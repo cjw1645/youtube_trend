@@ -1,0 +1,1667 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "B88J8wvqlCKwZ2Brez-TcjghLnY",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "yxQMjykf_jcN_caFlHZ6Xd7aVcQ",
+      "id": "n8hHU8BYB-g",
+      "snippet": {
+        "publishedAt": "2023-08-23T06:28:10Z",
+        "channelId": "UCH7s4vHBez8Xlw6AwhRYLuQ",
+        "title": "ㅎ ..... ! #커플브이로그 #couple",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/n8hHU8BYB-g/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/n8hHU8BYB-g/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/n8hHU8BYB-g/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/n8hHU8BYB-g/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/n8hHU8BYB-g/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "래인",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "ㅎ ..... ! #커플브이로그 #couple",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT25S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "19658298",
+        "likeCount": "90971",
+        "favoriteCount": "0",
+        "commentCount": "278"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "yw4FuT_9sy5KUkcgFHdQpOElVKo",
+      "id": "lmE35hCccS8",
+      "snippet": {
+        "publishedAt": "2019-07-28T07:40:22Z",
+        "channelId": "UC6Jl3MrfGBvRYxXgdDxXzVA",
+        "title": "(SUB) 고등학생의 일상ㅣ개학날 VLOGㅣDaily Life of a Korean High schooler",
+        "description": "문의 메일✉ dojin@sandboxnetwork.net\n\n안녕하세용 도진입니다!ㅎㅎ\n오늘 영상은 예전 채널에서 가장 인기가 많았던 개학날 학교브이로그에요!\n200만뷰 가까이 나왔었던 조회수가 사라진것도 너무아쉽지만 가장 슬픈건, 해외 각국의 팬분들이 정성껏 달아주셨던 자막들이 사라진거입니다..😭😭😭\n비록 많은 조회수와 자막은 사라졌지만 그분들의 감사함은 절대 잊지못할거에요!!💛💛\nToday’s video is a Back to School Vlog that was the most popular in my past channel!\nI’m very sad that the video that had almost 2 million views got deleted, but the worst part is the subtitles that you guys put using your precious times got deleted.. 😭😭😭\nAlthough the views and the subtitles are gone I’m still grateful for you all and I’ll never forget it!! 💛💛",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/lmE35hCccS8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/lmE35hCccS8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/lmE35hCccS8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/lmE35hCccS8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/lmE35hCccS8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "DOJIN도진이",
+        "tags": [
+          "DOJIN",
+          "도진이",
+          "도진 일상",
+          "도진 학교브이로그",
+          "도진이 학원",
+          "도진도진이",
+          "고등학생브이로그",
+          "고등학생의일상",
+          "개학식날 브이로그",
+          "고등학생",
+          "예체능고등학생"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "(SUB) 고등학생의 일상ㅣ개학날 VLOGㅣDaily Life of a Korean High schooler",
+          "description": "문의 메일✉ dojin@sandboxnetwork.net\n\n안녕하세용 도진입니다!ㅎㅎ\n오늘 영상은 예전 채널에서 가장 인기가 많았던 개학날 학교브이로그에요!\n200만뷰 가까이 나왔었던 조회수가 사라진것도 너무아쉽지만 가장 슬픈건, 해외 각국의 팬분들이 정성껏 달아주셨던 자막들이 사라진거입니다..😭😭😭\n비록 많은 조회수와 자막은 사라졌지만 그분들의 감사함은 절대 잊지못할거에요!!💛💛\nToday’s video is a Back to School Vlog that was the most popular in my past channel!\nI’m very sad that the video that had almost 2 million views got deleted, but the worst part is the subtitles that you guys put using your precious times got deleted.. 😭😭😭\nAlthough the views and the subtitles are gone I’m still grateful for you all and I’ll never forget it!! 💛💛"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT10M43S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "12947666",
+        "likeCount": "480850",
+        "favoriteCount": "0",
+        "commentCount": "15611"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "sRpZONoQ06fbFfmAVLtb9o5DyVY",
+      "id": "vAHqRNyhyno",
+      "snippet": {
+        "publishedAt": "2026-10-05T10:38:36Z",
+        "channelId": "UCBcrGk6kCWJjFWKV3mvjyOA",
+        "title": "[미국 의대생 브이로그] 인생이 걸린 9시간짜리 시험 보기 | USMLE STEP 2 | 의대생의 시험 공부법",
+        "description": "안녕하세요 여러분,\n이번 영상은 제 인생에서 가장 중요한 시험, USMLE Step 2를 준비하는 과정을 담은 영상입니다. \n힘들었던 한 주를 담은 영상인데 재밌게 봐주시면 감사하겠습니다.\n\n재밌게 보셨다면, 구독과 좋아요, 댓글은 사랑입니다 :)\n또 너무 늦지 않게 다음 영상으로 돌아오겠습니다. 좋은 하루 되세요!\n\n타임라인\n00:00 - D-9\n05:04 - D-8\n06:22 - D-7\n09:58 - D-4\n12:05 - D-2\n13:56 - D-1\n15:56 - D-Day\n18:08 - 점수 공개 (Score Reveal)\n\nHey guys,\nIn this video, I’m preparing for the most important exam of my life, USMLE Step 2. Hope you guys enjoy this video!\n\nAs always, thanks for watching. Like, subscribe, and leave a Comment if you enjoyed the video\nI’ll be back with another video soon. Have a good day!\n\n#미국 #의대 #공부",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/vAHqRNyhyno/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/vAHqRNyhyno/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/vAHqRNyhyno/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/vAHqRNyhyno/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/vAHqRNyhyno/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "성록 Sungrok",
+        "tags": [
+          "의대생",
+          "VLOG",
+          "브이로그",
+          "medschool",
+          "미국",
+          "유학생",
+          "아이비리그",
+          "의대",
+          "공부",
+          "study"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "[미국 의대생 브이로그] 인생이 걸린 9시간짜리 시험 보기 | USMLE STEP 2 | 의대생의 시험 공부법",
+          "description": "안녕하세요 여러분,\n이번 영상은 제 인생에서 가장 중요한 시험, USMLE Step 2를 준비하는 과정을 담은 영상입니다. \n힘들었던 한 주를 담은 영상인데 재밌게 봐주시면 감사하겠습니다.\n\n재밌게 보셨다면, 구독과 좋아요, 댓글은 사랑입니다 :)\n또 너무 늦지 않게 다음 영상으로 돌아오겠습니다. 좋은 하루 되세요!\n\n타임라인\n00:00 - D-9\n05:04 - D-8\n06:22 - D-7\n09:58 - D-4\n12:05 - D-2\n13:56 - D-1\n15:56 - D-Day\n18:08 - 점수 공개 (Score Reveal)\n\nHey guys,\nIn this video, I’m preparing for the most important exam of my life, USMLE Step 2. Hope you guys enjoy this video!\n\nAs always, thanks for watching. Like, subscribe, and leave a Comment if you enjoyed the video\nI’ll be back with another video soon. Have a good day!\n\n#미국 #의대 #공부"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT19M14S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "7784",
+        "likeCount": "224",
+        "favoriteCount": "0",
+        "commentCount": "65"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "xYWE6PvLsJjSDjkdJjyXsTQKCLo",
+      "id": "vZXjiSiHqhI",
+      "snippet": {
+        "publishedAt": "2026-10-05T17:12:02Z",
+        "channelId": "UC_hQjyfNsRqPdPLGqRdqfbw",
+        "title": "5일동안 100시간 공부하는 의대생 브이로그👩🏻‍⚕️🩺 ㅣ 카이가 이대서울병원에 오다 🌀",
+        "description": "여러분 🌀 정말 오랜만이죠 ㅠㅠ \n개강하고 처음으로 찾아왔어요 !  시험이 정말 많아서 정신 없으면서도 지치는 두달을 보냈는데요 여러분들도 많이 지칠 시기라고 생각합니다. \n무언가를 준비하시는 모든 분들이 끝까지 최선 다하실 수 있길 바라고, 저의 영상이 조금이나마 힘이 되기를 바라며 💐 기다려주셔서 감사해요 ! 또 열심히 살다가 만나요",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/vZXjiSiHqhI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/vZXjiSiHqhI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/vZXjiSiHqhI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/vZXjiSiHqhI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          }
+        },
+        "channelTitle": "정윤 Cecilia ",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "5일동안 100시간 공부하는 의대생 브이로그👩🏻‍⚕️🩺 ㅣ 카이가 이대서울병원에 오다 🌀",
+          "description": "여러분 🌀 정말 오랜만이죠 ㅠㅠ \n개강하고 처음으로 찾아왔어요 !  시험이 정말 많아서 정신 없으면서도 지치는 두달을 보냈는데요 여러분들도 많이 지칠 시기라고 생각합니다. \n무언가를 준비하시는 모든 분들이 끝까지 최선 다하실 수 있길 바라고, 저의 영상이 조금이나마 힘이 되기를 바라며 💐 기다려주셔서 감사해요 ! 또 열심히 살다가 만나요"
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT14M57S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "11430",
+        "likeCount": "274",
+        "favoriteCount": "0",
+        "commentCount": "32"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "b9Jp5OfcfWugDEoRNnY5HfFzzOA",
+      "id": "N3q4b0q3rFY",
+      "snippet": {
+        "publishedAt": "2026-10-06T00:30:13Z",
+        "channelId": "UCWWPbXICYE15dpvdkNw1gtQ",
+        "title": "코스트코 추천템 쇼핑하는 40대 주부 절약브이로그 | 친구 없고 외식 안 하는 | 평범한 일상 집밥 소박한 살림 | 미니멀라이프 하고 싶은",
+        "description": "[ 줄거리 ] \n코스트코에서 할인 품목 위주로 장을 보고 가자미구이와 된장찌개로 저녁을 차린 뒤, 하나로마트 로컬푸드 코너까지 둘러보는 평범한 40대 주부의 알뜰 장보기 브이로그 \n\n[ 타임 스탬프 ] \n00:00 코스트코 쇼핑 \n14:15 귀가,정리 \n17:42 소분 \n19:17 된장찌개,가자미구이 \n22:01 메브갈그릭요거트 \n23:07 하나로마트",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          },
+          "uhd": {
+            "url": "https://i.ytimg.com/vi/N3q4b0q3rFY/uhddefault.jpg",
+            "width": 3840,
+            "height": 2160
+          }
+        },
+        "channelTitle": "김오래😄주부브이로그",
+        "tags": [
+          "코스트코",
+          "코스트코 추천",
+          "코스트코 추천템",
+          "코스트코 할인",
+          "코스트코 인기템",
+          "코스트코 가자미",
+          "코스트코 고등어",
+          "코스트코 소분",
+          "집밥",
+          "살림"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "코스트코 추천템 쇼핑하는 40대 주부 절약브이로그 | 친구 없고 외식 안 하는 | 평범한 일상 집밥 소박한 살림 | 미니멀라이프 하고 싶은",
+          "description": "[ 줄거리 ] \n코스트코에서 할인 품목 위주로 장을 보고 가자미구이와 된장찌개로 저녁을 차린 뒤, 하나로마트 로컬푸드 코너까지 둘러보는 평범한 40대 주부의 알뜰 장보기 브이로그 \n\n[ 타임 스탬프 ] \n00:00 코스트코 쇼핑 \n14:15 귀가,정리 \n17:42 소분 \n19:17 된장찌개,가자미구이 \n22:01 메브갈그릭요거트 \n23:07 하나로마트"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT29M24S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": false,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "3736",
+        "likeCount": "50",
+        "favoriteCount": "0",
+        "commentCount": "2"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "DuCfA6Rax4svQC-hk76cabT7AN4",
+      "id": "1NevaxRkFF8",
+      "snippet": {
+        "publishedAt": "2024-03-20T12:00:03Z",
+        "channelId": "UCWYer2Csl-fxOvS1X9iQclw",
+        "title": "나 때문에 인생 산다는 남자친구 #커플 #브이로그 #장기연애",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/1NevaxRkFF8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/1NevaxRkFF8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/1NevaxRkFF8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/1NevaxRkFF8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/1NevaxRkFF8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "아요커플",
+        "tags": [
+          "아요커플",
+          "커플",
+          "커플일상",
+          "커플유튜브",
+          "커플유튜버",
+          "커플 브이로그",
+          "브이로그",
+          "커플 영상"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "나 때문에 인생 산다는 남자친구 #커플 #브이로그 #장기연애",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT19S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "17819076",
+        "likeCount": "203723",
+        "favoriteCount": "0",
+        "commentCount": "2057"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "tUPZCfYyryXuumbLrro7XY3cmys",
+      "id": "4Pp51fpKCFI",
+      "snippet": {
+        "publishedAt": "2023-07-31T11:44:43Z",
+        "channelId": "UCoAWIOzUMmZv7TJXla7eAkw",
+        "title": "알바 빌런의 카페알바 브이로그🖤 #카페알바 #1일차 #카페",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/4Pp51fpKCFI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/4Pp51fpKCFI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/4Pp51fpKCFI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/4Pp51fpKCFI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/4Pp51fpKCFI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "전교일등 전일이",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "알바 빌런의 카페알바 브이로그🖤 #카페알바 #1일차 #카페",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT35S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": false,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "12577920",
+        "likeCount": "179365",
+        "favoriteCount": "0",
+        "commentCount": "2003"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "l7q6c2v7l6Vs_AQxs3jGwa6aeUM",
+      "id": "bH2-DaKbw9s",
+      "snippet": {
+        "publishedAt": "2022-09-11T11:03:10Z",
+        "channelId": "UC8TxOmxwC8QpHRZra7sOFig",
+        "title": "다 가짜 연기였던 브이로그 유튜버",
+        "description": "#가요이",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/bH2-DaKbw9s/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/bH2-DaKbw9s/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/bH2-DaKbw9s/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/bH2-DaKbw9s/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/bH2-DaKbw9s/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "가요이 키우기 YoiKi",
+        "tags": [
+          "가요이",
+          "가요이키우기"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "다 가짜 연기였던 브이로그 유튜버",
+          "description": "#가요이"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT18S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "11868329",
+        "likeCount": "97783",
+        "favoriteCount": "0",
+        "commentCount": "1338"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "lRgGl54A0HqpDHD9yFVRdu_7f3o",
+      "id": "A06FZ9NeQv0",
+      "snippet": {
+        "publishedAt": "2024-10-27T02:00:06Z",
+        "channelId": "UCaAeaCKU-dBllPNadsXvQOg",
+        "title": "둘 다 내가 낳았는데.. #육아브이로그",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/A06FZ9NeQv0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/A06FZ9NeQv0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/A06FZ9NeQv0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/A06FZ9NeQv0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/A06FZ9NeQv0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "옆집간호사 구슬언니",
+        "categoryId": "24",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "둘 다 내가 낳았는데.. #육아브이로그",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT9S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "12958847",
+        "likeCount": "104862",
+        "favoriteCount": "0",
+        "commentCount": "953"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "D07YU1hAIsAXM_XRgJ94MLyOxdU",
+      "id": "v1Nt3cA96XE",
+      "snippet": {
+        "publishedAt": "2023-06-08T07:30:20Z",
+        "channelId": "UCwDtfjGn6LLIvlF3nUVRqHQ",
+        "title": "졸업사진 브이로그.",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/v1Nt3cA96XE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/v1Nt3cA96XE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/v1Nt3cA96XE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/v1Nt3cA96XE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/v1Nt3cA96XE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "김다윤",
+        "categoryId": "23",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "졸업사진 브이로그.",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT33S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "8754471",
+        "favoriteCount": "0",
+        "commentCount": "561"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "q-eQpxbIdUygYyYiYOXNNXLOOrc",
+      "id": "fj6YJn9Itw4",
+      "snippet": {
+        "publishedAt": "2024-11-27T00:22:55Z",
+        "channelId": "UCNpqEtwrJAeIqGz2UmEnJ5g",
+        "title": "그래도 잠은 잘오더군요 #신혼부부 #신혼여행 #호텔 #브이로그 #브이로그꿈나무",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/fj6YJn9Itw4/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/fj6YJn9Itw4/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/fj6YJn9Itw4/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/fj6YJn9Itw4/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/fj6YJn9Itw4/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "은윤이행님",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "그래도 잠은 잘오더군요 #신혼부부 #신혼여행 #호텔 #브이로그 #브이로그꿈나무",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT20S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": false,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "10875191",
+        "likeCount": "49263",
+        "favoriteCount": "0",
+        "commentCount": "1808"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "o4i0m24vivhHASmIQq1-NyYxKLw",
+      "id": "H85ojZSV9lM",
+      "snippet": {
+        "publishedAt": "2025-06-13T14:23:41Z",
+        "channelId": "UCXxf0mvGQdrIlOcjmLGa--g",
+        "title": "참지 않는 K여친 #한일커플 #도쿄브이로그 #일본브이로그 #일본여행 #일상브이로그",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/H85ojZSV9lM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/H85ojZSV9lM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/H85ojZSV9lM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/H85ojZSV9lM/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/H85ojZSV9lM/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "히씨 HeeSee",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "참지 않는 K여친 #한일커플 #도쿄브이로그 #일본브이로그 #일본여행 #일상브이로그",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT11S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "20128959",
+        "likeCount": "125363",
+        "favoriteCount": "0",
+        "commentCount": "936"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "sp0ap40NNwCa4fZr0oxefHr5gEI",
+      "id": "3n4oikV5LoM",
+      "snippet": {
+        "publishedAt": "2026-05-02T11:22:27Z",
+        "channelId": "UCuHfs9-UIFSTZfJCu6MXvBg",
+        "title": "코스트코 장보고 정리하는 일상 브이로그🛒",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/3n4oikV5LoM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/3n4oikV5LoM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/3n4oikV5LoM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/3n4oikV5LoM/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/3n4oikV5LoM/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "시우 siuday",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "코스트코 장보고 정리하는 일상 브이로그🛒",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT1M11S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "18213692",
+        "likeCount": "286657",
+        "favoriteCount": "0",
+        "commentCount": "454"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "S-M3yCxVnuA_upIswJIOAmlai8M",
+      "id": "Or57Chb_BMs",
+      "snippet": {
+        "publishedAt": "2024-03-22T12:00:32Z",
+        "channelId": "UCWYer2Csl-fxOvS1X9iQclw",
+        "title": "연애할 때 개그코드가 중요한 이유 #커플 #브이로그 #장기연애",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Or57Chb_BMs/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Or57Chb_BMs/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Or57Chb_BMs/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/Or57Chb_BMs/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/Or57Chb_BMs/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "아요커플",
+        "tags": [
+          "아요커플",
+          "커플",
+          "커플일상",
+          "커플유튜브",
+          "커플유튜버",
+          "커플 브이로그",
+          "브이로그",
+          "커플 영상",
+          "데이트",
+          "커플 데이트"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "연애할 때 개그코드가 중요한 이유 #커플 #브이로그 #장기연애",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT16S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "8926510",
+        "likeCount": "153531",
+        "favoriteCount": "0",
+        "commentCount": "334"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "U79Uq6GgGkbHY41hYUzk7RmY8gI",
+      "id": "5tR0CYRi0qw",
+      "snippet": {
+        "publishedAt": "2024-11-01T12:20:05Z",
+        "channelId": "UCWYer2Csl-fxOvS1X9iQclw",
+        "title": "소소한 것에도 행복을 느끼는 장기연애 #커플 #브이로그",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/5tR0CYRi0qw/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/5tR0CYRi0qw/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/5tR0CYRi0qw/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/5tR0CYRi0qw/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/5tR0CYRi0qw/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "아요커플",
+        "tags": [
+          "아요커플",
+          "커플",
+          "커플일상",
+          "커플유튜브",
+          "커플 브이로그",
+          "브이로그",
+          "커플 영상",
+          "데이트",
+          "일상",
+          "장기연애"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "소소한 것에도 행복을 느끼는 장기연애 #커플 #브이로그",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT12S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "11698218",
+        "likeCount": "180714",
+        "favoriteCount": "0",
+        "commentCount": "770"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "PTP6ilpjaQqaMUfWdbqqVc5bjWY",
+      "id": "pp48oFQ3B-g",
+      "snippet": {
+        "publishedAt": "2025-02-04T09:06:05Z",
+        "channelId": "UCf6rOn9oohstgyGGpmP_hyQ",
+        "title": "모자이크 할수밖에 없는 일상브이로그 #유머 #funny #웃긴영상 256",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/pp48oFQ3B-g/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/pp48oFQ3B-g/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/pp48oFQ3B-g/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/pp48oFQ3B-g/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/pp48oFQ3B-g/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "애니타임 스토리",
+        "categoryId": "23",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "모자이크 할수밖에 없는 일상브이로그 #유머 #funny #웃긴영상 256",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT39S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "9667963",
+        "likeCount": "23331",
+        "favoriteCount": "0",
+        "commentCount": "301"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "zKYX4BgYz7ctzsg_13MIApvwDJs",
+      "id": "BgIzQDhWjjI",
+      "snippet": {
+        "publishedAt": "2024-10-21T12:44:03Z",
+        "channelId": "UCWYer2Csl-fxOvS1X9iQclw",
+        "title": "편견 없는 여친 만나면 생기는 일 #장기연애 #커플 #브이로그",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/BgIzQDhWjjI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/BgIzQDhWjjI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/BgIzQDhWjjI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/BgIzQDhWjjI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/BgIzQDhWjjI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "아요커플",
+        "tags": [
+          "아요커플",
+          "커플",
+          "커플일상",
+          "커플유튜브",
+          "커플 브이로그",
+          "브이로그",
+          "커플 영상",
+          "데이트",
+          "일상",
+          "장기연애",
+          "착한 남친",
+          "귀여운 남친"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "편견 없는 여친 만나면 생기는 일 #장기연애 #커플 #브이로그",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT11S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "10259264",
+        "likeCount": "113756",
+        "favoriteCount": "0",
+        "commentCount": "1261"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "A51giEbykgVx2j0iqjWBrvPPnhI",
+      "id": "6KrCb8npcJg",
+      "snippet": {
+        "publishedAt": "2024-10-20T15:23:16Z",
+        "channelId": "UCG5wXyG-cJ6oJBmv9KkRHYQ",
+        "title": "길 가면서 커플 생각 차이  #커플유튜브 #커플 #커플브이로그 #couple",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/6KrCb8npcJg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/6KrCb8npcJg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/6KrCb8npcJg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/6KrCb8npcJg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/6KrCb8npcJg/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "그냥맹지윤",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "길 가면서 커플 생각 차이  #커플유튜브 #커플 #커플브이로그 #couple",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT20S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "11576347",
+        "likeCount": "118184",
+        "favoriteCount": "0",
+        "commentCount": "2375"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "XJbAUXaTinzaTdv_Oo5v-UpQcO8",
+      "id": "7XrxXC8Hlic",
+      "snippet": {
+        "publishedAt": "2024-08-08T08:01:10Z",
+        "channelId": "UCW-QBEmxsme2FAONSnTjp-g",
+        "title": "수술 브이로그",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/7XrxXC8Hlic/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/7XrxXC8Hlic/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/7XrxXC8Hlic/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/7XrxXC8Hlic/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/7XrxXC8Hlic/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "돼끼 baby_pig_rabbit",
+        "categoryId": "24",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "수술 브이로그",
+          "description": ""
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT39S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "7611412",
+        "likeCount": "97238",
+        "favoriteCount": "0",
+        "commentCount": "274"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "9c5JbqZiF6G6NKKANCkx0825aGg",
+      "id": "NRaYgvXiQBg",
+      "snippet": {
+        "publishedAt": "2025-09-01T09:15:01Z",
+        "channelId": "UCfqVrM2cvwxG3-EvxbsN0KQ",
+        "title": "나 말고 장원영 브이로그...",
+        "description": "영혼을 갈아 넣은 이번 브이로그 많은 많은 사랑 받길,\n그리고 우리 원영이 더 많은 많은 행복이 닿길.. 🤍\n\n\n\n🛎️ 이삭토스트 앱 🛎️ 으로 더 편리하게!  \n언제 어디서든 앱을 통해 편하게 주문, 픽업하세요!\n\n🍞 이삭토스트 앱\nhttp://bit.ly/4n8fDnc\n\n🍞 다양하게 만나는 옵션 변경\nhttp://bit.ly/4lKFxw9\n소스, 빵, 계란을 취향대로 즐길 수 있어요!\n✔️ 더 달콤하고 촉촉하게 즐기는 '프렌치 빵'\n✔️ 폭신폭신 부드러운 '스크램블 에그'\n\n이삭토스트 앱을 통해 더 편리하게,\n내 취향에 맞춘 더 다양한 옵션 변경 토스트를 \n전국 이삭토스트 매장에서 만나보세요:)\n\n\n*Sponsored by ISAAC TOAST\n*본 영상에는 ISAAC TOAST의 유료 광고가 포함되어 있습니다.\n\n\n00:00 오프닝 (이삭토스트 유료광고)\n03:21 원영과의 인연\n04:16 브이로그 시작\n06:28 입대하러 가는 워뇨\n08:27 베를린 출국\n09:12 공항 쇼핑 하울\n10:25 아이브 멤버들과 저녁식사\n12:01 마트 쇼핑\n14:03 롤라팔루자 in 베를린\n15:31 원영과 민경의 저녁식사 토크\n28:09 민경의 작업실에서 2차\n31:09 한국 일상\n34:54 롤라팔루자 in 파리\n35:48 지인과의 모임\n37:50 Stay With Me 녹음\n40:42 엔딩 크레딧(원영의 어린시절)\n\n\n\n*영상에서 제가 착용한 옷과 소품은 Àvie muah 입니다 ෆ \n🔗 https://aviemuah.com\n\n*위 온라인 스토어에서 찾을 수 없는 아이템은.. 테스트 샘플 혹은 *출시 예정*일 수 있습니다 ＼(°o°；）ㅁ\n\n\nCopyright © 2018-2025 by iammingki. All rights reserved.",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/NRaYgvXiQBg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/NRaYgvXiQBg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/NRaYgvXiQBg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/NRaYgvXiQBg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/NRaYgvXiQBg/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "걍밍경",
+        "tags": [
+          "아비에무아",
+          "소두핏",
+          "모자소개",
+          "모자",
+          "캡",
+          "avie muah",
+          "장원영",
+          "강민경",
+          "kang min kyung",
+          "JANGWONYOUNG",
+          "luckyvicky",
+          "Jang won young vlog",
+          "vlog",
+          "장원영 브이로그",
+          "나 말고 장원영 브이로그"
+        ],
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "나 말고 장원영 브이로그...",
+          "description": "영혼을 갈아 넣은 이번 브이로그 많은 많은 사랑 받길,\n그리고 우리 원영이 더 많은 많은 행복이 닿길.. 🤍\n\n\n\n🛎️ 이삭토스트 앱 🛎️ 으로 더 편리하게!  \n언제 어디서든 앱을 통해 편하게 주문, 픽업하세요!\n\n🍞 이삭토스트 앱\nhttp://bit.ly/4n8fDnc\n\n🍞 다양하게 만나는 옵션 변경\nhttp://bit.ly/4lKFxw9\n소스, 빵, 계란을 취향대로 즐길 수 있어요!\n✔️ 더 달콤하고 촉촉하게 즐기는 '프렌치 빵'\n✔️ 폭신폭신 부드러운 '스크램블 에그'\n\n이삭토스트 앱을 통해 더 편리하게,\n내 취향에 맞춘 더 다양한 옵션 변경 토스트를 \n전국 이삭토스트 매장에서 만나보세요:)\n\n\n*Sponsored by ISAAC TOAST\n*본 영상에는 ISAAC TOAST의 유료 광고가 포함되어 있습니다.\n\n\n00:00 오프닝 (이삭토스트 유료광고)\n03:21 원영과의 인연\n04:16 브이로그 시작\n06:28 입대하러 가는 워뇨\n08:27 베를린 출국\n09:12 공항 쇼핑 하울\n10:25 아이브 멤버들과 저녁식사\n12:01 마트 쇼핑\n14:03 롤라팔루자 in 베를린\n15:31 원영과 민경의 저녁식사 토크\n28:09 민경의 작업실에서 2차\n31:09 한국 일상\n34:54 롤라팔루자 in 파리\n35:48 지인과의 모임\n37:50 Stay With Me 녹음\n40:42 엔딩 크레딧(원영의 어린시절)\n\n\n\n*영상에서 제가 착용한 옷과 소품은 Àvie muah 입니다 ෆ \n🔗 https://aviemuah.com\n\n*위 온라인 스토어에서 찾을 수 없는 아이템은.. 테스트 샘플 혹은 *출시 예정*일 수 있습니다 ＼(°o°；）ㅁ\n\n\nCopyright © 2018-2025 by iammingki. All rights reserved."
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT42M45S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "5708017",
+        "likeCount": "139251",
+        "favoriteCount": "0",
+        "commentCount": "6670"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "IEEZfyQsubfTuI72oT-LTz9uMk8",
+      "id": "vs1y56SB1dQ",
+      "snippet": {
+        "publishedAt": "2026-06-09T07:00:21Z",
+        "channelId": "UCJkLyO2HB3zfDUd_W2UOCZg",
+        "title": "브이로그로 증명된 ‘카리나의 활동기 찐 식사량’",
+        "description": "#카리나 #karina #다이어트 #WDA #레모네이드 #다이어트 #식단 #지젤 #닝닝 #윈터 #shorts #직캠",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/vs1y56SB1dQ/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/vs1y56SB1dQ/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/vs1y56SB1dQ/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/vs1y56SB1dQ/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/vs1y56SB1dQ/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "패션탐정냥",
+        "categoryId": "24",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "브이로그로 증명된 ‘카리나의 활동기 찐 식사량’",
+          "description": "#카리나 #karina #다이어트 #WDA #레모네이드 #다이어트 #식단 #지젤 #닝닝 #윈터 #shorts #직캠"
+        }
+      },
+      "contentDetails": {
+        "duration": "PT34S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "9140620",
+        "likeCount": "135155",
+        "favoriteCount": "0",
+        "commentCount": "2135"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "mjhOX1LqThugNZX1tO-miobZVQ0",
+      "id": "0mlRDkORvE0",
+      "snippet": {
+        "publishedAt": "2025-03-20T09:33:12Z",
+        "channelId": "UCK9PdJPUyAQy3iQIb7CnnEA",
+        "title": "인스타여신이 출산브이로그를 찍는 법 [이해하면 무서운 이야기]",
+        "description": "[이해하면무서운이야기]채널에 가입하여 혜택을 누려보세요.\nhttps://www.youtube.com/channel/UCK9PdJPUyAQy3iQIb7CnnEA/join\n\n❤천사깨비님들 제작비 후원 감사드립니다❤\n\n제작: 금비,전\n❤천사깨비님들 제작비 후원 감사드립니다❤\n❤큥큥 님, ❤짱설TV 님, ❤문제이 님, ❤유니콘 님, ❤김송하 님, ❤마루 님, ❤란영공주 님, ❤율이 님, ❤시마스터 님, ❤지은 님, ❤호에에ᄋ에에ᅦ엥 님, ❤둥이의 견생일기 님, ❤안소윤 님, ❤배코 님, ❤과즙세연 님, ❤박지현 님, ❤우예슬 님, ❤김온설 님, ❤Kim밀비 님, ❤융동동동 님, ❤Damong다몽 님, ❤알콜솜 님, ❤얼그레이밀크티 님\n\n*본 영상은 허구의 창작이야기입니다.\n**본 영상에 등장하는 특정 인물, 단체, 지명, 사건등은 허구로 작성되었음을 미리 알립니다.\n*** 이 영상에 언급되거나 묘사된 인물, 지명, 회사 단체 및 그 밖의 일체의 명칭 은 모두 허구적으로 창작된 것이며 만일 실제와 같더라도 이는 우연에 의한 것임을 밝힙니다.\n\n#Shorts",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/0mlRDkORvE0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/0mlRDkORvE0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/0mlRDkORvE0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/0mlRDkORvE0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/0mlRDkORvE0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "금도깨비툰",
+        "categoryId": "1",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "인스타여신이 출산브이로그를 찍는 법 [이해하면 무서운 이야기]",
+          "description": "[이해하면무서운이야기]채널에 가입하여 혜택을 누려보세요.\nhttps://www.youtube.com/channel/UCK9PdJPUyAQy3iQIb7CnnEA/join\n\n❤천사깨비님들 제작비 후원 감사드립니다❤\n\n제작: 금비,전\n❤천사깨비님들 제작비 후원 감사드립니다❤\n❤큥큥 님, ❤짱설TV 님, ❤문제이 님, ❤유니콘 님, ❤김송하 님, ❤마루 님, ❤란영공주 님, ❤율이 님, ❤시마스터 님, ❤지은 님, ❤호에에ᄋ에에ᅦ엥 님, ❤둥이의 견생일기 님, ❤안소윤 님, ❤배코 님, ❤과즙세연 님, ❤박지현 님, ❤우예슬 님, ❤김온설 님, ❤Kim밀비 님, ❤융동동동 님, ❤Damong다몽 님, ❤알콜솜 님, ❤얼그레이밀크티 님\n\n*본 영상은 허구의 창작이야기입니다.\n**본 영상에 등장하는 특정 인물, 단체, 지명, 사건등은 허구로 작성되었음을 미리 알립니다.\n*** 이 영상에 언급되거나 묘사된 인물, 지명, 회사 단체 및 그 밖의 일체의 명칭 은 모두 허구적으로 창작된 것이며 만일 실제와 같더라도 이는 우연에 의한 것임을 밝힙니다.\n\n#Shorts"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT57S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "5906421",
+        "likeCount": "110407",
+        "favoriteCount": "0",
+        "commentCount": "482"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "Otyr5LbjHov7wbrFCmFHiYpy9tI",
+      "id": "rLuoEZbMnLM",
+      "snippet": {
+        "publishedAt": "2023-12-20T06:10:33Z",
+        "channelId": "UCbUNWAsGISwidbzNjr3BEiQ",
+        "title": "남사친들이랑 롯데월드 vlog",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/rLuoEZbMnLM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/rLuoEZbMnLM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/rLuoEZbMnLM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/rLuoEZbMnLM/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/rLuoEZbMnLM/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "AllZero다영",
+        "categoryId": "22",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "남사친들이랑 롯데월드 vlog",
+          "description": ""
+        }
+      },
+      "contentDetails": {
+        "duration": "PT9S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "7269155",
+        "likeCount": "64881",
+        "favoriteCount": "0",
+        "commentCount": "2199"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "5NGXQyr_h7s9lWNVLn3md3TCEYw",
+      "id": "GzMBFSYd7Hc",
+      "snippet": {
+        "publishedAt": "2025-05-02T08:45:00Z",
+        "channelId": "UCU5Bngb-griCg_96ZXpXOgg",
+        "title": "요리 브이로그 이렇게 하는거 아님? #animalchef",
+        "description": "남들은 요리 잘하던데..(햄무룩)\n#요리브이로그 #ai #햄찌 #햄스터 #요리하는동물 #ai #animalchef \n\n\n🎨 AI Tool: Sora  / HiLuo Premium  \n🎵 BGM: capcut\n📌 모든 영상은 직접 커스터마이징된 창작물입니다.",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/GzMBFSYd7Hc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/GzMBFSYd7Hc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/GzMBFSYd7Hc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/GzMBFSYd7Hc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/GzMBFSYd7Hc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "정서불안 김햄찌",
+        "tags": [
+          "요리브이로그",
+          "햄찌",
+          "ai",
+          "햄스터",
+          "동물요리",
+          "요리하는동물",
+          "피자"
+        ],
+        "categoryId": "15",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "요리 브이로그 이렇게 하는거 아님? #animalchef",
+          "description": "남들은 요리 잘하던데..(햄무룩)\n#요리브이로그 #ai #햄찌 #햄스터 #요리하는동물 #ai #animalchef \n\n\n🎨 AI Tool: Sora  / HiLuo Premium  \n🎵 BGM: capcut\n📌 모든 영상은 직접 커스터마이징된 창작물입니다."
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT28S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "9062043",
+        "likeCount": "119721",
+        "favoriteCount": "0",
+        "commentCount": "1379"
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "etag": "6ruJwSjG5yIz3W4g2Z7fPSRKcTk",
+      "id": "OnZiHyUvS_4",
+      "snippet": {
+        "publishedAt": "2025-09-20T23:00:32Z",
+        "channelId": "UC2PCyP-r5Lw3eCXHjhSthLA",
+        "title": "천조국 금수저의 브이로그",
+        "description": "#8",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/OnZiHyUvS_4/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/OnZiHyUvS_4/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/OnZiHyUvS_4/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/OnZiHyUvS_4/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/OnZiHyUvS_4/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "쑈옷",
+        "categoryId": "1",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "ko",
+        "localized": {
+          "title": "천조국 금수저의 브이로그",
+          "description": "#8"
+        },
+        "defaultAudioLanguage": "ko"
+      },
+      "contentDetails": {
+        "duration": "PT50S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "6995655",
+        "likeCount": "77728",
+        "favoriteCount": "0",
+        "commentCount": "1591"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 25,
+    "resultsPerPage": 25
+  }
+}
