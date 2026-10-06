@@ -98,7 +98,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | # | 작업 | 완료 기준 |
 |---|---|---|
 | 3-1 ✅ | Vercel 환경 설정 재확인 | Production/사용하는 Preview에 두 Key 등록 여부 확인(값 출력 금지). Production의 `USE_FIXTURES`와 오류 재현 설정 비활성화, 설정 변경 후 재배포 |
-| 3-2 | 보안 점검 | 배포 번들·네트워크·Git 이력에서 Key 노출 점검. `.env.local` 읽기 및 Key·`git log -p` 원문 출력 금지, 결과는 파일·위치·건수만 기록. YouTube/Gemini 데이터 호출은 `/api/*`만 사용, 오류 응답에도 비밀값 없음 |
+| 3-2 ✅ | 보안 점검 | 배포 번들·네트워크·Git 이력에서 Key 노출 점검. `.env.local` 읽기 및 Key·`git log -p` 원문 출력 금지, 결과는 파일·위치·건수만 기록. YouTube/Gemini 데이터 호출은 `/api/*`만 사용, 오류 응답에도 비밀값 없음 |
 | 3-3 | 배포 환경 E2E | fixture가 아닌 실제 YouTube 목록·검색·필터·정렬·상세, 관심 영상 새로고침 유지, 실제 Gemini 3질문 검증. 근거 값·대상 범위·형식 대조, 데이터 부족 안내 확인. Day 1의 fixture 검증과 별도로 날짜·URL·결과 기록 |
 | 3-4 | 오류 화면 재현 | 로컬/Preview의 서버 전용 설정으로 YouTube 할당량·Gemini 429·일반 오류를 주입. Production에서는 설정 무시, 공개 쿼리 플래그·실제 Key 변경 금지. 오류 안내·재시도·버튼 복구 확인 후 설정 해제. Production에서도 실패 응답 시 UI를 검증하고 모의 여부 명시 |
 | 3-5 | UI 다듬기 | 모바일·데스크톱 반응형, 키보드 조작·입력 라벨·상세 닫기/포커스 복귀, 로딩·빈 상태·누락 데이터 문구 확인. 롱폼/Shorts 구분은 필수 완료 후 선택 검토 |
@@ -227,4 +227,7 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 3-1부터 순서대로
 
 ## 3-1 검증 (2026-10-06)
 - Production/Preview 두 Key 등록 확인(값 Hidden). fixture/오류 설정 없음. Production은 USE_FIXTURES=1 오설정도 무시하도록 가드 추가, 챗 계약 테스트·빌드 통과. main push로 재배포한다.
+
+## 3-2 검증 (2026-10-06)
+- 환경 파일을 읽지 않고 추적 파일65개·Git 이력 blob125개·배포 자산2개·API 응답4개 검사. Google Key/개인키 패턴 탐지0건, src 직접 Google 호출/서버 Key 읽기/VITE 변수0건, 오류400/no-store 확인. 결과는 위치·건수만 출력. 재현: node scripts/check-security.ts.
 
