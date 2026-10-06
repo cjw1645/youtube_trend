@@ -1,0 +1,42 @@
+/** 1234 → "1,234", 12345 → "1.2만", 123456789 → "1.2억". 비공개(null)는 "비공개" */
+export function formatCount(n: number | null): string {
+  if (n === null) return '비공개';
+  if (n >= 1e8) return `${trim(n / 1e8)}억`;
+  if (n >= 1e4) return `${trim(n / 1e4)}만`;
+  return n.toLocaleString('ko-KR');
+}
+
+function trim(value: number): string {
+  return (value >= 100 ? Math.round(value) : Math.round(value * 10) / 10).toString();
+}
+
+/** ISO 시각 → "3시간 전", "2일 전" 등 */
+export function formatRelativeDate(iso: string, now: Date = new Date()): string {
+  const seconds = Math.max(0, (now.getTime() - new Date(iso).getTime()) / 1000);
+  const units: [number, string][] = [
+    [60 * 60 * 24 * 365, '년'],
+    [60 * 60 * 24 * 30, '개월'],
+    [60 * 60 * 24 * 7, '주'],
+    [60 * 60 * 24, '일'],
+    [60 * 60, '시간'],
+    [60, '분'],
+  ];
+  for (const [size, label] of units) {
+    if (seconds >= size) return `${Math.floor(seconds / size)}${label} 전`;
+  }
+  return '방금 전';
+}
+
+/** ISO 시각 → "2026. 10. 6." */
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('ko-KR');
+}
+
+/** 초 → "3:05", "1:02:03" */
+export function formatDuration(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (v: number) => v.toString().padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}

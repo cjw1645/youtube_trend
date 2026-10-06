@@ -1,1 +1,13 @@
 @import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Pretendard', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+/* 가로 스크롤은 유지하고 스크롤바만 숨김 (카테고리 탭) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
