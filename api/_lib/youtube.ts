@@ -4,6 +4,7 @@ import './env.js';
 import type { Category, SortOrder, Video, VideoDetail } from '../../src/types/video.js';
 import { isFixtureMode, loadFixture } from './fixtures.js';
 import { ApiFailure } from './http.js';
+import type { AnalysisContext } from '../../src/types/chat.js';
 
 const BASE = 'https://www.googleapis.com/youtube/v3';
 const REGION = 'KR';
@@ -116,7 +117,9 @@ async function ytFetch<T>(resource: string, params: Record<string, string>): Pro
 // ---------- 변환 ----------
 
 function toNumber(value: string | undefined): number | null {
-  return value === undefined ? null : Number(value);
+  if (value === undefined || value.trim() === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
 function pickThumbnail(thumbnails: Thumbnails): string {
@@ -286,5 +289,46 @@ export async function getVideoDetail(id: string): Promise<VideoDetail> {
     tags: raw.snippet.tags ?? [],
     channelThumbnailUrl: channel?.thumbnailUrl ?? '',
     subscriberCount: channel?.subscriberCount ?? null,
+  };
+}
+
+/** 분석 대상만 일괄 조회한다. 목록·상세 API를 영상마다 호출하지 않는다. */
+export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext> {
+  const requestedIds = [...new Set(ids)];
+  if (!requestedIds.length || requestedIds.length > 20 || requestedIds.some((id) => !/^[A-Za-z0-9_-]{11}$/.test(id))) {
+    throw new ApiFailure('BAD_REQUEST', '분석 대상은 올바른 영상 ID 1~20개여야 합니다.', 400);
+  }
+  const raws = await getRawVideos(requestedIds);
+  const byId = new Map(raws.map((raw) => [raw.id, raw]));
+  const ordered = requestedIds.flatMap((id) => {
+    const raw = byId.get(id);
+    return raw ? [raw] : [];
+  });
+  if (!ordered.length) {
+    throw new ApiFailure('NOT_FOUND', '분석할 영상이 없습니다. 삭제되었거나 비공개로 전환되었을 수 있습니다.', 404);
+  }
+  const [channels, categories] = await Promise.all([
+    getChannels(ordered.map((raw) => raw.snippet.channelId)),
+    listCategories(),
+  ]);
+  const categoryNames = new Map(categories.map((category) => [category.id, category.title]));
+  const videos = ordered.map((raw) => ({
+    id: raw.id,
+    title: raw.snippet.title,
+    description: Array.from(raw.snippet.description ?? '').slice(0, 200).join(''),
+    tags: (raw.snippet.tags ?? []).slice(0, 20).map((tag) => Array.from(tag).slice(0, 100).join('')),
+    category: categoryNames.get(raw.snippet.categoryId) ?? null,
+    publishedAt: raw.snippet.publishedAt,
+    viewCount: toNumber(raw.statistics?.viewCount),
+    likeCount: toNumber(raw.statistics?.likeCount),
+    commentCount: toNumber(raw.statistics?.commentCount),
+    channelTitle: raw.snippet.channelTitle,
+    subscriberCount: channels.get(raw.snippet.channelId)?.subscriberCount ?? null,
+  }));
+  return {
+    requestedIds,
+    analyzedIds: videos.map((video) => video.id),
+    excludedIds: requestedIds.filter((id) => !byId.has(id)),
+    videos,
   };
 }

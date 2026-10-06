@@ -11,6 +11,7 @@
     "test:favorites": "node scripts/test-favorites.ts",
     "test:status": "node scripts/test-status.ts",
     "test:gemini": "node scripts/test-gemini.ts",
+    "test:chat": "node scripts/test-chat.ts",
     "preview": "vite preview",
     "fixtures": "node scripts/fetch-fixtures.ts",
     "api": "node scripts/call-api.ts"

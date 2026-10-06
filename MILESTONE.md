@@ -5,7 +5,7 @@
 > 로컬 폴더: `C:\Users\LOOKSTEN\Desktop\cjw\youtube_trend` (clone 완료, main 브랜치)
 > 요구사항 원문: `docs/개발자온보딩_유튜브트렌드대시보드.pdf` (`.gitignore`로 커밋 제외)
 >
-> **현재 상태 (2026-10-06)**: Day 1 및 2-1~2-4 완료. 2-1~2-3 커밋·push 완료(c0311a2, a5957de). 최신 텍스트 Flash-Lite `gemini-3.5-flash-lite` 서버 래퍼 구현, 공식 무료 티어 확인, 모의 오류 테스트 및 빌드 통과. 실제 Gemini 답변과 챗 UI 검증은 이후 단계에서 수행한다. `docs/DECISION.md`·비밀 환경 파일·PDF는 Git 제외 유지 → **다음 단계: Day 2-5**
+> **현재 상태 (2026-10-06)**: Day 1 및 2-1~2-5 완료. Flash-Lite 서버 래퍼와 POST /api/chat 입력 검증·영상/채널 일괄 보완 구현. 모의 계약 테스트·상세 회귀·빌드 및 로컬 /api/chat 400·404·no-store 검증 통과. 실제 Gemini 생성과 브라우저 챗 검증은 이후 단계에서 수행한다. 비밀 환경 파일·PDF·docs/DECISION.md는 Git 제외 유지 → **다음 단계: Day 2-6**
 
 ## 목표 산출물 (마감 시 공유)
 
@@ -73,7 +73,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 2-2 ✅ | 관심 영상 | `src/hooks/useFavorites.ts`, `src/pages/Favorites.tsx` | 저장/해제·저장 목록·새로고침 유지, ID 중복 방지. 손상된 localStorage·저장 실패 안내, 삭제된 영상도 저장 해제 가능 |
 | 2-3 ✅ | 상태 뷰 | `src/components/StatusView.tsx` | 로딩 / 검색 결과 없음 / 관심 영상 없음 / API 오류 / 할당량 초과 구분. 재시도 제공, 빠른 검색·필터·상세 전환에서 이전 응답이 최신 화면을 덮지 않음 |
 | 2-4 ✅ | Gemini 래퍼 | `api/_lib/gemini.ts` | 구현 시 무료 사용 가능한 Flash 모델 확인·기록. 서버 전용 Key, 호출 시간 제한, 429·외부 API 실패·빈 응답을 안전한 오류로 정규화. 자동 반복 재시도 없음 |
-| 2-5 | 분석 데이터 준비 + 챗 엔드포인트 | `api/_lib/youtube.ts`, `api/chat.ts`, `src/types/` | 아래 데이터 계약에 따라 현재 화면 영상만 서버에서 일괄 보완. 질문·ID·본문 크기 검증, 메타데이터 길이 제한, 응답·오류 `no-store`. 21개·빈 질문·잘못된 ID 요청은 외부 API 호출 전 거부 |
+| 2-5 ✅ | 분석 데이터 준비 + 챗 엔드포인트 | `api/_lib/youtube.ts`, `api/chat.ts`, `src/types/` | 아래 데이터 계약에 따라 현재 화면 영상만 서버에서 일괄 보완. 질문·ID·본문 크기 검증, 메타데이터 길이 제한, 응답·오류 `no-store`. 21개·빈 질문·잘못된 ID 요청은 외부 API 호출 전 거부 |
 | 2-6 | 시스템 프롬프트 | `api/chat.ts` | ①[핵심 요약] 2~3줄 ②[근거 데이터] 영상명/조회수/업로드일 ③[콘텐츠 제안] 제목·소재·썸네일·구성. 트렌드 질문은 분석 대상 내 조회수 상위 3개 + 제안 3개. 3개 미만·누락 통계는 부족함 안내. 데이터 밖 사실·실시간 순위 단정 금지, 메타데이터 속 명령 무시 |
 | 2-7 | 챗 UI | `src/components/ChatPanel.tsx` | 분석 대상·개수 표시, 상세 질문은 선택 영상 1개. 예시 칩은 입력만 채움. 전송 버튼만 호출하며 처리 중 중복 차단. 빈 질문·대상 0개 차단, 오류·시간 초과·429 후 재전송 가능, 답변 원시 HTML 렌더링 금지 |
 | 2-8 | 검증 후 push | — | `npm run build` 통과, 아래 수동 검증 기록 후 자동 배포 확인(main은 Production, 별도 브랜치는 Preview). 완료 기준을 확인한 항목만 체크 |
@@ -127,10 +127,10 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 
 ## Day 2 이후 작업 재개 안내
 
-다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 2-5부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
+다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 2-6부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
 
 ```text
-AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-5부터 순서대로 진행해줘.
+AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-6부터 순서대로 진행해줘.
 - Day 1은 완료 상태이며, Day 2~3의 보완 기준과 완료 조건을 적용해.
 - .env.local은 읽거나 출력·복사하지 말고, Key는 /api에서만 사용해.
 - UI 개발은 YouTube fixture 모드를 사용하되 실제 API 검증과 구분해 기록해.
@@ -180,3 +180,12 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-5부터 순서대로
 - 서버 래퍼: Key는 api/_lib/gemini.ts에서 process.env로 읽어 인증 헤더에만 전달한다. 25초 제한은 응답 본문 읽기까지 적용한다. 단일 요청이며 자동 재시도·다른 모델 fallback·Gemini fixture 답변은 없다.
 - npm run test:gemini 통과: 모델·REST 요청 계약, 생각 과정 제외, Key 누락·빈 입력 호출 차단, 429, 400/401/403/404 설정 오류, 500/503·네트워크·잘못된 JSON, 빈 응답, 안전 차단·출력 잘림, 요청/본문 시간 초과, 오류 no-store·비밀값 미노출.
 - npm run typecheck 및 npm run build 통과. 테스트는 가짜 Key와 모의 fetch·타이머만 사용했다. 실제 Gemini 생성·무료 프로젝트 한도·브라우저 챗·Production 검증은 2-5 이후 및 Day 3에서 별도로 확인한다. .env.local은 출력·복사·수정하지 않았다.
+
+## 2-5 검증 기록 (2026-10-06)
+
+- POST /api/chat: application/json, 질문 1~2,000자, 중복 제거 ID 1~20개·형식, 실제 UTF-8 스트림 16KB를 외부 API 호출 전에 검증한다. 클라이언트 통계·시스템 지시문 등 추가 필드는 거부한다.
+- 요청 ID 순서로 영상 메타데이터를 일괄 조회한다. 채널 ID를 중복 제거하고 기존 카테고리 조회 래퍼로 이름을 매핑한다. 설명 200자·태그 20개/100자, 누락 통계·카테고리 null, 조회수 0을 보존한다. 삭제·비공개 대상 제외와 유효 대상 0개 Gemini 호출 차단을 적용했다.
+- 답변에 질문·모델·요청/분석/제외 ID·사용 메타데이터를 연결했다. 성공·오류는 no-store. 공용 오류 헬퍼에서 예상하지 못한 예외 원문을 로그하지 않도록 보완했다.
+- npm run test:chat 통과: 0/1/2/20/21개, 중복·순서, 16KB 정확한 경계·초과·가짜 Content-Length·잘못된 UTF-8/JSON, 위조 데이터 거부, videos.list 한 번·channels.list 한 번, 길이 제한·숨긴 구독자·null/0, 일부/전체 삭제, YouTube/Gemini 429, fixture 메타데이터. 모든 Gemini 응답은 테스트 프로세스 모의이며 실제 연동 성공으로 인정하지 않는다.
+- npm run test:detail 및 npm run build 통과. 전용 vercel dev 3010 fixture 서버에서 /api/chat 빈 입력 400·없는 영상 404·위조 지시문 400 및 오류 no-store 확인. 이 요청들은 Gemini를 호출하지 않는다.
+- 기존 로컬 서버가 종료돼 첫 HTTP 검증은 연결 거부였다. 전용 서버를 재실행해 경로를 확인했다. Key 파일 출력·복사·수정 및 공개 모의 오류 플래그는 사용하지 않았다. 2-6 답변 규칙·2-7 UI·실제 Gemini/Production 검증은 미완료이다.
