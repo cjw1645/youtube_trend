@@ -16,7 +16,8 @@ null은 정보 없음이며 0과 다릅니다. 누락 통계·카테고리·구�
 
 [근거 데이터]
 근거로 든 영상은 실제 제공된 제목 / 정확한 조회수 / 업로드일을 반드시 함께 적으세요.
-조회수는 원래 정수 또는 자릿수 쉼표만 사용하고 '만' 단위로 반올림하지 마세요. 날짜는 제공된 ISO 날짜의 YYYY-MM-DD를 사용하세요.
+조회수는 원래 정수 또는 자릿수 쉼표만 사용하고 '만' 단위로 반올림하지 마세요.
+업로드일은 각 영상의 publishedDate 값을 한 글자도 바꾸지 않고 그대로 복사하세요. 제목·설명 속 날짜를 업로드일로 사용하거나 다른 날짜를 추측하지 마세요.
 조회수가 null이면 '정보 없음'으로 표시하세요. 대상이 3개 미만이면 존재하는 영상만 제시하고 부족함을 알리세요.
 현재 트렌드 분석 질문에는 서버의 ranking.topVideos 순서로 최대 3개를 제시하세요.
 이 순위는 전달된 분석 대상 중 조회수 기준이며 전체 YouTube 인기 순위가 아닙니다.
@@ -36,12 +37,12 @@ export function buildChatInput(question: string, context: AnalysisContext): Gemi
     .filter((video) => video.viewCount !== null)
     .sort((a, b) => b.viewCount! - a.viewCount!)
     .slice(0, 3)
-    .map((video, index) => ({ id: video.id, title: video.title, viewCount: video.viewCount, publishedAt: video.publishedAt, rank: index + 1 }));
+    .map((video, index) => ({ id: video.id, title: video.title, viewCount: video.viewCount, publishedDate: video.publishedAt.slice(0, 10), rank: index + 1 }));
   return {
     systemInstruction: CHAT_SYSTEM_INSTRUCTION,
     prompt: JSON.stringify({
       question,
-      videos: context.videos,
+      videos: context.videos.map(video => ({ ...video, publishedDate: video.publishedAt.slice(0, 10) })),
       excludedIds: context.excludedIds,
       scope: { label: '현재 요청에서 분석하는 영상', videoCount: context.videos.length, requestedCount: context.requestedIds.length },
       ranking: {
