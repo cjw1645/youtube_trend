@@ -2,11 +2,12 @@
 // fixture는 scripts/fetch-fixtures.ts(npm run fixtures)로 한 번만 생성한다.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isProduction } from './runtime.js';
 
 export type FixtureName = 'videos-popular' | 'video-categories' | 'search' | 'videos-search' | 'channels';
 
 export function isFixtureMode(): boolean {
-  return process.env.VERCEL_ENV !== 'production' && process.env.USE_FIXTURES === '1';
+  return !isProduction() && process.env.USE_FIXTURES === '1';
 }
 
 const cache = new Map<FixtureName, unknown>();

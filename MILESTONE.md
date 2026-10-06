@@ -100,7 +100,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 3-1 ✅ | Vercel 환경 설정 재확인 | Production/사용하는 Preview에 두 Key 등록 여부 확인(값 출력 금지). Production의 `USE_FIXTURES`와 오류 재현 설정 비활성화, 설정 변경 후 재배포 |
 | 3-2 ✅ | 보안 점검 | 배포 번들·네트워크·Git 이력에서 Key 노출 점검. `.env.local` 읽기 및 Key·`git log -p` 원문 출력 금지, 결과는 파일·위치·건수만 기록. YouTube/Gemini 데이터 호출은 `/api/*`만 사용, 오류 응답에도 비밀값 없음 |
 | 3-3 ✅ | 배포 환경 E2E | fixture가 아닌 실제 YouTube 목록·검색·필터·정렬·상세, 관심 영상 새로고침 유지, 실제 Gemini 3질문 검증. 근거 값·대상 범위·형식 대조, 데이터 부족 안내 확인. Day 1의 fixture 검증과 별도로 날짜·URL·결과 기록 |
-| 3-4 | 오류 화면 재현 | 로컬/Preview의 서버 전용 설정으로 YouTube 할당량·Gemini 429·일반 오류를 주입. Production에서는 설정 무시, 공개 쿼리 플래그·실제 Key 변경 금지. 오류 안내·재시도·버튼 복구 확인 후 설정 해제. Production에서도 실패 응답 시 UI를 검증하고 모의 여부 명시 |
+| 3-4 ✅ | 오류 화면 재현 | 로컬/Preview의 서버 전용 설정으로 YouTube 할당량·Gemini 429·일반 오류를 주입. Production에서는 설정 무시, 공개 쿼리 플래그·실제 Key 변경 금지. 오류 안내·재시도·버튼 복구 확인 후 설정 해제. Production에서도 실패 응답 시 UI를 검증하고 모의 여부 명시 |
 | 3-5 | UI 다듬기 | 모바일·데스크톱 반응형, 키보드 조작·입력 라벨·상세 닫기/포커스 복귀, 로딩·빈 상태·누락 데이터 문구 확인. 롱폼/Shorts 구분은 필수 완료 후 선택 검토 |
 | 3-6 | README / .env.example 점검 | 기존 파일 보완: `vercel dev` 실행, Key 발급·설정, fixture 전환, 실제 API 검증, 사용 모델, 분석 대상·정렬 범위, Vercel 배포 절차. `.env.example` 값은 공란, 비밀 파일 스테이징 없음 |
 | 3-7 | 캡처 3종 + 셀프 리뷰 | 실제 데이터·실제 챗봇 답변·오류 캡처에 URL·검증일·실제/모의 조건 기록. 리뷰 5항목 체크, 저장소/배포 링크·README·환경변수 예제·캡처를 확인하고 상단 산출물 체크리스트 갱신 |
@@ -234,4 +234,8 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 3-1부터 순서대로
 ## 3-3 검증 (2026-10-06 17:23 KST)
 - Production 실제 YouTube+Gemini 세 질문 3/1/2개 모두200/no-store: ANIMAL(11,109,111/2026-09-28), Dear my crazy soulmate(10,684,540/2026-09-10), 꿈꾸던 어른이 되었나요?(7,684,642/2026-09-11). 세 섹션·제안3·정확한 근거/대상 내 순서·부족 안내 검사 통과. 응답 전문은 로컬 DECISION에 보존.
 - 브라우저 실제 목록·음악 카테고리·최신순·조회수순·김결 OK 검색(2개)·OK 상세 검증. 음악 목록 카테고리 일치와 두 정렬 순서는 API 수치로도 확인. 관심 영상 저장 후 새로고침해1개 유지. Production fixture 비활성 가드/환경 설정은3-1에서 확인.
+
+## 3-4 검증 (2026-10-06)
+- API_TEST_YOUTUBE_ERROR/API_TEST_GEMINI_ERROR 서버 전용 quota/upstream/timeout. Production은 무시, 공개 쿼리·실제 Key 변경 없음. test-runtime:429/502/504와 no-store, Production 무시 통과. 기존 챗/Gemini 계약과 빌드 통과.
+- 로컬 브라우저3010 YouTube quota·재시도,3011 Gemini429,3012 외부 오류,3013 시간초과 안내 및 전송 버튼 복구 확인. 캡처는 fixture+모의 오류 조건. 재현 서버4개 종료로 설정 해제 후 정상3010 서버 복구. 오류후 성공 재전송은 2-7 클라이언트 제어 테스트에서도 확인.
 

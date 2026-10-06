@@ -5,6 +5,7 @@ import type { Category, SortOrder, Video, VideoDetail } from '../../src/types/vi
 import { isFixtureMode, loadFixture } from './fixtures.js';
 import { ApiFailure } from './http.js';
 import type { AnalysisContext } from '../../src/types/chat.js';
+import { injectTestFailure } from './runtime.js';
 
 const BASE = 'https://www.googleapis.com/youtube/v3';
 const REGION = 'KR';
@@ -182,6 +183,7 @@ async function fixtureVideos(): Promise<RawVideo[]> {
 
 /** videos.list(chart=mostPopular, regionCode=KR) — 1 unit */
 export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
+  injectTestFailure('youtube');
   if (isFixtureMode()) {
     const { items = [] } = await loadFixture<ListResponse<RawVideo>>('videos-popular');
     return items.filter((v) => !categoryId || v.snippet.categoryId === categoryId).map(toVideo);
@@ -205,6 +207,7 @@ export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
 
 /** search.list(100 unit) + videos.list(1 unit). search.list에는 통계가 없어 videos.list로 재조회한다. */
 export async function searchVideos(q: string, opts: { categoryId?: string; order?: SortOrder } = {}): Promise<Video[]> {
+  injectTestFailure('youtube');
   if (isFixtureMode()) {
     // fixture에는 검색어 하나의 결과만 있으므로, 저장된 전체 영상에서 제목·채널명·태그로 걸러 흉내 낸다
     const needle = q.toLowerCase();
@@ -250,6 +253,7 @@ async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
 
 /** videoCategories.list(regionCode=KR) — 1 unit. 영상에 지정 가능한 카테고리만 반환 */
 export async function listCategories(): Promise<Category[]> {
+  injectTestFailure('youtube');
   const { items = [] } = isFixtureMode()
     ? await loadFixture<ListResponse<RawCategory>>('video-categories')
     : await ytFetch<ListResponse<RawCategory>>('videoCategories', { part: 'snippet', regionCode: REGION, hl: 'ko' });
@@ -279,6 +283,7 @@ export async function getChannels(ids: string[]): Promise<Map<string, ChannelInf
 
 /** 상세: videos.list + channels.list — 2 unit */
 export async function getVideoDetail(id: string): Promise<VideoDetail> {
+  injectTestFailure('youtube');
   const [raw] = await getRawVideos([id]);
   if (!raw) throw new ApiFailure('NOT_FOUND', '영상을 찾을 수 없습니다. 삭제되었거나 비공개일 수 있습니다.', 404);
 
@@ -294,6 +299,7 @@ export async function getVideoDetail(id: string): Promise<VideoDetail> {
 
 /** 분석 대상만 일괄 조회한다. 목록·상세 API를 영상마다 호출하지 않는다. */
 export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext> {
+  injectTestFailure('youtube');
   const requestedIds = [...new Set(ids)];
   if (!requestedIds.length || requestedIds.length > 20 || requestedIds.some((id) => !/^[A-Za-z0-9_-]{11}$/.test(id))) {
     throw new ApiFailure('BAD_REQUEST', '분석 대상은 올바른 영상 ID 1~20개여야 합니다.', 400);
