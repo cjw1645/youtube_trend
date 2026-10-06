@@ -1,6 +1,6 @@
 // YouTube 응답을 한 번만 받아 api/_fixtures/*.json으로 저장한다.
 // USE_FIXTURES=1이면 서버(api/_lib)가 실제 API 대신 이 파일들을 반환 → UI 개발 중 할당량 소모 0.
-// 실행: npm run fixtures [검색어]   (약 104 unit 소모: search.list 100 + 나머지 각 1)
+// 실행: npm run fixtures -- --run-live [검색어] (search.list 100 + 나머지 각 1 unit)
 // Key는 프로세스 안에서만 읽고 요청 헤더로만 보낸다 (출력·URL·파일에 남기지 않음).
 import { mkdir, writeFile } from 'node:fs/promises';
 import './env.ts';

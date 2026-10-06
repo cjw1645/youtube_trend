@@ -1,5 +1,5 @@
 // 할당량 절약용 목업: USE_FIXTURES=1이면 YouTube 래퍼가 실제 API 대신 api/_fixtures/*.json을 반환한다.
-// fixture는 scripts/fetch-fixtures.ts(npm run fixtures)로 한 번만 생성한다.
+// fixture는 api/_lib/fetch-fixtures.ts(npm run fixtures -- --run-live)로 생성한다.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isProduction } from './runtime.js';

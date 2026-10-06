@@ -18,15 +18,23 @@ for (const file of paths) {
   if (!/\.(?:ts|tsx|js|json|md|html|css)$/.test(file)) continue;
   const content = await readFile(file, 'utf8');
   scan(file, content);
+  if (/\.(?:ts|tsx)$/.test(file) && !file.startsWith('api/') && !file.startsWith('scripts/test-')) {
+    const count = [...content.matchAll(/process\.env\.(?:YOUTUBE|GEMINI)_API_KEY\b(?!\s*=)/g)].length;
+    if (count) findings.push({ location: `server-boundary:${file}`, count });
+  }
   if (file.startsWith('src/')) {
     const count = [...content.matchAll(/VITE_[A-Z_]+|(?:generativelanguage|www)\.googleapis\.com|process\.env\.(?:YOUTUBE|GEMINI)_API_KEY/g)].length;
     if (count) findings.push({ location: `client-boundary:${file}`, count });
   }
 }
-const objects = git(['rev-list', '--objects', '--all']).trim().split('\n').map(line => {
+const history = git(['rev-list', '--objects', '--all']).trim().split('\n').map(line => {
   const space = line.indexOf(' ');
   return { id: space < 0 ? line : line.slice(0, space), file: space < 0 ? '' : line.slice(space + 1) };
-}).filter(({ file }) => file && !/^\.env(?!\.example$)|(^|\/)DECISION\.md$|^docs\/.*\.pdf$/.test(file));
+});
+for (const file of new Set(history.map(object => object.file).filter(file => /(?:^|\/)\.env(?!\.example$)/.test(file)))) {
+  findings.push({ location: `history-protected-path:${file}`, count: 1 });
+}
+const objects = history.filter(({ file }) => file && !/(?:^|\/)\.env(?!\.example$)|(^|\/)DECISION\.md$|^docs\/.*\.pdf$/.test(file));
 const packed = Buffer.from(execFileSync('git', ['cat-file', '--batch'], { input: objects.map(o => o.id).join('\n') + '\n', maxBuffer: 64 * 1024 * 1024 }));
 let offset = 0;
 let blobs = 0;
