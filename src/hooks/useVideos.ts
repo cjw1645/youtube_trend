@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ApiRequestError, getJson, toApiRequestError } from '../lib/api';
+import type { ApiRequestError } from '../lib/api';
+import { useApiResource } from './useApiResource';
 import type { SortOrder, Video, VideosResponse } from '../types/video';
 
 export interface VideoQuery {
@@ -18,25 +18,14 @@ export type VideosState =
 
 /** 조건이 바뀔 때만 /api/videos를 호출한다. 검색은 검색어 제출 시에만 q가 바뀌므로 입력 중에는 호출하지 않는다. */
 export function useVideos({ q, categoryId, order }: VideoQuery) {
-  const [state, setState] = useState<VideosState>({ status: 'loading' });
-  const [reloadKey, setReloadKey] = useState(0);
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (categoryId) params.set('categoryId', categoryId);
+  if (order) params.set('order', order);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (categoryId) params.set('categoryId', categoryId);
-    if (order) params.set('order', order);
-
-    setState({ status: 'loading' });
-    getJson<VideosResponse>(`/api/videos?${params}`, controller.signal)
-      .then((res) => setState({ status: 'success', videos: res.items }))
-      .catch((err) => {
-        if (!controller.signal.aborted) setState({ status: 'error', error: toApiRequestError(err) });
-      });
-
-    return () => controller.abort();
-  }, [q, categoryId, order, reloadKey]);
-
-  return { state, reload: () => setReloadKey((k) => k + 1) };
+  const resource = useApiResource<VideosResponse>(`/api/videos?${params}`);
+  const state: VideosState = resource.state.status === 'success'
+    ? { status: 'success', videos: resource.state.data.items }
+    : resource.state;
+  return { state, reload: resource.reload };
 }

@@ -35,5 +35,8 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
       res.status,
     );
   }
+  if (body === null || typeof body !== 'object') {
+    throw new ApiRequestError('INTERNAL_ERROR', '서버 응답을 읽지 못했습니다. 다시 시도해 주세요.', res.status);
+  }
   return body as T;
 }

@@ -4,12 +4,13 @@ import Favorites from './pages/Favorites';
 import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
 import { useCategories } from './hooks/useCategories';
+import { ErrorView } from './components/StatusView';
 
 export default function App() {
   const [page, setPage] = useState<'home' | 'favorites'>('home');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const favorites = useFavorites();
-  const { categories, nameById } = useCategories();
+  const { categories, nameById, state: categoryState, reload: reloadCategories } = useCategories();
   const onSelect = (video: { id: string }) => setSelectedVideoId(video.id);
   return (
     <div className="min-h-screen bg-white text-zinc-900">
@@ -34,6 +35,8 @@ export default function App() {
           </div>
         )}
         <div hidden={page !== 'home'}>
+          {categoryState.status === 'loading' && <p role="status" className="mb-4 text-sm text-zinc-500">카테고리를 불러오는 중…</p>}
+          {categoryState.status === 'error' && <div className="mb-5"><ErrorView compact title="카테고리를 불러오지 못했습니다" error={categoryState.error} onRetry={reloadCategories} /></div>}
           <Home favorites={favorites} categories={categories} nameById={nameById} onSelect={onSelect} />
         </div>
         {page === 'favorites' && <Favorites favorites={favorites} categoryNames={nameById} onSelect={onSelect} onBrowse={() => setPage('home')} />}

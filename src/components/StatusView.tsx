@@ -17,9 +17,9 @@ export function LoadingGrid({ count = 8 }: { count?: number }) {
   );
 }
 
-function Panel({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
+function Panel({ icon, title, children, error = false, compact = false }: { icon: string; title: string; children: ReactNode; error?: boolean; compact?: boolean }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-dashed border-zinc-300 px-6 py-16 text-center">
+    <div role={error ? 'alert' : 'status'} className={`flex flex-col items-center rounded-2xl border border-dashed border-zinc-300 px-6 ${compact ? 'py-5' : 'py-16'} text-center`}>
       <span aria-hidden className="text-4xl">
         {icon}
       </span>
@@ -40,21 +40,23 @@ export function EmptyView({ query, onReset }: { query: string; onReset: () => vo
   );
 }
 
-export function ErrorView({ error, onRetry }: { error: ApiRequestError; onRetry: () => void }) {
-  if (error.code === 'QUOTA_EXCEEDED') {
-    return (
-      <Panel icon="⏳" title="오늘 사용할 수 있는 YouTube 조회량을 모두 썼어요">
-        <p>{error.message}</p>
-        <p className="mt-2 text-xs text-zinc-500">YouTube Data API 무료 할당량은 매일 오후 4~5시(한국 시간)에 초기화됩니다.</p>
-      </Panel>
-    );
-  }
+export function EmptyFavoritesView({ onBrowse }: { onBrowse: () => void }) {
+  return <Panel icon="♡" title="아직 관심 영상이 없습니다">
+    <p>영상 카드의 관심 영상 버튼을 눌러 저장해 보세요.</p>
+    <button type="button" onClick={onBrowse} className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">영상 둘러보기</button>
+  </Panel>;
+}
 
+export function ErrorView({ error, onRetry, title, compact }: { error: ApiRequestError; onRetry: () => void; title?: string; compact?: boolean }) {
+  const quota = error.code === 'QUOTA_EXCEEDED';
+  const missing = error.code === 'NOT_FOUND';
   return (
-    <Panel icon="⚠️" title="영상을 불러오지 못했습니다">
+    <Panel error compact={compact} icon={quota ? '⏳' : '⚠️'} title={quota ? 'YouTube 조회 할당량을 초과했습니다' : missing ? '이 영상을 찾을 수 없습니다' : title ?? '영상을 불러오지 못했습니다'}>
       <p>{error.message}</p>
+      {quota && <p className="mt-2 text-xs text-zinc-500">잠시 후 다시 확인해 주세요. 자동으로 재시도하지 않습니다.</p>}
+      {missing && <p className="mt-2 text-xs text-zinc-500">삭제되었거나 비공개로 전환된 영상일 수 있습니다.</p>}
       <button type="button" onClick={onRetry} className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">
-        다시 시도
+        {quota ? '다시 확인' : '다시 시도'}
       </button>
     </Panel>
   );

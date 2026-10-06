@@ -1,15 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { ApiRequestError, getJson, toApiRequestError } from '../lib/api';
+import { useEffect, useRef } from 'react';
+import { useApiResource } from '../hooks/useApiResource';
 import { formatDate, formatDuration } from '../lib/format';
 import type { VideoDetail as VideoDetailData } from '../types/video';
 import { ErrorView } from './StatusView';
 import FavoriteButton from './FavoriteButton';
 import type { FavoritesController } from '../hooks/useFavorites';
-
-type DetailState =
-  | { status: 'loading' }
-  | { status: 'success'; video: VideoDetailData }
-  | { status: 'error'; error: ApiRequestError };
 
 interface Props {
   videoId: string;
@@ -25,8 +20,7 @@ export function formatDetailCount(value: number | null): string {
 export default function VideoDetail({ videoId, categoryNames, onClose, favorites }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const [state, setState] = useState<DetailState>({ status: 'loading' });
-  const [retry, setRetry] = useState(0);
+  const { state, reload } = useApiResource<VideoDetailData>(`/api/video/${encodeURIComponent(videoId)}`);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -43,19 +37,6 @@ export default function VideoDetail({ videoId, categoryNames, onClose, favorites
     };
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ status: 'loading' });
-    getJson<VideoDetailData>(`/api/video/${encodeURIComponent(videoId)}`, controller.signal)
-      .then((video) => {
-        if (!controller.signal.aborted) setState({ status: 'success', video });
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) setState({ status: 'error', error: toApiRequestError(err) });
-      });
-    return () => controller.abort();
-  }, [videoId, retry]);
-
   return (
     <dialog
       ref={dialog}
@@ -68,11 +49,11 @@ export default function VideoDetail({ videoId, categoryNames, onClose, favorites
         <div className="ml-auto flex items-center gap-2">
           <FavoriteButton
             saved={favorites.has(videoId)}
-            title={state.status === 'success' ? state.video.title : '선택한 영상'}
+            title={state.status === 'success' ? state.data.title : '선택한 영상'}
             disabled={!favorites.has(videoId) && state.status !== 'success'}
             onClick={() => {
               if (favorites.has(videoId)) favorites.remove(videoId);
-              else if (state.status === 'success') favorites.toggle(state.video);
+              else if (state.status === 'success') favorites.toggle(state.data);
             }}
           />
         <button ref={closeButton} autoFocus type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-red-600">
@@ -86,10 +67,10 @@ export default function VideoDetail({ videoId, categoryNames, onClose, favorites
           <div role="status" className="py-16 text-center text-zinc-500">영상 상세를 불러오는 중…</div>
         )}
         {state.status === 'error' && (
-          <ErrorView error={state.error} onRetry={() => setRetry((value) => value + 1)} />
+          <ErrorView error={state.error} onRetry={reload} />
         )}
         {state.status === 'success' && (
-          <DetailContent video={state.video} categoryName={categoryNames.get(state.video.categoryId)} />
+          <DetailContent video={state.data} categoryName={categoryNames.get(state.data.categoryId)} />
         )}
       </div>
     </dialog>
