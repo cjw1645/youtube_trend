@@ -1,24 +1,25 @@
-# Compiled class file
-*.class
+# dependencies
+node_modules/
 
-# Log file
+# build output
+dist/
+.vercel/
+
+# env (실제 Key는 절대 커밋하지 않음 — .env.example만 커밋)
+.env
+.env.*
+!.env.example
+
+# logs
 *.log
+npm-debug.log*
 
-# BlueJ files
-*.ctxt
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# 내부 온보딩 문서 (저장소에 올리지 않음)
+docs/*.pdf
