@@ -1,9 +1,16 @@
-import { useId } from 'react';
+import { useId, type KeyboardEvent } from 'react';
 import type { ChatController } from '../hooks/useChat';
 import { selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import ChatResult, { ChatVideoList } from './ChatResult';
 
 const EXAMPLES = ['현재 유튜브 트렌드를 분석해줘', '이 영상이 인기 있는 이유를 분석해줘', '다음 콘텐츠 아이디어 3개를 제안해줘'];
+
+export function submitChatOnEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
+  if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey
+    || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
+  event.preventDefault();
+  if (!event.repeat) event.currentTarget.form?.requestSubmit();
+}
 
 export default function ChatPanel({ chat, target }: { chat: ChatController; target: ChatTarget }) {
   const inputId = useId();
@@ -28,7 +35,8 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
       </div>
       <form className="mt-4" onSubmit={event => { event.preventDefault(); if (!disabled) void chat.submit(question, target); }}>
         <label htmlFor={inputId} className="text-sm font-medium">분석 질문</label>
-        <textarea id={inputId} value={question} disabled={pending} onChange={event => chat.setQuestion(event.target.value)} rows={3} placeholder="현재 영상에서 어떤 콘텐츠 흐름이 보이나요?" className="mt-2 block w-full resize-y rounded-xl border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-red-500 disabled:bg-zinc-100" />
+        <textarea id={inputId} aria-describedby={`${inputId}-help`} value={question} disabled={pending} onChange={event => chat.setQuestion(event.target.value)} onKeyDown={submitChatOnEnter} rows={3} placeholder="현재 영상에서 어떤 콘텐츠 흐름이 보이나요?" className="mt-2 block w-full resize-y rounded-xl border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-red-500 disabled:bg-zinc-100" />
+        <p id={`${inputId}-help`} className="mt-1 text-xs text-zinc-500">Enter로 전송 · Shift+Enter로 줄바꿈</p>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className={`text-xs ${length > 2000 ? 'text-red-700' : 'text-zinc-500'}`}>{length.toLocaleString('ko-KR')} / 2,000자</span>
           <button type="submit" disabled={disabled} className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-300">{pending ? '분석 중…' : '전송'}</button>
