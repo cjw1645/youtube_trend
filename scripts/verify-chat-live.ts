@@ -7,9 +7,11 @@ import type { VideosResponse } from '../src/types/video.ts';
 
 if (!process.argv.includes('--run-live')) throw new Error('실제 Gemini를 호출합니다. --run-live를 명시해 주세요.');
 const base = new URL(process.argv.find((arg) => arg.startsWith('--url='))?.slice(6) ?? 'http://localhost:3010');
-if (base.protocol !== 'http:' || !['localhost', '127.0.0.1'].includes(base.hostname)) throw new Error('로컬 API 주소만 사용할 수 있습니다.');
+const production = process.argv.includes('--production') && base.origin === 'https://youtube-trend-orpin.vercel.app';
+if (!production && (base.protocol !== 'http:' || !['localhost', '127.0.0.1'].includes(base.hostname))) throw new Error('로컬 API 또는 --production으로 명시한 프로젝트 배포 주소만 사용할 수 있습니다.');
 const source = process.argv.find((arg) => arg.startsWith('--source='))?.slice(9);
 if (!['fixture', 'live'].includes(source ?? '')) throw new Error('--source=fixture 또는 --source=live로 YouTube 검증 조건을 기록해 주세요.');
+if (production && source !== 'live') throw new Error('Production은 --source=live로 검증하세요.');
 const listResponse = await fetch(new URL('/api/videos?categoryId=10&order=viewCount', base), { signal: AbortSignal.timeout(20_000) });
 if (!listResponse.ok) throw new Error(`목록 조회 실패: HTTP ${listResponse.status}`);
 const list = await listResponse.json() as VideosResponse;
@@ -64,5 +66,5 @@ for (const [index, [question, count]] of questions.entries()) {
   for (const label of ['소재', '썸네일', '구성 방향', '참고 근거']) assert.equal(ideas.match(new RegExp(`^\\s*-\\s*${label}\\s*:`, 'gm'))?.length, 3, `${label} 3개`);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
   assert.deepEqual(body.context.requestedIds, ids.slice(0, count));
-  console.log(JSON.stringify({ ...record, evidence: record.evidence, checks: 'PASS' }, null, 2));
+  console.log(JSON.stringify({ verifiedAt, question, count, status: response.status, model: body.model, evidence: record.evidence, checks: 'PASS' }));
 }
