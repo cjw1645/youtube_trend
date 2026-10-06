@@ -3,8 +3,9 @@
 // 실행: npm run fixtures [검색어]   (약 104 unit 소모: search.list 100 + 나머지 각 1)
 // Key는 프로세스 안에서만 읽고 요청 헤더로만 보낸다 (출력·URL·파일에 남기지 않음).
 import { mkdir, writeFile } from 'node:fs/promises';
+import './env.ts';
 
-process.loadEnvFile('.env.local');
+if (!process.argv.includes('--run-live')) throw new Error('실제 YouTube API를 호출합니다. --run-live를 명시해 주세요.');
 const apiKey = process.env.YOUTUBE_API_KEY;
 if (!apiKey) {
   console.error('YOUTUBE_API_KEY가 설정되어 있지 않습니다.');
@@ -13,7 +14,7 @@ if (!apiKey) {
 
 const BASE = 'https://www.googleapis.com/youtube/v3';
 const OUT_DIR = 'api/_fixtures';
-const searchQuery = process.argv[2] ?? '브이로그';
+const searchQuery = process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? '브이로그';
 const VIDEO_PART = 'snippet,statistics,contentDetails';
 
 type ListResponse = { items?: Array<{ id: unknown; snippet?: { channelId?: string } }> };
@@ -24,11 +25,7 @@ async function yt<T = ListResponse>(resource: string, params: Record<string, str
   });
   const body = await res.json();
   if (!res.ok) {
-    const reason = body?.error?.errors?.[0]?.reason ?? 'unknown';
-    // ErrorInfo(예: API_KEY_SERVICE_BLOCKED)와 metadata(서비스·프로젝트 번호)는 Key를 포함하지 않아 원인 파악용으로 출력
-    const info = (body?.error?.details ?? []).find((d: { reason?: string }) => d.reason);
-    const detail = info ? ` [${info.reason} ${JSON.stringify(info.metadata ?? {})}]` : '';
-    throw new Error(`${resource} ${res.status} ${reason}: ${body?.error?.message ?? ''}${detail}`);
+    throw new Error(`YouTube ${resource} 조회 실패: HTTP ${res.status}`);
   }
   return body as T;
 }

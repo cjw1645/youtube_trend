@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 
 process.env.VERCEL = '1';
-process.env.VERCEL_ENV = 'production';
+process.env.VERCEL_ENV = 'preview'; // fixture 검증은 Production에서 수행하지 않는다.
 process.env.USE_FIXTURES = '1';
 process.env.YOUTUBE_API_KEY = 'test-placeholder';
 
 const vite = await createServer({ configFile: false, envDir: 'tmp/no-env', server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const realFetch = globalThis.fetch;
+globalThis.fetch = async () => { throw new Error('Unexpected external request'); };
 
 try {
   const { GET } = await vite.ssrLoadModule('/api/video/[id].ts');

@@ -16,8 +16,9 @@
     "test:chat-ui": "node scripts/test-chat-ui.ts",
     "verify:chat-live": "node scripts/verify-chat-live.ts",
     "preview": "vite preview",
-    "fixtures": "node scripts/fetch-fixtures.ts",
-    "api": "node scripts/call-api.ts"
+    "fixtures": "node api/_lib/fetch-fixtures.ts",
+    "test:runtime": "node scripts/test-runtime.ts",
+    "check:security": "node scripts/check-security.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

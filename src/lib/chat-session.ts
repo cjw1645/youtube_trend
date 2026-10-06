@@ -10,7 +10,14 @@ export type ChatState = { status: 'idle' }
 
 export function selectChatVideos(videos: ChatTarget['videos']) {
   const seen = new Set<string>();
-  return videos.filter(({ id }) => !seen.has(id) && !!seen.add(id)).slice(0, 20).map(({ id, title }) => ({ id, title }));
+  const selected: { id: string; title: string }[] = [];
+  for (const { id, title } of videos) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    selected.push({ id, title });
+    if (selected.length === 20) break;
+  }
+  return selected;
 }
 
 type Send = (request: ChatRequest, signal: AbortSignal) => Promise<ChatResponse>;

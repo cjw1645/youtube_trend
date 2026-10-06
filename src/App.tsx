@@ -23,7 +23,7 @@ export default function App() {
             ▶
           </span>
           <h1 className="text-base font-bold">유튜브 트렌드 AI 대시보드</h1>
-          <span className="ml-auto hidden text-xs text-zinc-500 sm:inline">YouTube Data API 실시간 조회 · 한국</span>
+          <span className="ml-auto hidden text-xs text-zinc-500 sm:inline">한국 인기 영상 · AI 분석</span>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">
