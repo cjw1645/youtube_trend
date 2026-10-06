@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -14,15 +14,16 @@ function devApi(): Plugin {
     name: 'dev-api',
     apply: 'serve',
     configureServer(server) {
-      const env = loadEnv('development', process.cwd(), '');
-      for (const [key, value] of Object.entries(env)) process.env[key] ??= value;
-
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (!url.pathname.startsWith('/api/')) return next();
 
-        const file = path.join(process.cwd(), `${url.pathname}.ts`);
-        if (!existsSync(file)) {
+        // 동적 상세 경로를 Vercel과 같은 핸들러로 연결한다. 내부 _lib 경로는 공개하지 않는다.
+        const route = /^\/api\/video\/[^/]+\/?$/.test(url.pathname)
+          ? 'api/video/[id].ts'
+          : /^\/api\/[a-z][a-z0-9-]*$/.test(url.pathname) ? `${url.pathname.slice(1)}.ts` : null;
+        const file = route ? path.join(process.cwd(), route) : '';
+        if (!file || !existsSync(file)) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           return res.end(JSON.stringify({ code: 'NOT_FOUND', message: '없는 API 경로입니다.' }));

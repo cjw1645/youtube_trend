@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "test:detail": "node scripts/test-video-detail.ts",
+    "test:favorites": "node scripts/test-favorites.ts",
     "preview": "vite preview",
     "fixtures": "node scripts/fetch-fixtures.ts",
     "api": "node scripts/call-api.ts"

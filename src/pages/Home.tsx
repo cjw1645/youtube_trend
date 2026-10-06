@@ -3,14 +3,21 @@ import FilterBar from '../components/FilterBar';
 import SearchBar from '../components/SearchBar';
 import { EmptyView, ErrorView, LoadingGrid } from '../components/StatusView';
 import VideoCard from '../components/VideoCard';
-import { useCategories } from '../hooks/useCategories';
 import { useVideos, type VideoQuery } from '../hooks/useVideos';
+import type { FavoritesController } from '../hooks/useFavorites';
+import type { Category, Video } from '../types/video';
 
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 
-export default function Home() {
+interface Props {
+  favorites: FavoritesController;
+  categories: Category[];
+  nameById: ReadonlyMap<string, string>;
+  onSelect: (video: Video) => void;
+}
+
+export default function Home({ favorites, categories, nameById, onSelect }: Props) {
   const [query, setQuery] = useState<VideoQuery>(INITIAL_QUERY);
-  const { categories, nameById } = useCategories();
   const { state, reload } = useVideos(query);
 
   const update = (patch: Partial<VideoQuery>) => setQuery((prev) => ({ ...prev, ...patch }));
@@ -66,6 +73,9 @@ export default function Home() {
                 video={video}
                 categoryName={nameById.get(video.categoryId)}
                 rank={showRank ? i + 1 : undefined}
+                onSelect={onSelect}
+                saved={favorites.has(video.id)}
+                onFavoriteToggle={() => favorites.toggle(video)}
               />
             ))}
           </div>
