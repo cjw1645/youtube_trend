@@ -5,7 +5,7 @@
 > 로컬 폴더: `C:\Users\LOOKSTEN\Desktop\cjw\youtube_trend` (clone 완료, main 브랜치)
 > 요구사항 원문: `docs/개발자온보딩_유튜브트렌드대시보드.pdf` (`.gitignore`로 커밋 제외)
 >
-> **현재 상태 (2026-10-06)**: Day 0 사전 준비 전부 완료(Node.js·Vercel CLI 로그인 포함), 저장소 clone·GitHub 인증 완료, `.env.local`에 두 Key 입력 완료, `.gitignore`를 Node/Vite용으로 교체(`.env.local` 제외 확인). 저장소에는 `README.md`, `.gitignore`, `.env.example`, `MILESTONE.md`만 있고 소스 코드·`package.json`은 아직 없음 → **Day 1-1부터 시작**
+> **현재 상태 (2026-10-06)**: Day 1 완료. Vercel 저장소 연결(`.vercel/repo.json`, youtube-trend)을 확인했고, `vercel dev`에서 프론트와 `/api`를 함께 실행·검증함. `.env.local`은 출력·복사하지 않고 서버 함수 내부에서만 로드하며 Git 제외를 확인함. 현재 fixture 모드로 영상 50개·카테고리 14개 조회 성공, 빌드 통과 → **다음 단계: Day 2-1**
 
 ## 목표 산출물 (마감 시 공유)
 
@@ -45,14 +45,14 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | # | 작업 | 파일 | 완료 기준 |
 |---|---|---|---|
 | 1-1 ✅ | 프로젝트 초기화: Vite + React + TS, Tailwind 설정. 폴더에 기존 파일(README·MILESTONE·.env*)이 있으므로 `npm create vite .` 대신 설정 파일을 직접 추가하고, 폴더 구조 `api/_lib`, `api/video`, `src/{components,hooks,pages,types}` 생성 | `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`, `src/App.tsx` | `npm install` 후 `npm run build` 성공 |
-| 1-2 | ~~Git 연결~~ ✅ clone으로 완료. `.gitignore` 교체 ✅ | `.gitignore` | `node_modules`, `.env.local`, `.vercel` 제외 확인 |
-| 1-3 | ~~환경변수~~ ✅ `.env.local` 입력 완료, `.env.example`은 값 비어 있음 | `.env.local`(커밋 안 함), `.env.example` | `VITE_` 접두사 미사용 |
+| 1-2 ✅ | ~~Git 연결~~ ✅ clone으로 완료. `.gitignore` 교체 ✅ | `.gitignore` | `node_modules`, `.env.local`, `.vercel` 제외 확인 (`.env.*` 규칙 복구) |
+| 1-3 ✅ | ~~환경변수~~ ✅ `.env.local` 입력 완료, `.env.example`은 값 비어 있음 | `.env.local`(커밋 안 함), `.env.example` | `VITE_` 접두사 미사용 |
 | 1-3b ✅ | (fixture 생성 `npm run fixtures` + 로더 `api/_lib/fixtures.ts` 완료, 래퍼 연결은 1-5에서) 할당량 절약용 목업: YouTube 응답을 한 번만 받아 `api/_fixtures/*.json`에 저장하고, `.env.local`에 `USE_FIXTURES=1`이면 서버가 실제 API 대신 fixture 반환 | `api/_fixtures/` | UI 개발 중 YouTube 할당량 소모 0 |
 | 1-4 ✅ | 타입 정의 | `src/types/video.ts` | `Video`, `VideoDetail`, `Category`, `ApiError` |
 | 1-5 ✅ | YouTube 래퍼 | `api/_lib/youtube.ts` | `videos.list(chart=mostPopular, regionCode=KR)`, `search.list`, `videoCategories.list`, `channels.list` 래핑, 403 `quotaExceeded` 판별 |
 | 1-6 ✅ | 서버리스 엔드포인트 | `api/videos.ts`, `api/categories.ts` | `?q=&categoryId=&order=viewCount\|date` 지원, 에러를 `{code, message}`로 정규화 |
 | 1-7 ✅ | 목록 UI | `src/pages/Home.tsx`, `src/components/VideoCard.tsx` | 썸네일·제목·채널명·조회수·업로드일·카테고리 표시, 검색·카테고리 필터·정렬 동작 |
-| 1-8 | 로컬 실행 (**1-9 다음에 진행**: 대시보드 import로 프로젝트 생성 → `vercel link`로 연결 → `vercel dev`) | — | `vercel dev`로 프론트 + `/api` 동시 실행 확인 |
+| 1-8 ✅ | 로컬 실행 (**1-9 다음에 진행**: 대시보드 import로 프로젝트 생성 → `vercel link`로 연결 → `vercel dev`) | `api/_lib/env.ts` | `vercel dev` 프론트 200 + `/api/videos` 200(50개) + `/api/categories` 200(14개), 잘못된 정렬 400, 캐시 헤더 및 브라우저 목록 확인. fixture 모드(할당량 0), `npm run build` 성공 |
 | 1-9 ✅ | 첫 push & Vercel 연결 (https://youtube-trend-orpin.vercel.app) | — | vercel.com → Add New Project → `cjw1645/youtube_trend` import → Environment Variables에 두 Key 등록 → 배포 성공. 이후 main push 시 자동 배포 |
 
 **주의**

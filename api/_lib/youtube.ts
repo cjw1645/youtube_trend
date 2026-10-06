@@ -1,5 +1,6 @@
 // YouTube Data API v3 래퍼 (서버 전용). YOUTUBE_API_KEY는 이 파일에서만 읽고, 요청 헤더로만 보낸다.
 // USE_FIXTURES=1이면 실제 API 대신 api/_fixtures 응답을 사용한다 (할당량 소모 0).
+import './env.js';
 import type { Category, SortOrder, Video, VideoDetail } from '../../src/types/video.js';
 import { isFixtureMode, loadFixture } from './fixtures.js';
 import { ApiFailure } from './http.js';
