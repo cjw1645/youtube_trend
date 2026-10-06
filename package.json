@@ -10,6 +10,7 @@
     "test:detail": "node scripts/test-video-detail.ts",
     "test:favorites": "node scripts/test-favorites.ts",
     "test:status": "node scripts/test-status.ts",
+    "test:gemini": "node scripts/test-gemini.ts",
     "preview": "vite preview",
     "fixtures": "node scripts/fetch-fixtures.ts",
     "api": "node scripts/call-api.ts"

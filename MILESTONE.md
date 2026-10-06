@@ -5,7 +5,7 @@
 > 로컬 폴더: `C:\Users\LOOKSTEN\Desktop\cjw\youtube_trend` (clone 완료, main 브랜치)
 > 요구사항 원문: `docs/개발자온보딩_유튜브트렌드대시보드.pdf` (`.gitignore`로 커밋 제외)
 >
-> **현재 상태 (2026-10-06)**: Day 1 및 2-1~2-3 완료. 상세·관심 영상·상태 처리, 취소된 이전 응답 차단 및 수동 재시도 검증, 테스트 3종·빌드 통과. 기존 판단·오류는 `docs/DECISION.md`에 소급 기록함. 이전 커밋 승인 거절 이후, 사용자의 새 요청에 따라 2-1·2-2와 2-3을 나누어 커밋·push 진행. Key 파일 출력·복사·수정 없이 Git 제외 유지 → **다음 단계: Day 2-4**
+> **현재 상태 (2026-10-06)**: Day 1 및 2-1~2-4 완료. 2-1~2-3 커밋·push 완료(c0311a2, a5957de). 최신 텍스트 Flash-Lite `gemini-3.5-flash-lite` 서버 래퍼 구현, 공식 무료 티어 확인, 모의 오류 테스트 및 빌드 통과. 실제 Gemini 답변과 챗 UI 검증은 이후 단계에서 수행한다. `docs/DECISION.md`·비밀 환경 파일·PDF는 Git 제외 유지 → **다음 단계: Day 2-5**
 
 ## 목표 산출물 (마감 시 공유)
 
@@ -72,7 +72,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 2-1 ✅ | 상세 API + 화면 | `api/video/[id].ts`, `src/components/VideoDetail.tsx` | 기존 `getVideoDetail` 재사용. 설명·태그·조회수·좋아요·댓글·구독자 수 표시. 잘못된 ID 400, 삭제·비공개 404, 누락 통계·비공개 구독자 수는 0과 구분 |
 | 2-2 ✅ | 관심 영상 | `src/hooks/useFavorites.ts`, `src/pages/Favorites.tsx` | 저장/해제·저장 목록·새로고침 유지, ID 중복 방지. 손상된 localStorage·저장 실패 안내, 삭제된 영상도 저장 해제 가능 |
 | 2-3 ✅ | 상태 뷰 | `src/components/StatusView.tsx` | 로딩 / 검색 결과 없음 / 관심 영상 없음 / API 오류 / 할당량 초과 구분. 재시도 제공, 빠른 검색·필터·상세 전환에서 이전 응답이 최신 화면을 덮지 않음 |
-| 2-4 | Gemini 래퍼 | `api/_lib/gemini.ts` | 구현 시 무료 사용 가능한 Flash 모델 확인·기록. 서버 전용 Key, 호출 시간 제한, 429·외부 API 실패·빈 응답을 안전한 오류로 정규화. 자동 반복 재시도 없음 |
+| 2-4 ✅ | Gemini 래퍼 | `api/_lib/gemini.ts` | 구현 시 무료 사용 가능한 Flash 모델 확인·기록. 서버 전용 Key, 호출 시간 제한, 429·외부 API 실패·빈 응답을 안전한 오류로 정규화. 자동 반복 재시도 없음 |
 | 2-5 | 분석 데이터 준비 + 챗 엔드포인트 | `api/_lib/youtube.ts`, `api/chat.ts`, `src/types/` | 아래 데이터 계약에 따라 현재 화면 영상만 서버에서 일괄 보완. 질문·ID·본문 크기 검증, 메타데이터 길이 제한, 응답·오류 `no-store`. 21개·빈 질문·잘못된 ID 요청은 외부 API 호출 전 거부 |
 | 2-6 | 시스템 프롬프트 | `api/chat.ts` | ①[핵심 요약] 2~3줄 ②[근거 데이터] 영상명/조회수/업로드일 ③[콘텐츠 제안] 제목·소재·썸네일·구성. 트렌드 질문은 분석 대상 내 조회수 상위 3개 + 제안 3개. 3개 미만·누락 통계는 부족함 안내. 데이터 밖 사실·실시간 순위 단정 금지, 메타데이터 속 명령 무시 |
 | 2-7 | 챗 UI | `src/components/ChatPanel.tsx` | 분석 대상·개수 표시, 상세 질문은 선택 영상 1개. 예시 칩은 입력만 채움. 전송 버튼만 호출하며 처리 중 중복 차단. 빈 질문·대상 0개 차단, 오류·시간 초과·429 후 재전송 가능, 답변 원시 HTML 렌더링 금지 |
@@ -127,10 +127,10 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 
 ## Day 2 이후 작업 재개 안내
 
-다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 2-4부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
+다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 2-5부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
 
 ```text
-AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-4부터 순서대로 진행해줘.
+AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-5부터 순서대로 진행해줘.
 - Day 1은 완료 상태이며, Day 2~3의 보완 기준과 완료 조건을 적용해.
 - .env.local은 읽거나 출력·복사하지 말고, Key는 /api에서만 사용해.
 - UI 개발은 YouTube fixture 모드를 사용하되 실제 API 검증과 구분해 기록해.
@@ -173,3 +173,10 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-4부터 순서대로
 - 브라우저 `http://localhost:3010`(fixture): 로딩→없는 검색어 빈 상태, 전체 보기 복귀, 전용 테스트 서버 종료로 연결 실패 안내 및 수동 재시도, 서버 복구 후 50개 목록·상세 조회 확인. 게임→음악→최신순 연속 전환 뒤 음악 22개가 최신순으로 표시됨. 상세 두 영상 전환·관심 목록 회귀 확인.
 - 오류 재현은 이번 세션에서 실행한 전용 서버만 종료·복구했다. 환경 파일·실제 Key·공개 오류 쿼리는 변경하지 않았다. 빈 관심 상태는 컴포넌트 테스트와 앞선 2-2 브라우저 검증으로 확인했다.
 - 기존 2-1·2-2와 지침·소급 기록을 스테이징했으나 커밋 실행 승인이 거절됨. 해당 인덱스를 보존하며 2-3 변경은 작업 트리에 남겼다. 커밋·push·배포 검증은 미완료이다.
+
+## 2-4 검증 기록 (2026-10-06)
+
+- 공식 모델: gemini-3.5-flash-lite(Stable). https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite 와 https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite 에서 최신 텍스트 Flash-Lite 및 Standard 무료 입력·출력을 확인했다. 10월 9일 변경은 개인 Gemini Apps 안내이며 Developer API와 구분한다(https://support.google.com/gemini/answer/17004136).
+- 서버 래퍼: Key는 api/_lib/gemini.ts에서 process.env로 읽어 인증 헤더에만 전달한다. 25초 제한은 응답 본문 읽기까지 적용한다. 단일 요청이며 자동 재시도·다른 모델 fallback·Gemini fixture 답변은 없다.
+- npm run test:gemini 통과: 모델·REST 요청 계약, 생각 과정 제외, Key 누락·빈 입력 호출 차단, 429, 400/401/403/404 설정 오류, 500/503·네트워크·잘못된 JSON, 빈 응답, 안전 차단·출력 잘림, 요청/본문 시간 초과, 오류 no-store·비밀값 미노출.
+- npm run typecheck 및 npm run build 통과. 테스트는 가짜 Key와 모의 fetch·타이머만 사용했다. 실제 Gemini 생성·무료 프로젝트 한도·브라우저 챗·Production 검증은 2-5 이후 및 Day 3에서 별도로 확인한다. .env.local은 출력·복사·수정하지 않았다.

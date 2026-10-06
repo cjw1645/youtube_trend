@@ -38,6 +38,8 @@ export type ApiErrorCode =
   | 'BAD_REQUEST'
   | 'NOT_FOUND'
   | 'UPSTREAM_ERROR'
+  | 'TIMEOUT'
+  | 'EMPTY_RESPONSE'
   | 'INTERNAL_ERROR'
   /** 클라이언트 전용: /api에 연결하지 못함 */
   | 'NETWORK_ERROR';
