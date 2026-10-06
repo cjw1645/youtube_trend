@@ -10,7 +10,7 @@
 ## 목표 산출물 (마감 시 공유)
 
 - [x] Git 저장소 링크 — https://github.com/cjw1645/youtube_trend
-- [ ] Vercel 배포 URL
+- [x] Vercel 배포 URL — https://youtube-trend-orpin.vercel.app
 - [ ] `.env.example` (`YOUTUBE_API_KEY=`, `GEMINI_API_KEY=` — 값 비움)
 - [ ] README: 로컬 실행 / API Key 발급·설정 / Vercel 배포 방법
 - [ ] 화면 캡처 3종: 실제 데이터 조회, 챗봇 답변, 할당량 초과·오류
@@ -53,7 +53,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 1-6 ✅ | 서버리스 엔드포인트 | `api/videos.ts`, `api/categories.ts` | `?q=&categoryId=&order=viewCount\|date` 지원, 에러를 `{code, message}`로 정규화 |
 | 1-7 ✅ | 목록 UI | `src/pages/Home.tsx`, `src/components/VideoCard.tsx` | 썸네일·제목·채널명·조회수·업로드일·카테고리 표시, 검색·카테고리 필터·정렬 동작 |
 | 1-8 | 로컬 실행 (**1-9 다음에 진행**: 대시보드 import로 프로젝트 생성 → `vercel link`로 연결 → `vercel dev`) | — | `vercel dev`로 프론트 + `/api` 동시 실행 확인 |
-| 1-9 | 첫 push & Vercel 연결 | — | vercel.com → Add New Project → `cjw1645/youtube_trend` import → Environment Variables에 두 Key 등록 → 배포 성공. 이후 main push 시 자동 배포 |
+| 1-9 ✅ | 첫 push & Vercel 연결 (https://youtube-trend-orpin.vercel.app) | — | vercel.com → Add New Project → `cjw1645/youtube_trend` import → Environment Variables에 두 Key 등록 → 배포 성공. 이후 main push 시 자동 배포 |
 
 **주의**
 - `search.list`는 호출당 100 unit (일 10,000 한도) → 검색은 Enter/버튼 시에만 호출, 서버 응답에 `Cache-Control: s-maxage` 적용
