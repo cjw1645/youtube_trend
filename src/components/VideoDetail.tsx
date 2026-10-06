@@ -5,8 +5,11 @@ import type { VideoDetail as VideoDetailData } from '../types/video';
 import { ErrorView } from './StatusView';
 import FavoriteButton from './FavoriteButton';
 import type { FavoritesController } from '../hooks/useFavorites';
+import type { ChatController } from '../hooks/useChat';
+import ChatPanel from './ChatPanel';
 
 interface Props {
+  chat: ChatController;
   videoId: string;
   categoryNames: ReadonlyMap<string, string>;
   onClose: () => void;
@@ -17,7 +20,7 @@ export function formatDetailCount(value: number | null): string {
   return value === null ? '정보 없음' : value.toLocaleString('ko-KR');
 }
 
-export default function VideoDetail({ videoId, categoryNames, onClose, favorites }: Props) {
+export default function VideoDetail({ chat, videoId, categoryNames, onClose, favorites }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const { state, reload } = useApiResource<VideoDetailData>(`/api/video/${encodeURIComponent(videoId)}`);
@@ -62,6 +65,7 @@ export default function VideoDetail({ videoId, categoryNames, onClose, favorites
         </div>
       </header>
       <div className="p-5 sm:p-6" aria-live="polite">
+        <div className="mb-6"><ChatPanel chat={chat} target={{ label: '선택 영상 상세', videos: state.status === 'success' ? [state.data] : [] }} /></div>
         {favorites.error && <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{favorites.error}</p>}
         {state.status === 'loading' && (
           <div role="status" className="py-16 text-center text-zinc-500">영상 상세를 불러오는 중…</div>

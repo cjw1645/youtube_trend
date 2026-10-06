@@ -13,6 +13,7 @@
     "test:gemini": "node scripts/test-gemini.ts",
     "test:chat": "node scripts/test-chat.ts",
     "test:prompt": "node scripts/test-chat-prompt.ts",
+    "test:chat-ui": "node scripts/test-chat-ui.ts",
     "verify:chat-live": "node scripts/verify-chat-live.ts",
     "preview": "vite preview",
     "fixtures": "node scripts/fetch-fixtures.ts",

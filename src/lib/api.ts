@@ -18,9 +18,18 @@ export function toApiRequestError(err: unknown): ApiRequestError {
 }
 
 export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return requestJson<T>(path, { signal });
+}
+
+export async function postJson<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
+  return requestJson<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal, cache: 'no-store' });
+}
+
+async function requestJson<T>(path: string, options: RequestInit): Promise<T> {
+  const signal = options.signal;
   let res: Response;
   try {
-    res = await fetch(path, { signal });
+    res = await fetch(path, options);
   } catch (err) {
     if (signal?.aborted) throw err;
     throw new ApiRequestError('NETWORK_ERROR', '서버에 연결하지 못했습니다. 네트워크 상태를 확인해 주세요.', 0);

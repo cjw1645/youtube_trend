@@ -5,11 +5,14 @@ import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
 import { useCategories } from './hooks/useCategories';
 import { ErrorView } from './components/StatusView';
+import { useChat } from './hooks/useChat';
+import ChatPanel from './components/ChatPanel';
 
 export default function App() {
   const [page, setPage] = useState<'home' | 'favorites'>('home');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const favorites = useFavorites();
+  const chat = useChat();
   const { categories, nameById, state: categoryState, reload: reloadCategories } = useCategories();
   const onSelect = (video: { id: string }) => setSelectedVideoId(video.id);
   return (
@@ -37,11 +40,11 @@ export default function App() {
         <div hidden={page !== 'home'}>
           {categoryState.status === 'loading' && <p role="status" className="mb-4 text-sm text-zinc-500">카테고리를 불러오는 중…</p>}
           {categoryState.status === 'error' && <div className="mb-5"><ErrorView compact title="카테고리를 불러오지 못했습니다" error={categoryState.error} onRetry={reloadCategories} /></div>}
-          <Home favorites={favorites} categories={categories} nameById={nameById} onSelect={onSelect} />
+          <Home chat={chat} favorites={favorites} categories={categories} nameById={nameById} onSelect={onSelect} />
         </div>
-        {page === 'favorites' && <Favorites favorites={favorites} categoryNames={nameById} onSelect={onSelect} onBrowse={() => setPage('home')} />}
+        {page === 'favorites' && <div className="space-y-6"><ChatPanel chat={chat} target={{ label: '관심 영상', videos: favorites.videos }} /><Favorites favorites={favorites} categoryNames={nameById} onSelect={onSelect} onBrowse={() => setPage('home')} /></div>}
         {selectedVideoId && (
-          <VideoDetail key={selectedVideoId} videoId={selectedVideoId} categoryNames={nameById} onClose={() => setSelectedVideoId(null)} favorites={favorites} />
+          <VideoDetail key={selectedVideoId} chat={chat} videoId={selectedVideoId} categoryNames={nameById} onClose={() => setSelectedVideoId(null)} favorites={favorites} />
         )}
       </main>
     </div>

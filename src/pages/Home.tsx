@@ -6,17 +6,20 @@ import VideoCard from '../components/VideoCard';
 import { useVideos, type VideoQuery } from '../hooks/useVideos';
 import type { FavoritesController } from '../hooks/useFavorites';
 import type { Category, Video } from '../types/video';
+import ChatPanel from '../components/ChatPanel';
+import type { ChatController } from '../hooks/useChat';
 
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 
 interface Props {
+  chat: ChatController;
   favorites: FavoritesController;
   categories: Category[];
   nameById: ReadonlyMap<string, string>;
   onSelect: (video: Video) => void;
 }
 
-export default function Home({ favorites, categories, nameById, onSelect }: Props) {
+export default function Home({ chat, favorites, categories, nameById, onSelect }: Props) {
   const [query, setQuery] = useState<VideoQuery>(INITIAL_QUERY);
   const { state, reload } = useVideos(query);
 
@@ -36,6 +39,8 @@ export default function Home({ favorites, categories, nameById, onSelect }: Prop
           searching={!!query.q}
         />
       </section>
+
+      <ChatPanel chat={chat} target={{ label: `${query.q ? `검색: ${query.q}` : '한국 인기 급상승'}${query.categoryId ? ` · ${nameById.get(query.categoryId) ?? '선택 카테고리'}` : ''}${query.order === 'viewCount' ? ' · 조회수순' : query.order === 'date' ? ' · 최신순' : ''}`, videos: state.status === 'success' ? state.videos : [] }} />
 
       <section aria-live="polite" className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between gap-4">
