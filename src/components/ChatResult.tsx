@@ -20,9 +20,7 @@ export default function ChatResult({ state }: { state: Exclude<ChatState, { stat
     {state.status === 'success' && <>
       {state.response.context.excludedIds.length > 0 && <p className="mt-2 text-sm text-amber-800">조회할 수 없는 영상 {state.response.context.excludedIds.length}개를 제외하고 {state.response.context.videos.length}개를 분석했습니다.</p>}
       <div aria-label="AI 답변" className="mt-3 rounded-xl bg-white p-4 text-sm leading-7 text-zinc-800">
-        {formatNumericRanges(state.response.answer).split(/(\[(?:핵심 요약|근거 데이터|콘텐츠 제안)\])/g).map((part, index) => /^\[(?:핵심 요약|근거 데이터|콘텐츠 제안)\]$/.test(part)
-          ? <h3 key={index} className="mb-2 mt-5 font-bold text-zinc-900 first:mt-0">{part.slice(1, -1)}</h3>
-          : part.trim() && <p key={index} className="whitespace-pre-wrap break-words">{part.trim()}</p>)}
+        <p className="whitespace-pre-wrap break-words">{formatNumericRanges(state.response.answer)}</p>
       </div>
     </>}
   </div>;
