@@ -97,7 +97,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 
 | # | 작업 | 완료 기준 |
 |---|---|---|
-| 3-1 | Vercel 환경 설정 재확인 | Production/사용하는 Preview에 두 Key 등록 여부 확인(값 출력 금지). Production의 `USE_FIXTURES`와 오류 재현 설정 비활성화, 설정 변경 후 재배포 |
+| 3-1 ✅ | Vercel 환경 설정 재확인 | Production/사용하는 Preview에 두 Key 등록 여부 확인(값 출력 금지). Production의 `USE_FIXTURES`와 오류 재현 설정 비활성화, 설정 변경 후 재배포 |
 | 3-2 | 보안 점검 | 배포 번들·네트워크·Git 이력에서 Key 노출 점검. `.env.local` 읽기 및 Key·`git log -p` 원문 출력 금지, 결과는 파일·위치·건수만 기록. YouTube/Gemini 데이터 호출은 `/api/*`만 사용, 오류 응답에도 비밀값 없음 |
 | 3-3 | 배포 환경 E2E | fixture가 아닌 실제 YouTube 목록·검색·필터·정렬·상세, 관심 영상 새로고침 유지, 실제 Gemini 3질문 검증. 근거 값·대상 범위·형식 대조, 데이터 부족 안내 확인. Day 1의 fixture 검증과 별도로 날짜·URL·결과 기록 |
 | 3-4 | 오류 화면 재현 | 로컬/Preview의 서버 전용 설정으로 YouTube 할당량·Gemini 429·일반 오류를 주입. Production에서는 설정 무시, 공개 쿼리 플래그·실제 Key 변경 금지. 오류 안내·재시도·버튼 복구 확인 후 설정 해제. Production에서도 실패 응답 시 UI를 검증하고 모의 여부 명시 |
@@ -224,3 +224,7 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 3-1부터 순서대로
 - 상세 닫기→관심 목록(0개)으로 전환해도 원래 상세1개 질문·대상·답변 유지. 현재 대상0개는 전송 비활성화. Production POST /api/chat: 대상0개·21개·빈 질문 모두400 BAD_REQUEST 및 no-store 확인.
 - 세 질문 실제 응답3/1/2개 형식·근거 대조는 2-6 기록, 대상0/1/2/20/21개·비공개 통계·연속 클릭·429/시간초과후복구는 2-5/2-7 계약·클라이언트 테스트 기록을 유지한다. 검증 방식은 모의 테스트와 실제 Gemini/Production 스모크를 구분한다. 같은 코드의 통과한 테스트를 불필요하게 반복하지 않았다.
 - 실제 Production 챗 답변 캡처 chat-production.png를 로컬 시각화 폴더에 저장. 이번 단계는 자동 배포 및 핵심 연결 확인이며 Day 3 환경 설정·보안 점검·전체 실제 데이터 E2E와 오류 화면 재현은 미완료로 유지한다.
+
+## 3-1 검증 (2026-10-06)
+- Production/Preview 두 Key 등록 확인(값 Hidden). fixture/오류 설정 없음. Production은 USE_FIXTURES=1 오설정도 무시하도록 가드 추가, 챗 계약 테스트·빌드 통과. main push로 재배포한다.
+

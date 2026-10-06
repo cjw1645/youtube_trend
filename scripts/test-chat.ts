@@ -139,6 +139,10 @@ try {
   assert.deepEqual(requests.map((r) => r.resource), ['videos']);
   // YouTube fixture와 Gemini 모의 계약을 함께 검증한다. 실제 Gemini 성공을 의미하지 않는다.
   process.env.USE_FIXTURES = '1';
+  const { isFixtureMode } = await vite.ssrLoadModule('/api/_lib/fixtures.ts');
+  assert.equal(isFixtureMode(), false, 'Production은 fixture 설정을 무시한다');
+  process.env.VERCEL_ENV = 'preview';
+  assert.equal(isFixtureMode(), true);
   geminiStatus = 200;
   youtubeQuota = false;
   requests.length = 0;

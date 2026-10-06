@@ -6,7 +6,7 @@ import path from 'node:path';
 export type FixtureName = 'videos-popular' | 'video-categories' | 'search' | 'videos-search' | 'channels';
 
 export function isFixtureMode(): boolean {
-  return process.env.USE_FIXTURES === '1';
+  return process.env.VERCEL_ENV !== 'production' && process.env.USE_FIXTURES === '1';
 }
 
 const cache = new Map<FixtureName, unknown>();
