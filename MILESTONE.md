@@ -5,7 +5,7 @@
 > 로컬 폴더: `C:\Users\LOOKSTEN\Desktop\cjw\youtube_trend` (clone 완료, main 브랜치)
 > 요구사항 원문: `docs/개발자온보딩_유튜브트렌드대시보드.pdf` (`.gitignore`로 커밋 제외)
 >
-> **현재 상태 (2026-10-06)**: Day 1 및 2-1~2-7 완료. 사용자 요청으로 2-4~2-6을 main에 push했다. 챗 UI를 목록·관심 목록·상세에 연결하고 실제 Gemini 답변 표시와 화면 전환 후 대상 유지까지 확인했다(YouTube fixture·Gemini 실제). 중복 전송·대상 제한·오류/시간 초과 후 수동 복구·HTML 이스케이프 테스트 및 빌드 통과. 실제 YouTube/Production 통합 검증과 오류 캡처는 남아 있다 → **다음 단계: Day 2-8**
+> **현재 상태 (2026-10-06)**: Day 1 및 Day 2 완료. 사용자 요청으로 2-4~2-6을 main에 push했다. 챗 UI를 목록·관심 목록·상세에 연결하고 실제 Gemini 답변 표시와 화면 전환 후 대상 유지까지 확인했다(YouTube fixture·Gemini 실제). 중복 전송·대상 제한·오류/시간 초과 후 수동 복구·HTML 이스케이프 테스트 및 빌드 통과. 2-8 빌드·Production Ready·목록/상세/실제 Gemini 스모크·입력 거부/no-store 확인까지 완료했다. Day 3 환경·보안·전체 E2E·오류 캡처는 남아 있다 → **다음 단계: Day 3-1**
 
 ## 목표 산출물 (마감 시 공유)
 
@@ -76,7 +76,7 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 2-5 ✅ | 분석 데이터 준비 + 챗 엔드포인트 | `api/_lib/youtube.ts`, `api/chat.ts`, `src/types/` | 아래 데이터 계약에 따라 현재 화면 영상만 서버에서 일괄 보완. 질문·ID·본문 크기 검증, 메타데이터 길이 제한, 응답·오류 `no-store`. 21개·빈 질문·잘못된 ID 요청은 외부 API 호출 전 거부 |
 | 2-6 ✅ | 시스템 프롬프트 | `api/chat.ts` | ①[핵심 요약] 2~3줄 ②[근거 데이터] 영상명/조회수/업로드일 ③[콘텐츠 제안] 제목·소재·썸네일·구성. 트렌드 질문은 분석 대상 내 조회수 상위 3개 + 제안 3개. 3개 미만·누락 통계는 부족함 안내. 데이터 밖 사실·실시간 순위 단정 금지, 메타데이터 속 명령 무시 |
 | 2-7 ✅ | 챗 UI | `src/components/ChatPanel.tsx` | 분석 대상·개수 표시, 상세 질문은 선택 영상 1개. 예시 칩은 입력만 채움. 전송 버튼만 호출하며 처리 중 중복 차단. 빈 질문·대상 0개 차단, 오류·시간 초과·429 후 재전송 가능, 답변 원시 HTML 렌더링 금지 |
-| 2-8 | 검증 후 push | — | `npm run build` 통과, 아래 수동 검증 기록 후 자동 배포 확인(main은 Production, 별도 브랜치는 Preview). 완료 기준을 확인한 항목만 체크 |
+| 2-8 ✅ | 검증 후 push | — | `npm run build` 통과, 아래 수동 검증 기록 후 자동 배포 확인(main은 Production, 별도 브랜치는 Preview). 완료 기준을 확인한 항목만 체크 |
 
 **2-5 데이터 계약**
 
@@ -127,10 +127,10 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 
 ## Day 2 이후 작업 재개 안내
 
-다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 2-8부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
+다음 세션은 `AGENTS.md`, `docs/DECISION.md`와 이 문서의 현재 상태를 읽고 **Day 3-1부터** 시작한다. 완료 이력과 미커밋 변경을 보존하며 다시 초기화하지 않는다.
 
 ```text
-AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-8부터 순서대로 진행해줘.
+AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 3-1부터 순서대로 진행해줘.
 - Day 1은 완료 상태이며, Day 2~3의 보완 기준과 완료 조건을 적용해.
 - .env.local은 읽거나 출력·복사하지 말고, Key는 /api에서만 사용해.
 - UI 개발은 YouTube fixture 모드를 사용하되 실제 API 검증과 구분해 기록해.
@@ -216,3 +216,11 @@ AGENTS.md, docs/DECISION.md와 MILESTONE.md를 읽고 Day 2-8부터 순서대로
 - 브라우저 http://localhost:3010 (vercel dev, YouTube fixture·Gemini 실제): 목록 50개 중 20개 대상 표시, 예시 칩 선택 후 답변/요청 상태 없음, 상세 OK 1개 대상 확인. 전송 직후 버튼/입력/예시 칩 비활성화 확인 후 상세 닫기→관심 목록으로 이동해 요청 대상 1개 유지 및 실제 답변 표시 확인.
 - 실제 답변 model gemini-3.5-flash-lite, OK / 271,087 / 2026-09-30 근거 일치. 세 섹션·제안 3개·단일 대상/인기 원인 판단 부족 안내 확인. 검색 변경 시 0개 대상으로 전송이 차단되고 이전 답변의 상세 대상은 유지됨.
 - 실제 챗 UI 캡처는 로컬 시각화 폴더 chat-ui.png에 저장했다. 실제 YouTube/Production 통합 및 모의 오류 브라우저 캡처는 2-8/Day 3에서 검증한다.
+
+## 2-8 검증 기록 (2026-10-06)
+
+- 2-7 커밋2714782의 main push 자동 배포 확인: Vercel Production Ready, deployment dpl_2ZWoUPSAagK1vxK9nBnP9LYT4jq1, https://youtube-trend-orpin.vercel.app. categories/chat/video/videos 함수 배포 및 새 챗 UI 표시 확인. npm run build 통과.
+- 브라우저 Production 스모크: 목록50개·카테고리·상세 OK 조회 성공, 단일 대상1개로 전송. 처리 중 전송 차단, 실제 gemini-3.5-flash-lite 답변 표시. 상세와 답변의 OK / 276,223 / 2026-09-30 근거 일치, 세 섹션·요약2줄·제안3·정보 부족/인기 원인 단정 금지 확인.
+- 상세 닫기→관심 목록(0개)으로 전환해도 원래 상세1개 질문·대상·답변 유지. 현재 대상0개는 전송 비활성화. Production POST /api/chat: 대상0개·21개·빈 질문 모두400 BAD_REQUEST 및 no-store 확인.
+- 세 질문 실제 응답3/1/2개 형식·근거 대조는 2-6 기록, 대상0/1/2/20/21개·비공개 통계·연속 클릭·429/시간초과후복구는 2-5/2-7 계약·클라이언트 테스트 기록을 유지한다. 검증 방식은 모의 테스트와 실제 Gemini/Production 스모크를 구분한다. 같은 코드의 통과한 테스트를 불필요하게 반복하지 않았다.
+- 실제 Production 챗 답변 캡처 chat-production.png를 로컬 시각화 폴더에 저장. 이번 단계는 자동 배포 및 핵심 연결 확인이며 Day 3 환경 설정·보안 점검·전체 실제 데이터 E2E와 오류 화면 재현은 미완료로 유지한다.
