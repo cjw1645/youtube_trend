@@ -49,11 +49,11 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
   }
   if (typeof fields.question !== 'string') throw badRequest('질문을 입력해 주세요.');
   const question = fields.question.trim();
-  if (!question || Array.from(question).length > 2000) throw badRequest('질문은 1~2,000자로 입력해 주세요.');
+  if (!question || Array.from(question).length > 2000) throw badRequest('질문은 1–2,000자로 입력해 주세요.');
   if (!Array.isArray(fields.videoIds) || fields.videoIds.some((id) => typeof id !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(id))) {
     throw badRequest('올바른 영상 ID 목록을 보내 주세요.');
   }
   const videoIds = [...new Set(fields.videoIds as string[])];
-  if (!videoIds.length || videoIds.length > 20) throw badRequest('분석할 영상은 1~20개 선택해 주세요.');
+  if (!videoIds.length || videoIds.length > 20) throw badRequest('분석할 영상은 1–20개 선택해 주세요.');
   return { question, videoIds };
 }

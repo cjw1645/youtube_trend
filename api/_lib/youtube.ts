@@ -1,11 +1,8 @@
 // YouTube Data API v3 래퍼 (서버 전용). YOUTUBE_API_KEY는 이 파일에서만 읽고, 요청 헤더로만 보낸다.
-// USE_FIXTURES=1이면 실제 API 대신 api/_fixtures 응답을 사용한다 (할당량 소모 0).
 import './env.js';
 import type { Category, SortOrder, Video, VideoDetail } from '../../src/types/video.js';
-import { isFixtureMode, loadFixture } from './fixtures.js';
 import { ApiFailure } from './http.js';
 import type { AnalysisContext } from '../../src/types/chat.js';
-import { injectTestFailure } from './runtime.js';
 
 const BASE = 'https://www.googleapis.com/youtube/v3';
 const REGION = 'KR';
@@ -81,7 +78,7 @@ function toFailure(status: number, body: unknown): ApiFailure {
   if (quotaReason) {
     return new ApiFailure(
       'QUOTA_EXCEEDED',
-      'YouTube API 일일 할당량을 모두 사용했습니다. 할당량이 초기화되는 오후 4~5시(한국 시간) 이후 다시 시도해 주세요.',
+      'YouTube API 일일 할당량을 모두 사용했습니다. 할당량이 초기화되는 오후 4–5시(한국 시간) 이후 다시 시도해 주세요.',
       429,
       quotaReason,
     );
@@ -167,27 +164,10 @@ export function sortVideos(videos: Video[], order?: SortOrder): Video[] {
   return videos;
 }
 
-// ---------- fixture ----------
-
-async function fixtureVideos(): Promise<RawVideo[]> {
-  const [popular, searched] = await Promise.all([
-    loadFixture<ListResponse<RawVideo>>('videos-popular'),
-    loadFixture<ListResponse<RawVideo>>('videos-search'),
-  ]);
-  const byId = new Map<string, RawVideo>();
-  for (const v of [...(popular.items ?? []), ...(searched.items ?? [])]) byId.set(v.id, v);
-  return [...byId.values()];
-}
-
 // ---------- 공개 API ----------
 
 /** videos.list(chart=mostPopular, regionCode=KR) — 1 unit */
 export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
-  injectTestFailure('youtube');
-  if (isFixtureMode()) {
-    const { items = [] } = await loadFixture<ListResponse<RawVideo>>('videos-popular');
-    return items.filter((v) => !categoryId || v.snippet.categoryId === categoryId).map(toVideo);
-  }
   try {
     const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
       part: VIDEO_PART,
@@ -207,18 +187,6 @@ export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
 
 /** search.list(100 unit) + videos.list(1 unit). search.list에는 통계가 없어 videos.list로 재조회한다. */
 export async function searchVideos(q: string, opts: { categoryId?: string; order?: SortOrder } = {}): Promise<Video[]> {
-  injectTestFailure('youtube');
-  if (isFixtureMode()) {
-    // fixture에는 검색어 하나의 결과만 있으므로, 저장된 전체 영상에서 제목·채널명·태그로 걸러 흉내 낸다
-    const needle = q.toLowerCase();
-    return (await fixtureVideos())
-      .filter((v) => !opts.categoryId || v.snippet.categoryId === opts.categoryId)
-      .filter((v) =>
-        [v.snippet.title, v.snippet.channelTitle, ...(v.snippet.tags ?? [])].some((s) => s.toLowerCase().includes(needle)),
-      )
-      .map(toVideo);
-  }
-
   const search = await ytFetch<ListResponse<RawSearchItem>>('search', {
     part: 'id',
     q,
@@ -239,10 +207,6 @@ export async function searchVideos(q: string, opts: { categoryId?: string; order
 
 /** videos.list(id=…) — 1 unit, 최대 50개 */
 async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
-  if (isFixtureMode()) {
-    const wanted = new Set(ids);
-    return (await fixtureVideos()).filter((v) => wanted.has(v.id));
-  }
   const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
     part: VIDEO_PART,
     id: ids.slice(0, 50).join(','),
@@ -253,37 +217,26 @@ async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
 
 /** videoCategories.list(regionCode=KR) — 1 unit. 영상에 지정 가능한 카테고리만 반환 */
 export async function listCategories(): Promise<Category[]> {
-  injectTestFailure('youtube');
-  const { items = [] } = isFixtureMode()
-    ? await loadFixture<ListResponse<RawCategory>>('video-categories')
-    : await ytFetch<ListResponse<RawCategory>>('videoCategories', { part: 'snippet', regionCode: REGION, hl: 'ko' });
+  const { items = [] } = await ytFetch<ListResponse<RawCategory>>('videoCategories', { part: 'snippet', regionCode: REGION, hl: 'ko' });
   return items.filter((c) => c.snippet.assignable).map((c) => ({ id: c.id, title: c.snippet.title }));
 }
 
 /** channels.list — 50개당 1 unit */
 export async function getChannels(ids: string[]): Promise<Map<string, ChannelInfo>> {
   const unique = [...new Set(ids)];
-  let raws: RawChannel[];
-  if (isFixtureMode()) {
-    const wanted = new Set(unique);
-    const { items = [] } = await loadFixture<ListResponse<RawChannel>>('channels');
-    raws = items.filter((c) => wanted.has(c.id));
-  } else {
-    raws = [];
-    for (let i = 0; i < unique.length; i += 50) {
-      const { items = [] } = await ytFetch<ListResponse<RawChannel>>('channels', {
-        part: 'snippet,statistics',
-        id: unique.slice(i, i + 50).join(','),
-      });
-      raws.push(...items);
-    }
+  const raws: RawChannel[] = [];
+  for (let i = 0; i < unique.length; i += 50) {
+    const { items = [] } = await ytFetch<ListResponse<RawChannel>>('channels', {
+      part: 'snippet,statistics',
+      id: unique.slice(i, i + 50).join(','),
+    });
+    raws.push(...items);
   }
   return new Map(raws.map((c) => [c.id, toChannel(c)]));
 }
 
 /** 상세: videos.list + channels.list — 2 unit */
 export async function getVideoDetail(id: string): Promise<VideoDetail> {
-  injectTestFailure('youtube');
   const [raw] = await getRawVideos([id]);
   if (!raw) throw new ApiFailure('NOT_FOUND', '영상을 찾을 수 없습니다. 삭제되었거나 비공개일 수 있습니다.', 404);
 
@@ -299,10 +252,9 @@ export async function getVideoDetail(id: string): Promise<VideoDetail> {
 
 /** 분석 대상만 일괄 조회한다. 목록·상세 API를 영상마다 호출하지 않는다. */
 export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext> {
-  injectTestFailure('youtube');
   const requestedIds = [...new Set(ids)];
   if (!requestedIds.length || requestedIds.length > 20 || requestedIds.some((id) => !/^[A-Za-z0-9_-]{11}$/.test(id))) {
-    throw new ApiFailure('BAD_REQUEST', '분석 대상은 올바른 영상 ID 1~20개여야 합니다.', 400);
+    throw new ApiFailure('BAD_REQUEST', '분석 대상은 올바른 영상 ID 1–20개여야 합니다.', 400);
   }
   const raws = await getRawVideos(requestedIds);
   const byId = new Map(raws.map((raw) => [raw.id, raw]));

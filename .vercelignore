@@ -1,0 +1,15 @@
+docs/
+scripts/
+AGENTS.md
+CLAUDE.md
+MILESTONE.md
+DECISION.md
+.claude/
+.agents/
+.codex/
+api/_fixtures/
+api/_lib/fixtures.ts
+api/_lib/fetch-fixtures.ts
+api/_lib/runtime.ts
+.env
+.env.*

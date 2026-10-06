@@ -7,18 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test:detail": "node scripts/test-video-detail.ts",
-    "test:favorites": "node scripts/test-favorites.ts",
-    "test:status": "node scripts/test-status.ts",
-    "test:gemini": "node scripts/test-gemini.ts",
-    "test:chat": "node scripts/test-chat.ts",
-    "test:prompt": "node scripts/test-chat-prompt.ts",
-    "test:chat-ui": "node scripts/test-chat-ui.ts",
-    "verify:chat-live": "node scripts/verify-chat-live.ts",
-    "preview": "vite preview",
-    "fixtures": "node api/_lib/fetch-fixtures.ts",
-    "test:runtime": "node scripts/test-runtime.ts",
-    "check:security": "node scripts/check-security.ts"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.3.0",

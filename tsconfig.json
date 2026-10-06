@@ -16,5 +16,6 @@
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "api", "scripts", "vite.config.ts"]
+  "include": ["src", "api", "vite.config.ts"],
+  "exclude": ["api/_lib/fixtures.ts", "api/_lib/fetch-fixtures.ts", "api/_lib/runtime.ts"]
 }

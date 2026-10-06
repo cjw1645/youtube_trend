@@ -28,3 +28,17 @@ docs/*.pdf
 # 로컬 판단 기록 (커밋 제외)
 /DECISION.md
 /docs/DECISION.md
+
+# 로컬 개발・에이전트 기록 (서비스 소스에서 제외)
+/docs/
+/scripts/
+/AGENTS.md
+/CLAUDE.md
+/MILESTONE.md
+/.claude/
+/.agents/
+/.codex/
+/api/_fixtures/
+/api/_lib/fixtures.ts
+/api/_lib/fetch-fixtures.ts
+/api/_lib/runtime.ts

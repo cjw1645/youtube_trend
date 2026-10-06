@@ -3,7 +3,6 @@
 // https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite
 import './env.js';
 import { ApiFailure } from './http.js';
-import { injectTestFailure } from './runtime.js';
 
 export const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 export const GEMINI_TIMEOUT_MS = 25_000;
@@ -55,9 +54,8 @@ function readAnswer(body: unknown): string {
   return text;
 }
 
-/** 단일 호출만 수행한다. 자동 재시도·다른 모델 fallback·fixture 답변은 없다. */
+/** 단일 호출만 수행한다. 자동 재시도·다른 모델 fallback은 없다. */
 export async function generateContent(input: GeminiInput): Promise<GeminiResult> {
-  injectTestFailure('gemini');
   if (!input.prompt.trim() || !input.systemInstruction.trim()) {
     throw new ApiFailure('BAD_REQUEST', 'Gemini 요청의 질문 또는 서버 지시문이 비어 있습니다.', 400);
   }
