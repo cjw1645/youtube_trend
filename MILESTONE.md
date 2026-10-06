@@ -48,9 +48,9 @@ Claude Code가 대신할 수 없는 계정·Key·설치 작업입니다. 모두 
 | 1-2 | ~~Git 연결~~ ✅ clone으로 완료. `.gitignore` 교체 ✅ | `.gitignore` | `node_modules`, `.env.local`, `.vercel` 제외 확인 |
 | 1-3 | ~~환경변수~~ ✅ `.env.local` 입력 완료, `.env.example`은 값 비어 있음 | `.env.local`(커밋 안 함), `.env.example` | `VITE_` 접두사 미사용 |
 | 1-3b ✅ | (fixture 생성 `npm run fixtures` + 로더 `api/_lib/fixtures.ts` 완료, 래퍼 연결은 1-5에서) 할당량 절약용 목업: YouTube 응답을 한 번만 받아 `api/_fixtures/*.json`에 저장하고, `.env.local`에 `USE_FIXTURES=1`이면 서버가 실제 API 대신 fixture 반환 | `api/_fixtures/` | UI 개발 중 YouTube 할당량 소모 0 |
-| 1-4 | 타입 정의 | `src/types/video.ts` | `Video`, `VideoDetail`, `Category`, `ApiError` |
-| 1-5 | YouTube 래퍼 | `api/_lib/youtube.ts` | `videos.list(chart=mostPopular, regionCode=KR)`, `search.list`, `videoCategories.list`, `channels.list` 래핑, 403 `quotaExceeded` 판별 |
-| 1-6 | 서버리스 엔드포인트 | `api/videos.ts`, `api/categories.ts` | `?q=&categoryId=&order=viewCount\|date` 지원, 에러를 `{code, message}`로 정규화 |
+| 1-4 ✅ | 타입 정의 | `src/types/video.ts` | `Video`, `VideoDetail`, `Category`, `ApiError` |
+| 1-5 ✅ | YouTube 래퍼 | `api/_lib/youtube.ts` | `videos.list(chart=mostPopular, regionCode=KR)`, `search.list`, `videoCategories.list`, `channels.list` 래핑, 403 `quotaExceeded` 판별 |
+| 1-6 ✅ | 서버리스 엔드포인트 | `api/videos.ts`, `api/categories.ts` | `?q=&categoryId=&order=viewCount\|date` 지원, 에러를 `{code, message}`로 정규화 |
 | 1-7 | 목록 UI | `src/pages/Home.tsx`, `src/components/VideoCard.tsx` | 썸네일·제목·채널명·조회수·업로드일·카테고리 표시, 검색·카테고리 필터·정렬 동작 |
 | 1-8 | 로컬 실행 | — | `vercel dev`로 프론트 + `/api` 동시 실행 확인 |
 | 1-9 | 첫 push & Vercel 연결 | — | vercel.com → Add New Project → `cjw1645/youtube_trend` import → Environment Variables에 두 Key 등록 → 배포 성공. 이후 main push 시 자동 배포 |
