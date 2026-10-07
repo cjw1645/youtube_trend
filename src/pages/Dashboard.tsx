@@ -1,7 +1,13 @@
 import { type ReactNode, useEffect, useId, useMemo } from 'react';
 import { useVideos } from '../hooks/useVideos';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
-import { aggregateKeywords, summarizeList, topBy, viewsPerHour } from '../lib/stats';
+import {
+  aggregateKeywords,
+  categoryDistribution,
+  summarizeList,
+  topBy,
+  viewsPerHour,
+} from '../lib/stats';
 import { formatCount, formatRelativeDate } from '../lib/format';
 import type { ChatTarget } from '../lib/chat-session';
 import type { Video } from '../types/video';
@@ -16,8 +22,12 @@ interface Props {
   onAnalyze: (target: ChatTarget) => void;
 }
 
-const percent = (value: number | null) =>
-  value === null ? '정보 없음' : `${Math.round(value * 100)}%`;
+/** 0–1 비율을 정수 %로. 0보다 크지만 반올림하면 0이 되는 값은 「1% 미만」으로 구분한다. */
+const percent = (value: number | null) => {
+  if (value === null) return '정보 없음';
+  if (value > 0 && value < 0.005) return '1% 미만';
+  return `${Math.round(value * 100)}%`;
+};
 
 function StatTile({ label, value, note }: { label: string; value: string; note: string }) {
   return (
@@ -130,12 +140,21 @@ function VideoRankList({
 }
 
 /** 현재 YouTube 인기 목록을 공용 통계로 요약한다. 모든 수치는 lib/stats 결과만 사용한다. */
-export default function Dashboard({ resolveCategoryNames, onSearchKeyword, onSelect }: Props) {
+export default function Dashboard({
+  categoryNames,
+  resolveCategoryNames,
+  onSearchKeyword,
+  onSelect,
+}: Props) {
   const { state, reload } = useVideos(POPULAR_QUERY);
   const videos = state.status === 'success' ? state.videos : undefined;
   const now = state.status === 'success' ? state.fetchedAt : 0;
   const summary = useMemo(() => (videos ? summarizeList(videos, now) : null), [videos, now]);
   const keywords = useMemo(() => (videos ? aggregateKeywords(videos) : []), [videos]);
+  const categories = useMemo(
+    () => (videos ? categoryDistribution(videos, (video) => video.categoryId) : []),
+    [videos],
+  );
   const fastest = useMemo(
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 5) : []),
     [videos, now],
@@ -221,6 +240,23 @@ export default function Dashboard({ resolveCategoryNames, onSearchKeyword, onSel
               ) : (
                 <p className="dash-empty">조회수가 공개된 영상이 없습니다.</p>
               )}
+            </DashCard>
+            <DashCard
+              title="카테고리 분포"
+              basis="막대는 영상 수 · 조회수 비중은 목록 전체 조회수 합계 대비"
+              className="dash-categories"
+            >
+              <ol className="bar-list">
+                {categories.map(({ key, count, viewShare }) => (
+                  <BarRow
+                    key={key}
+                    label={categoryNames.get(key) ?? '카테고리 정보 없음'}
+                    value={count}
+                    max={categories[0].count}
+                    valueLabel={`${count}개 · 조회수 ${percent(viewShare)}`}
+                  />
+                ))}
+              </ol>
             </DashCard>
           </div>
         </>

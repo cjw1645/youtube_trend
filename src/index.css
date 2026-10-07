@@ -1123,3 +1123,6 @@ button.bar-row:hover {
     width: 72px;
   }
 }
+.dash-categories .bar-row {
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr) 8.5rem;
+}
