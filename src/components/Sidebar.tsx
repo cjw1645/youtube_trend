@@ -4,13 +4,20 @@ import {
   ChatBubbleIcon,
   Cross2Icon,
   HamburgerMenuIcon,
-  HomeIcon,
+  DashboardIcon,
+  MagnifyingGlassIcon,
 } from '@radix-ui/react-icons';
 
-export type Page = 'home' | 'ai' | 'favorites';
+export type Page = 'dashboard' | 'search' | 'ai' | 'favorites';
+const NAV: { page: Page; label: string }[] = [
+  { page: 'dashboard', label: '대시보드' },
+  { page: 'search', label: '영상 검색' },
+  { page: 'ai', label: 'AI 대화' },
+  { page: 'favorites', label: '관심 영상' },
+];
 export function Logo({ onClick }: { onClick: () => void }) {
   return (
-    <button className="brand" type="button" onClick={onClick} aria-label="유튜브 트렌드 홈">
+    <button className="brand" type="button" onClick={onClick} aria-label="유튜브 트렌드 대시보드">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <rect width="32" height="32" rx="9" fill="currentColor" />
         <path d="M8 22V16M15 22V10M22 22V7" stroke="white" strokeWidth="3" strokeLinecap="round" />
@@ -32,7 +39,7 @@ function Navigation({
 }) {
   return (
     <nav aria-label="화면 전환" className="app-nav">
-      {(['home', 'ai', 'favorites'] as const).map((item, index) => (
+      {NAV.map(({ page: item, label }) => (
         <button
           key={item}
           type="button"
@@ -40,9 +47,17 @@ function Navigation({
           onClick={() => navigate(item)}
         >
           <span className="nav-symbol" aria-hidden="true">
-            {item === 'home' ? <HomeIcon /> : item === 'ai' ? <ChatBubbleIcon /> : <BookmarkIcon />}
+            {item === 'dashboard' ? (
+              <DashboardIcon />
+            ) : item === 'search' ? (
+              <MagnifyingGlassIcon />
+            ) : item === 'ai' ? (
+              <ChatBubbleIcon />
+            ) : (
+              <BookmarkIcon />
+            )}
           </span>
-          {['홈', 'AI 대화', '관심 영상'][index]}
+          {label}
           {item === 'favorites' && <span className="nav-count">{count}</span>}
         </button>
       ))}
@@ -83,12 +98,12 @@ export default function Sidebar({
   return (
     <>
       <aside className="sidebar">
-        <Logo onClick={() => navigate('home')} />
+        <Logo onClick={() => navigate('dashboard')} />
         <Navigation page={page} count={count} navigate={navigate} />
         {info}
       </aside>
       <header className="mobile-header">
-        <Logo onClick={() => navigate('home')} />
+        <Logo onClick={() => navigate('dashboard')} />
         <button
           ref={menu}
           className="icon-button"
@@ -126,7 +141,7 @@ export default function Sidebar({
           <Logo
             onClick={() => {
               close();
-              navigate('home');
+              navigate('dashboard');
             }}
           />
           <button

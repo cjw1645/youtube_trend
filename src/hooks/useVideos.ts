@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useApiResource } from './useApiResource';
 import type { SortOrder, Video, VideosResponse } from '../types/video';
 
+export const POPULAR_CACHE_MS = 5 * 60 * 1000;
+
 export interface VideoQuery {
   /** 검색어와 카테고리가 둘 다 비어 있으면 API 인기 목록 */
   q: string;
@@ -24,8 +26,10 @@ export function useVideos({ q, categoryId, order }: VideoQuery) {
   if (categoryId) params.set('categoryId', categoryId);
   if (order && (q || categoryId)) params.set('order', order);
 
-  const resource = useApiResource<VideosResponse>(`/api/videos?${params}`);
-  const fetchedAt = useMemo(() => Date.now(), [resource.state]);
+  // 기본 인기 목록은 대시보드와 같은 응답을 5분간 공유한다.
+  const resource = useApiResource<VideosResponse>(`/api/videos?${params}`, {
+    cacheMs: q || categoryId ? 0 : POPULAR_CACHE_MS,
+  });
   const state = useMemo<VideosState>(() => {
     if (resource.state.status !== 'success') return resource.state;
     const videos = resource.state.data.items;
@@ -37,7 +41,7 @@ export function useVideos({ q, categoryId, order }: VideoQuery) {
               ? (a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1)
               : (a, b) => b.publishedAt.localeCompare(a.publishedAt),
           );
-    return { status: 'success', videos: sorted, fetchedAt };
-  }, [resource.state, q, categoryId, order, fetchedAt]);
+    return { status: 'success', videos: sorted, fetchedAt: resource.state.receivedAt };
+  }, [resource.state, q, categoryId, order]);
   return { state, reload: resource.reload };
 }

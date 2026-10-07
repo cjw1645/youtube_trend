@@ -116,3 +116,23 @@ export function ErrorView({
     </Panel>
   );
 }
+
+/** 대시보드처럼 카드 격자가 아닌 화면의 로딩 자리 */
+export function LoadingPanel({ label }: { label: string }) {
+  return (
+    <div role="status" aria-label={label} className="dash-loading">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="animate-pulse rounded-xl bg-zinc-200" />
+      ))}
+    </div>
+  );
+}
+
+/** 오류가 아닌 안내(예: 인기 목록을 제공하지 않는 카테고리) */
+export function NoticeView({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Panel icon={<MagnifyingGlassIcon />} title={title}>
+      {children}
+    </Panel>
+  );
+}

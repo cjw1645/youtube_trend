@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Home from './pages/Home';
+import Home, { type SearchRequest } from './pages/Home';
+import Dashboard from './pages/Dashboard';
 import Favorites from './pages/Favorites';
 import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
@@ -14,16 +15,22 @@ import { useTargets } from './hooks/useTargets';
 import { makeTarget } from './lib/analysis-target';
 
 function currentPage(): Page {
-  return location.hash === '#ai' ? 'ai' : location.hash === '#favorites' ? 'favorites' : 'home';
+  const hash = location.hash;
+  if (hash === '#ai') return 'ai';
+  if (hash === '#favorites') return 'favorites';
+  // 이전 주소(#home)는 영상 검색으로 연결한다.
+  if (hash === '#search' || hash === '#home') return 'search';
+  return 'dashboard';
 }
 export default function App() {
   const [page, setPage] = useState<Page>(currentPage);
-  const [homeVisited, setHomeVisited] = useState(() => currentPage() === 'home');
+  const [visited, setVisited] = useState<ReadonlySet<Page>>(() => new Set([currentPage()]));
+  const [searchRequest, setSearchRequest] = useState<SearchRequest>();
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const targets = useTargets();
   const { lastHome, setLastHome, setActive } = targets;
   const target: ChatTarget = targets.active ?? { label: '대상 미선택', videos: [] };
-  const scroll = useRef<Record<Page, number>>({ home: 0, ai: 0, favorites: 0 });
+  const scroll = useRef<Record<Page, number>>({ dashboard: 0, search: 0, ai: 0, favorites: 0 });
   const favorites = useFavorites();
   const chat = useChat();
   const {
@@ -38,15 +45,16 @@ export default function App() {
   }, [favorites.videos, resolveNames]);
   const navigate = (next: Page) => {
     scroll.current[page] = window.scrollY;
-    if (next === 'home') setHomeVisited(true);
+    setVisited((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
     if (next === 'ai' && !targets.active && lastHome) setActive(lastHome);
     setPage(next);
     history.replaceState(null, '', `#${next}`);
   };
   useEffect(() => {
     const change = () => {
-      setPage(currentPage());
-      if (currentPage() === 'home') setHomeVisited(true);
+      const next = currentPage();
+      setPage(next);
+      setVisited((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
     };
     window.addEventListener('hashchange', change);
     return () => window.removeEventListener('hashchange', change);
@@ -63,6 +71,10 @@ export default function App() {
     setActive(makeTarget(value, value.source ?? 'detail', value.query));
   };
   const onSelect = (video: { id: string }) => setSelectedVideoId(video.id);
+  const searchKeyword = (q: string) => {
+    setSearchRequest({ q, id: Date.now() });
+    navigate('search');
+  };
   return (
     <div className="app-shell">
       <a
@@ -85,7 +97,18 @@ export default function App() {
             </button>
           </div>
         )}
-        <div hidden={page !== 'home'}>
+        <div hidden={page !== 'dashboard'}>
+          {visited.has('dashboard') && (
+            <Dashboard
+              categoryNames={nameById}
+              resolveCategoryNames={resolveNames}
+              onSelect={onSelect}
+              onSearchKeyword={searchKeyword}
+              onAnalyze={analyze}
+            />
+          )}
+        </div>
+        <div hidden={page !== 'search'}>
           {categoryState.status === 'error' && (
             <ErrorView
               compact
@@ -94,8 +117,9 @@ export default function App() {
               onRetry={reloadCategories}
             />
           )}
-          {homeVisited && (
+          {visited.has('search') && (
             <Home
+              searchRequest={searchRequest}
               initialQuery={lastHome?.query}
               favorites={favorites}
               categories={categories}
@@ -182,7 +206,7 @@ export default function App() {
             favorites={favorites}
             categoryNames={nameById}
             onSelect={onSelect}
-            onBrowse={() => navigate('home')}
+            onBrowse={() => navigate('search')}
             onAnalyze={analyze}
           />
         </div>

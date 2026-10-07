@@ -895,3 +895,78 @@ button:active:not(:disabled) {
 .answer-tags-more {
   color: var(--muted);
 }
+/* 대시보드: 수치는 tabular, 강조색은 막대·주요 행동에만 쓴다. */
+.page-heading > p.dash-scope {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-loading {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.dash-loading > div {
+  height: 112px;
+}
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 22px;
+  min-width: 0;
+}
+.stat-tile + .stat-tile {
+  border-left: 1px solid var(--line);
+}
+.stat-tile dt {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.stat-tile dd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-value {
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 1023px) {
+  .dash-stats,
+  .dash-loading {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat-tile:nth-child(3) {
+    border-left: 0;
+  }
+  .stat-tile:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}
+@media (max-width: 399px) {
+  .stat-tile {
+    padding: 16px;
+  }
+  .stat-value {
+    font-size: 24px;
+  }
+}

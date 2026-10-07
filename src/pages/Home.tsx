@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FilterBar from '../components/FilterBar';
 import SearchBar from '../components/SearchBar';
 import { EmptyView, ErrorView, LoadingGrid } from '../components/StatusView';
@@ -15,7 +15,14 @@ import KeywordChips from '../components/KeywordChips';
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 const EMPTY: Video[] = [];
 
+/** 대시보드 키워드 클릭처럼 다른 화면에서 요청한 검색. id가 바뀔 때마다 한 번 실행한다. */
+export interface SearchRequest {
+  q: string;
+  id: number;
+}
+
 interface Props {
+  searchRequest?: SearchRequest;
   onResults: (target: ChatTarget) => void;
   onAnalyze: (target: ChatTarget) => void;
   initialQuery?: VideoQuery;
@@ -35,9 +42,15 @@ export default function Home({
   onSelect,
   initialQuery,
   resolveCategoryNames,
+  searchRequest,
 }: Props) {
-  const [query, setQuery] = useState<VideoQuery>(initialQuery ?? INITIAL_QUERY);
-  const [draft, setDraft] = useState<VideoQuery>(initialQuery ?? INITIAL_QUERY);
+  // 처음 열 때 외부 검색 요청이 있으면 기본 목록을 거치지 않고 바로 그 검색으로 시작한다.
+  const [start] = useState<VideoQuery>(() =>
+    searchRequest ? { ...INITIAL_QUERY, q: searchRequest.q } : (initialQuery ?? INITIAL_QUERY),
+  );
+  const [query, setQuery] = useState<VideoQuery>(start);
+  const [draft, setDraft] = useState<VideoQuery>(start);
+  const appliedRequest = useRef(searchRequest?.id);
   const { state, reload } = useVideos(query);
 
   const update = (patch: Partial<VideoQuery>) => setDraft((prev) => ({ ...prev, ...patch }));
@@ -47,6 +60,13 @@ export default function Home({
     else setQuery(next);
   };
   const apply = () => run({ ...draft, q: draft.q.trim() });
+  useEffect(() => {
+    if (!searchRequest || appliedRequest.current === searchRequest.id) return;
+    appliedRequest.current = searchRequest.id;
+    const next = { ...INITIAL_QUERY, q: searchRequest.q };
+    setDraft(next);
+    setQuery(next);
+  }, [searchRequest]);
   const searchKeyword = (keyword: string) =>
     run({ ...query, q: Array.from(keyword).slice(0, 100).join('').trim() });
   const reset = () => {
@@ -76,8 +96,8 @@ export default function Home({
   return (
     <div className="home-page flex flex-col gap-6">
       <header className="page-heading">
-        <h1>지금 트렌드</h1>
-        <p>관심 있는 영상을 찾고, 다음 콘텐츠의 방향을 살펴보세요.</p>
+        <h1>영상 검색</h1>
+        <p>키워드·카테고리·정렬로 영상을 찾고, 다음 콘텐츠의 방향을 살펴보세요.</p>
       </header>
       <section className="discovery-controls" aria-label="영상 검색과 필터">
         <SearchBar value={draft.q} onChange={(q) => update({ q })} onSearch={apply} />
