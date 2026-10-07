@@ -32,19 +32,19 @@ export default function KeywordChips({
   return (
     <section className="keyword-row" aria-labelledby="keyword-row-title">
       <h3 id="keyword-row-title">
-        현재 목록 {videos.length}개 기준 키워드 · 2개 이상 채널에 등장한 단어
+        현재 목록 {videos.length}개 기준 키워드 · 2개 이상 영상에 등장한 단어
       </h3>
       <div className="keyword-scroll" data-more={hasMore || undefined}>
         <ul ref={list} onScroll={measure}>
-          {keywords.map(({ keyword, channels }) => (
+          {keywords.map(({ keyword, videos: count }) => (
             <li key={keyword}>
               <button
                 type="button"
                 className="keyword-chip"
-                aria-label={`${keyword} 검색 (현재 목록의 채널 ${channels}곳에 등장)`}
+                aria-label={`${keyword} 검색 (현재 목록의 영상 ${count}개에 등장)`}
                 onClick={() => onSearch(keyword)}
               >
-                {keyword} <span aria-hidden="true">· 채널 {channels}곳</span>
+                {keyword} <span aria-hidden="true">· 영상 {count}개</span>
               </button>
             </li>
           ))}

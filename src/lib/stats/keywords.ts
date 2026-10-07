@@ -107,9 +107,7 @@ const TITLE_SEPARATOR = /[\s|/\\·•,.!?"'“”‘’()[\]{}<>【】「」『�
 
 export interface KeywordCount {
   keyword: string;
-  /** 키워드가 등장한 채널 수 (같은 채널의 반복 태그는 1회) */
-  channels: number;
-  /** 키워드가 등장한 영상 수 (한 영상 안의 중복은 1회) */
+  /** 키워드가 등장한 영상 수 (한 영상 안의 중복은 1회, 같은 채널의 영상도 각각 센다) */
   videos: number;
 }
 
@@ -133,37 +131,26 @@ export function videoKeywords(video: { title: string; tags?: readonly string[] }
 }
 
 /**
- * 2개 이상 채널에 등장한 키워드를 채널 수 → 영상 수 내림차순으로 상위 limit개 반환한다.
- * 한 채널이 여러 영상에 단 같은 태그가 목록 전체의 흐름처럼 보이지 않게 채널 수를 기준으로 한다.
+ * 2개 이상 영상에 등장한 키워드를 영상 수 내림차순으로 상위 limit개 반환한다.
  * 동률이면 목록에서 먼저 등장한 키워드가 앞선다. 현재 검색어와 같은 키워드는 다시 검색해도
  * 같은 결과이므로 제외한다.
  */
 export function aggregateKeywords(
-  videos: readonly { title: string; channelId: string; tags?: readonly string[] }[],
+  videos: readonly { title: string; tags?: readonly string[] }[],
   {
     limit = 10,
-    minChannels = 2,
+    minVideos = 2,
     query = '',
-  }: { limit?: number; minChannels?: number; query?: string } = {},
+  }: { limit?: number; minVideos?: number; query?: string } = {},
 ): KeywordCount[] {
   const excluded = normalizeKeyword(query);
-  const counts = new Map<string, { channels: Set<string>; videos: number }>();
+  const counts = new Map<string, number>();
   for (const video of videos)
-    for (const keyword of videoKeywords(video)) {
-      const entry = counts.get(keyword) ?? { channels: new Set<string>(), videos: 0 };
-      entry.channels.add(video.channelId);
-      entry.videos += 1;
-      counts.set(keyword, entry);
-    }
+    for (const keyword of videoKeywords(video)) counts.set(keyword, (counts.get(keyword) ?? 0) + 1);
   return [...counts]
-    .map(([keyword, entry], order) => ({
-      keyword,
-      channels: entry.channels.size,
-      videos: entry.videos,
-      order,
-    }))
-    .filter(({ keyword, channels }) => channels >= minChannels && keyword !== excluded)
-    .sort((a, b) => b.channels - a.channels || b.videos - a.videos || a.order - b.order)
+    .map(([keyword, count], order) => ({ keyword, videos: count, order }))
+    .filter(({ keyword, videos }) => videos >= minVideos && keyword !== excluded)
+    .sort((a, b) => b.videos - a.videos || a.order - b.order)
     .slice(0, limit)
-    .map(({ keyword, channels, videos }) => ({ keyword, channels, videos }));
+    .map(({ keyword, videos }) => ({ keyword, videos }));
 }

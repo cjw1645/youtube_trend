@@ -329,25 +329,25 @@ export default function Dashboard({
           <div className="dash-grid">
             <DashCard
               title="지금 뜨는 소재"
-              basis="태그·제목 단어가 등장한 채널 수 · 2곳 이상, 상위 10개 · 누르면 영상 검색"
+              basis="태그·제목 단어가 등장한 영상 수 · 2개 이상, 상위 10개 · 누르면 영상 검색"
               className="dash-keywords"
             >
               {keywords.length ? (
                 <ol className="bar-list">
-                  {keywords.map(({ keyword, channels }) => (
+                  {keywords.map(({ keyword, videos: count }) => (
                     <BarRow
                       key={keyword}
                       label={keyword}
-                      value={channels}
-                      max={keywords[0].channels}
-                      valueLabel={`채널 ${channels}곳`}
+                      value={count}
+                      max={keywords[0].videos}
+                      valueLabel={`영상 ${count}개`}
                       onClick={() => onSearchKeyword(keyword)}
-                      actionLabel={`${keyword} 영상 검색 (현재 목록의 채널 ${channels}곳에 등장)`}
+                      actionLabel={`${keyword} 영상 검색 (현재 목록의 영상 ${count}개에 등장)`}
                     />
                   ))}
                 </ol>
               ) : (
-                <p className="dash-empty">2개 이상 채널에 공통으로 나온 키워드가 없습니다.</p>
+                <p className="dash-empty">2개 이상 영상에 나온 키워드가 없습니다.</p>
               )}
             </DashCard>
             <DashCard
