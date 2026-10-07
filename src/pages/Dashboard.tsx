@@ -4,6 +4,7 @@ import { ErrorView, LoadingPanel } from '../components/StatusView';
 import {
   aggregateKeywords,
   categoryDistribution,
+  formatSplit,
   summarizeList,
   topBy,
   viewsPerHour,
@@ -139,6 +140,45 @@ function VideoRankList({
   );
 }
 
+/** 쇼츠·롱폼 영상 수 비율 막대와 그룹별 중앙값 조회수 */
+function FormatSplitView({ split }: { split: ReturnType<typeof formatSplit> }) {
+  const known = split.shorts.count + split.long.count;
+  const groups = [
+    { name: '쇼츠', range: '3분 이하', ...split.shorts },
+    { name: '롱폼', range: '3분 초과', ...split.long },
+  ];
+  return (
+    <>
+      {known > 0 && (
+        <div className="split-bar" aria-hidden="true">
+          <span style={{ width: `${(split.shorts.count / known) * 100}%` }} />
+        </div>
+      )}
+      <dl className="split-groups">
+        {groups.map((group) => (
+          <div key={group.name}>
+            <dt>
+              {group.name} <span>{group.range}</span>
+            </dt>
+            <dd>
+              <span className="split-count">
+                {group.count}개 · {known ? percent(group.count / known) : '정보 없음'}
+              </span>
+              <span className="split-median">
+                중앙값 조회수{' '}
+                {group.medianViews === null ? '정보 없음' : formatCount(group.medianViews)}
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {split.unknown > 0 && (
+        <p className="dash-empty">길이를 알 수 없는 영상 {split.unknown}개는 제외했습니다.</p>
+      )}
+    </>
+  );
+}
+
 /** 현재 YouTube 인기 목록을 공용 통계로 요약한다. 모든 수치는 lib/stats 결과만 사용한다. */
 export default function Dashboard({
   categoryNames,
@@ -155,6 +195,7 @@ export default function Dashboard({
     () => (videos ? categoryDistribution(videos, (video) => video.categoryId) : []),
     [videos],
   );
+  const split = useMemo(() => (videos ? formatSplit(videos) : null), [videos]);
   const fastest = useMemo(
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 5) : []),
     [videos, now],
@@ -258,6 +299,15 @@ export default function Dashboard({
                 ))}
               </ol>
             </DashCard>
+            {split && (
+              <DashCard
+                title="쇼츠 / 롱폼 비율"
+                basis="쇼츠 = 3분 이하 영상 · API에 쇼츠 여부 필드가 없어 길이로만 나눕니다"
+                className="dash-split"
+              >
+                <FormatSplitView split={split} />
+              </DashCard>
+            )}
           </div>
         </>
       )}
