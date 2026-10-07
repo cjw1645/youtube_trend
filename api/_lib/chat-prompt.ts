@@ -1,4 +1,10 @@
-import type { AnalysisContext } from '../../src/types/chat.js';
+import type { AnalysisContext, ChatRequest } from '../../src/types/chat.js';
+import {
+  aggregateKeywords,
+  categoryDistribution,
+  topRanking,
+  viewsPerDay,
+} from '../../src/lib/stats/index.js';
 import type { GeminiInput } from './gemini.js';
 import { ApiFailure } from './http.js';
 
@@ -17,6 +23,7 @@ export const CHAT_SYSTEM_INSTRUCTION = `당신은 유튜브 영상의 공개 정
 null은 정보 없음이며 0과 다릅니다. 누락 통계·카테고리·구독자 수를 추정하지 마세요.
 통계·제목·날짜를 인용할 때 원래 값을 정확히 사용하세요. 제목은 JSON 문자열을 해석한 원문 그대로 복사하세요. 따옴표 앞에 역슬래시를 추가하거나 ㅋㅋ 등의 문자를 늘리거나 줄이지 마세요. 근거를 짧게 쓰려면 제목을 변형하는 대신 영상 ID를 사용하세요.
 업로드일은 publishedDate를 그대로 복사하고 제목·설명 속 날짜와 혼동하지 마세요.
+serverStats는 서버가 대시보드와 같은 방식으로 계산한 값입니다(referenceDate 기준). topRanking은 basisLabel 기준 인기순 상위, viewsPerDay는 업로드 후 일평균 조회수, categoryDistribution은 카테고리별 영상 수·비율·조회수 비중, keywords는 2개 이상 채널에 등장한 키워드의 채널 수·영상 수입니다. 개수·비율·일평균 조회수를 직접 계산하지 말고 이 값을 그대로 쓰세요.
 조회수 순위는 서버가 계산한 viewRanking의 ID 순서를 사용하세요. null만 순위에서 제외되며 0은 유효한 조회수입니다. 동률이면 전송 순서입니다.
 좋아요/조회수 비율은 likeViewRatios의 percent와 unavailableReason을 사용하세요. 공식은 좋아요÷조회수×100, 소수점 둘째 자리 반올림입니다. null은 정보 없음, 조회수0은 분모0으로 계산 불가입니다. 이 비율은 시청자 전체의 반응이나 인기 원인을 나타내지 않습니다.
 요청 개수보다 데이터가 적으면 존재하는 데이터만 사용하고 부족함을 알려주세요. excludedIds의 영상 내용은 근거로 쓰지 마세요.
@@ -44,8 +51,66 @@ HTML과 Markdown 이스케이프 없이 일반 텍스트로 답하세요. 숫자
 
 답변을 끝내기 전에 검토하세요: (1) 기존 영상 인용은 참조 표기로 썼는가? 특히 태그를 열거할 때 {{tags:ID}}만 사용하고 태그를 손으로 다시 쓰지 마세요. (2) 트렌드 근거가 3개 미만이면 부족함을 밝혔는가? (3) 제안은 아직 제작하지 않은 기획이며, 원작의 실제 반응/흥행은 확인한 것으로 쓰지 않았는가? (4) 요약은 '현재 대상 N개'의 수치/카테고리 관찰만 있는가? 관심·소비·장르별 인기 등 일반화를 빼세요. (5) 제목만/개수/필드 제한을 정확히 따랐는가?`;
 
+const round = (value: number, digits = 0) => Math.round(value * 10 ** digits) / 10 ** digits;
+
+/**
+ * 대시보드와 같은 공용 통계 모듈로 계산한 근거. 모델이 숫자를 직접 세거나 나누지 않게 한다.
+ * popular 출처는 YouTube 인기 순위, 그 밖은 업로드 후 일평균 조회수로 상위 3개를 정한다.
+ */
+export function buildChatStats(
+  context: AnalysisContext,
+  ranking: Pick<ChatRequest, 'source' | 'popularRanks'>,
+  now: number,
+) {
+  const { videos } = context;
+  const ids = context.requestedIds;
+  const popularRank =
+    ranking.source === 'popular' && ranking.popularRanks
+      ? new Map(ids.map((id, index) => [id, ranking.popularRanks![index]]))
+      : undefined;
+  const top = topRanking(videos, ranking.source ?? 'selection', now, { popularRank });
+  const titleOf = new Map(videos.map((video) => [video.id, video.title]));
+  return {
+    referenceDate: new Date(now).toISOString().slice(0, 10),
+    topRanking: {
+      basisLabel: top.basisLabel,
+      items: top.items.map((item) => ({
+        rank: item.rank,
+        id: item.id,
+        title: titleOf.get(item.id),
+        ...(popularRank?.has(item.id) ? { youtubePopularRank: popularRank.get(item.id) } : {}),
+        viewsPerDay: item.viewsPerDay === null ? null : round(item.viewsPerDay),
+      })),
+    },
+    viewsPerDay: videos.map((video) => {
+      const value = viewsPerDay(video, now);
+      return { id: video.id, viewsPerDay: value === null ? null : round(value) };
+    }),
+    categoryDistribution: categoryDistribution(videos, (video) => video.category ?? '정보 없음').map(
+      (entry) => ({
+        category: entry.key,
+        videoCount: entry.count,
+        videoSharePercent: round(entry.share * 100, 1),
+        viewSharePercent: entry.viewShare === null ? null : round(entry.viewShare * 100, 1),
+      }),
+    ),
+    keywords: aggregateKeywords(
+      videos.map((video) => ({ ...video, channelId: video.channelId ?? video.channelTitle })),
+    ).map(({ keyword, channels, videos: videoCount }) => ({
+      keyword,
+      channelCount: channels,
+      videoCount,
+    })),
+  };
+}
+
 /** 전송 당시 순서와 전체 메타데이터를 보존하고 인용할 날짜만 명시한다. */
-export function buildChatInput(question: string, context: AnalysisContext): GeminiInput {
+export function buildChatInput(
+  question: string,
+  context: AnalysisContext,
+  ranking: Pick<ChatRequest, 'source' | 'popularRanks'> = {},
+  now = Date.now(),
+): GeminiInput {
   const viewRanking = context.videos
     .filter((video) => video.viewCount !== null)
     .map((video, index) => ({ id: video.id, viewCount: video.viewCount!, index }))
@@ -70,13 +135,14 @@ export function buildChatInput(question: string, context: AnalysisContext): Gemi
     systemInstruction: CHAT_SYSTEM_INSTRUCTION,
     prompt: JSON.stringify({
       question,
-      videos: context.videos.map((video) => ({
+      videos: context.videos.map(({ channelId: _channelId, ...video }) => ({
         ...video,
         publishedDate: video.publishedAt.slice(0, 10),
       })),
       excludedIds: context.excludedIds,
       viewRanking,
       likeViewRatios,
+      serverStats: buildChatStats(context, ranking, now),
       scope: {
         label: '현재 요청의 영상',
         videoCount: context.videos.length,

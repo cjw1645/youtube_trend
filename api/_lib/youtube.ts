@@ -407,6 +407,7 @@ export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext
     likeCount: toNumber(raw.statistics?.likeCount),
     commentCount: toNumber(raw.statistics?.commentCount),
     channelTitle: raw.snippet.channelTitle,
+    channelId: raw.snippet.channelId,
     subscriberCount: channels.get(raw.snippet.channelId)?.subscriberCount ?? null,
   }));
   return {

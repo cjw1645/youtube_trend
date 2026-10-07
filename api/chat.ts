@@ -7,9 +7,11 @@ import { buildChatInput, renderChatReferences } from './_lib/chat-prompt.js';
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const { question, videoIds } = await readChatRequest(request);
+    const { question, videoIds, source, popularRanks } = await readChatRequest(request);
     const context = await getAnalysisContext(videoIds);
-    const result = await generateContent(buildChatInput(question, context));
+    const result = await generateContent(
+      buildChatInput(question, context, { source, popularRanks }),
+    );
     const body: ChatResponse = {
       answer: renderChatReferences(result.text, context),
       model: result.model,

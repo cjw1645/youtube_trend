@@ -29,6 +29,8 @@ export interface AnalysisVideo {
   likeCount: number | null;
   commentCount: number | null;
   channelTitle: string;
+  /** 키워드 채널 수 집계용. 이전에 저장된 응답에는 없을 수 있다. */
+  channelId?: string;
   subscriberCount: number | null;
 }
 
