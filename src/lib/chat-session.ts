@@ -90,6 +90,25 @@ export function listRanking(
     : { rankingSource: 'popular' };
 }
 
+/** 인기 차트 목록의 앞 20개를 YouTube 인기 순위(popularRank)와 함께 AI 대상으로 만든다. */
+export function popularChartTarget(
+  videos: readonly { id: string; title: string; popularRank?: number }[],
+  label: string,
+  capturedAt: number,
+): ChatTarget {
+  const top = videos.slice(0, 20);
+  return {
+    label,
+    videos: top,
+    source: 'dashboard',
+    capturedAt,
+    rankingSource: 'popular',
+    popularRank: Object.fromEntries(
+      top.map((video, index) => [video.id, video.popularRank ?? index + 1]),
+    ),
+  };
+}
+
 /** 요청 본문의 순위 필드. popularRanks는 videoIds와 같은 순서·길이다. */
 function rankingFields(
   target: ChatTarget,

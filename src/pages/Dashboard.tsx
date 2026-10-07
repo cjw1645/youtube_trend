@@ -13,11 +13,11 @@ import {
   viewsPerHour,
 } from '../lib/stats';
 import { formatCount, formatRelativeDate } from '../lib/format';
-import type { ChatTarget } from '../lib/chat-session';
+import { popularChartTarget, type ChatTarget } from '../lib/chat-session';
 import type { Video, VideosResponse } from '../types/video';
 
 /** 전체 인기 차트를 pageToken으로 끝까지 수집한 목록. 카테고리 탭은 이 목록 안에서만 거른다. */
-const CHART_PATH = '/api/videos?chart=popular&all=1';
+export const CHART_PATH = '/api/videos?chart=popular&all=1';
 /** 이 개수 미만이면 비율·순위 해석에 주의 문구를 붙인다. */
 const SMALL_SAMPLE = 10;
 
@@ -260,17 +260,7 @@ export default function Dashboard({
           onClick={() => {
             if (!videos) return;
             // 현재 탭 목록의 앞 20개를 전체 차트 순위(popularRank)와 함께 전달한다.
-            const top = videos.slice(0, 20);
-            onAnalyze({
-              label: `대시보드 · ${scope}`,
-              videos: top,
-              source: 'dashboard',
-              capturedAt: now,
-              rankingSource: 'popular',
-              popularRank: Object.fromEntries(
-                top.map((video, index) => [video.id, video.popularRank ?? index + 1]),
-              ),
-            });
+            onAnalyze(popularChartTarget(videos, `대시보드 · ${scope}`, now));
           }}
         >
           이 대시보드 데이터로 AI 질문

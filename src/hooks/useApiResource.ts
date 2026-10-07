@@ -10,7 +10,7 @@ export type ResourceState<T> =
 /** 같은 경로를 쓰는 화면(대시보드·영상 검색)이 성공 응답을 잠시 공유한다. 실패는 공유하지 않는다. */
 const shared = new Map<string, { at: number; promise: Promise<unknown> }>();
 
-function loadShared<T>(path: string, cacheMs: number, force: boolean): Promise<T> {
+export function loadShared<T>(path: string, cacheMs: number, force = false): Promise<T> {
   const hit = shared.get(path);
   if (!force && hit && Date.now() - hit.at < cacheMs) return hit.promise as Promise<T>;
   // 공유 요청은 한 화면의 이탈로 취소하지 않는다. 결과 반영 여부는 startRequest가 정한다.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Home, { type SearchRequest } from './pages/Home';
-import Dashboard from './pages/Dashboard';
+import Dashboard, { CHART_PATH } from './pages/Dashboard';
 import Favorites from './pages/Favorites';
 import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
@@ -9,7 +9,11 @@ import { ErrorView } from './components/StatusView';
 import { useChat } from './hooks/useChat';
 import ChatPanel from './components/ChatPanel';
 import Sidebar, { type Page } from './components/Sidebar';
-import { selectChatVideos, type ChatTarget } from './lib/chat-session';
+import { popularChartTarget, selectChatVideos, type ChatTarget } from './lib/chat-session';
+import { loadShared } from './hooks/useApiResource';
+import { POPULAR_CACHE_MS } from './hooks/useVideos';
+import { toApiRequestError } from './lib/api';
+import type { VideosResponse } from './types/video';
 import InfoDisclosure from './components/InfoDisclosure';
 import { useTargets } from './hooks/useTargets';
 import { makeTarget } from './lib/analysis-target';
@@ -32,6 +36,26 @@ export default function App() {
   const target: ChatTarget = targets.active ?? { label: '대상 미선택', videos: [] };
   const scroll = useRef<Record<Page, number>>({ dashboard: 0, search: 0, ai: 0, favorites: 0 });
   const favorites = useFavorites();
+  const [chartLoad, setChartLoad] = useState<{ loading: boolean; error?: string }>({
+    loading: false,
+  });
+  // 대시보드와 같은 인기 차트 응답을 공유한다. 대시보드를 이미 열었다면 추가 호출이 없다.
+  const applyChartTop = async () => {
+    setChartLoad({ loading: true });
+    try {
+      const { items } = await loadShared<VideosResponse>(CHART_PATH, POPULAR_CACHE_MS);
+      if (!items.length) throw new Error('인기 차트 영상이 없습니다.');
+      setActive(
+        makeTarget(
+          popularChartTarget(items, 'YouTube 인기 차트 상위 20개', Date.now()),
+          'dashboard',
+        ),
+      );
+      setChartLoad({ loading: false });
+    } catch (error) {
+      setChartLoad({ loading: false, error: toApiRequestError(error).message });
+    }
+  };
   const chat = useChat();
   const {
     categories,
@@ -168,7 +192,15 @@ export default function App() {
                 disabled={!lastHome?.videos.length}
                 onClick={() => setActive(lastHome)}
               >
-                현재 검색/홈 결과 사용 ({lastHome?.videos.length ?? 0})
+                현재 검색 결과 사용 ({lastHome?.videos.length ?? 0})
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={chartLoad.loading}
+                onClick={applyChartTop}
+              >
+                {chartLoad.loading ? '인기 차트 불러오는 중…' : '인기 차트 상위 20개 사용'}
               </button>
               <button
                 className="secondary-button"
@@ -190,6 +222,11 @@ export default function App() {
               </button>
             </div>
           </section>
+          {chartLoad.error && (
+            <p role="alert" className="mb-4 text-sm text-red-700">
+              인기 차트를 불러오지 못했습니다: {chartLoad.error}
+            </p>
+          )}
           {targets.notice && (
             <p role="status" className="mb-4 text-sm text-amber-900">
               {targets.notice}
