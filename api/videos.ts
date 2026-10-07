@@ -1,7 +1,12 @@
 // 기본 홈은 카테고리 제한 없는 인기 목록. 키워드/카테고리는 검색 후 통계 일괄 보완.
 import type { SortOrder, VideosResponse } from '../src/types/video.js';
 import { ApiFailure, errorResponse, json } from './_lib/http.js';
-import { listPopularVideos, searchVideos, sortVideos } from './_lib/youtube.js';
+import {
+  listAllPopularVideos,
+  listPopularVideos,
+  searchVideos,
+  sortVideos,
+} from './_lib/youtube.js';
 
 const CACHE_POPULAR = 'public, s-maxage=600, stale-while-revalidate=1200';
 const CACHE_SEARCH = 'public, s-maxage=1800, stale-while-revalidate=3600';
@@ -25,13 +30,13 @@ export async function GET(request: Request): Promise<Response> {
       throw new ApiFailure('BAD_REQUEST', '카테고리 값이 올바르지 않습니다.', 400);
     }
 
-    // chart=popular: 카테고리별 인기 차트(videos.list). 검색(search.list)을 쓰지 않는다.
+    // chart=popular&all=1: 전체 인기 차트를 pageToken으로 끝까지 수집한다. 카테고리별 차트·검색은 쓰지 않는다.
     const chart = params.get('chart');
-    if (chart !== null && (chart !== 'popular' || q || order)) {
-      throw new ApiFailure('BAD_REQUEST', 'chart=popular는 categoryId만 함께 쓸 수 있습니다.', 400);
-    }
-    if (chart) {
-      const body: VideosResponse = { items: await listPopularVideos(categoryId) };
+    if (chart !== null) {
+      if (chart !== 'popular' || params.get('all') !== '1' || q || categoryId || order) {
+        throw new ApiFailure('BAD_REQUEST', 'chart=popular는 all=1만 함께 쓸 수 있습니다.', 400);
+      }
+      const body: VideosResponse = { items: await listAllPopularVideos() };
       return json(body, { cache: CACHE_POPULAR });
     }
 

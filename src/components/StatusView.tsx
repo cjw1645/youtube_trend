@@ -127,12 +127,3 @@ export function LoadingPanel({ label }: { label: string }) {
     </div>
   );
 }
-
-/** 오류가 아닌 안내(예: 인기 목록을 제공하지 않는 카테고리) */
-export function NoticeView({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Panel icon={<MagnifyingGlassIcon />} title={title}>
-      {children}
-    </Panel>
-  );
-}

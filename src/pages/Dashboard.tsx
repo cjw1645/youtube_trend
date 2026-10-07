@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useId, useMemo, useState } from 'react';
-import { POPULAR_CACHE_MS, useVideos } from '../hooks/useVideos';
+import { POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
-import { ErrorView, LoadingPanel, NoticeView } from '../components/StatusView';
+import { ErrorView, LoadingPanel } from '../components/StatusView';
 import {
   aggregateKeywords,
   categoryDistribution,
@@ -16,9 +16,10 @@ import { formatCount, formatRelativeDate } from '../lib/format';
 import type { ChatTarget } from '../lib/chat-session';
 import type { Video, VideosResponse } from '../types/video';
 
-const POPULAR_QUERY = { q: '', categoryId: '', order: '' } as const;
-/** 전체 인기 목록에서 영상이 많은 카테고리 순으로 탭을 만든다. */
-const MAX_TABS = 6;
+/** 전체 인기 차트를 pageToken으로 끝까지 수집한 목록. 카테고리 탭은 이 목록 안에서만 거른다. */
+const CHART_PATH = '/api/videos?chart=popular&all=1';
+/** 이 개수 미만이면 비율·순위 해석에 주의 문구를 붙인다. */
+const SMALL_SAMPLE = 10;
 
 interface Props {
   categoryNames: ReadonlyMap<string, string>;
@@ -191,42 +192,33 @@ export default function Dashboard({
   onSelect,
   onAnalyze,
 }: Props) {
-  // 전체 인기 목록은 영상 검색 화면과 같은 응답을 공유하고, 탭 목록도 이 목록의 카테고리로 만든다.
-  const base = useVideos(POPULAR_QUERY);
-  const baseVideos = base.state.status === 'success' ? base.state.videos : undefined;
+  const chart = useApiResource<VideosResponse>(CHART_PATH, { cacheMs: POPULAR_CACHE_MS });
   const [tab, setTab] = useState('');
-  const chart = useApiResource<VideosResponse>(
-    tab ? `/api/videos?chart=popular&categoryId=${encodeURIComponent(tab)}` : '/api/videos?',
-    { cacheMs: POPULAR_CACHE_MS },
+  const chartVideos = chart.state.status === 'success' ? chart.state.data.items : undefined;
+  const now = chart.state.status === 'success' ? chart.state.receivedAt : 0;
+  // 수집한 목록의 카테고리 분포에 실제로 있는 카테고리만 영상 수 순으로 탭을 만든다.
+  const tabs = useMemo(
+    () =>
+      chartVideos
+        ? categoryDistribution(chartVideos, (video) => video.categoryId).map(({ key, count }) => ({
+            id: key,
+            count,
+          }))
+        : [],
+    [chartVideos],
   );
-  const tabs = useMemo(() => {
-    const ids = baseVideos
-      ? categoryDistribution(baseVideos, (video) => video.categoryId)
-          .slice(0, MAX_TABS)
-          .map(({ key }) => key)
-      : [];
-    return tab && !ids.includes(tab) ? [...ids, tab] : ids;
-  }, [baseVideos, tab]);
-  const tabState = tab ? chart.state : null;
-  // 인기 차트가 없는 카테고리는 빈 목록 또는 NOT_FOUND로 온다.
-  const unsupported =
-    !!tabState &&
-    ((tabState.status === 'success' && !tabState.data.items.length) ||
-      (tabState.status === 'error' && tabState.error.code === 'NOT_FOUND'));
-  const state = tabState
-    ? tabState.status === 'success'
-      ? {
-          status: 'success' as const,
-          videos: tabState.data.items,
-          fetchedAt: tabState.receivedAt,
-        }
-      : tabState
-    : base.state;
-  const reload = tab ? chart.reload : base.reload;
-  const videos = state.status === 'success' && !unsupported ? state.videos : undefined;
-  const now = state.status === 'success' ? state.fetchedAt : 0;
+  const activeTab = tabs.some(({ id }) => id === tab) ? tab : '';
+  // 추가 API 호출 없이 전체 차트 순서(popularRank)를 유지한 채 걸러낸다.
+  const videos = useMemo(
+    () =>
+      chartVideos && activeTab
+        ? chartVideos.filter((video) => video.categoryId === activeTab)
+        : chartVideos,
+    [chartVideos, activeTab],
+  );
+  const reload = chart.reload;
   const tabsId = useId();
-  const tabName = tab ? (categoryNames.get(tab) ?? '선택 카테고리') : '';
+  const tabName = activeTab ? (categoryNames.get(activeTab) ?? '카테고리 정보 없음') : '';
   const selectTab = (id: string) => {
     setTab(id);
     document.getElementById(tabsId)?.scrollIntoView({ block: 'nearest' });
@@ -244,8 +236,11 @@ export default function Dashboard({
     [videos, now],
   );
   useEffect(() => {
-    if (videos) resolveCategoryNames(videos.map((video) => video.categoryId));
-  }, [videos, resolveCategoryNames]);
+    if (chartVideos) resolveCategoryNames(chartVideos.map((video) => video.categoryId));
+  }, [chartVideos, resolveCategoryNames]);
+  const scope = tabName
+    ? `YouTube 인기 차트 ${chartVideos?.length ?? 0}개 중 ${tabName} ${videos?.length ?? 0}개 기준`
+    : `YouTube 인기 차트 ${chartVideos?.length ?? 0}개 기준`;
 
   return (
     <div className="dashboard flex flex-col gap-6">
@@ -254,8 +249,8 @@ export default function Dashboard({
           <h1>대시보드</h1>
           <p className="dash-scope">
             {videos
-              ? `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} ${videos.length}개 기준 · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
-              : `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} 기준`}
+              ? `${scope} · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
+              : 'YouTube 인기 차트 기준'}
           </p>
         </div>
         <button
@@ -264,15 +259,17 @@ export default function Dashboard({
           disabled={!videos?.length}
           onClick={() => {
             if (!videos) return;
-            // 현재 탭 인기 목록의 앞 20개를 YouTube 인기 순위와 함께 전달한다.
+            // 현재 탭 목록의 앞 20개를 전체 차트 순위(popularRank)와 함께 전달한다.
             const top = videos.slice(0, 20);
             onAnalyze({
-              label: `대시보드 · YouTube 인기 목록${tabName ? ` · ${tabName}` : ''}`,
+              label: `대시보드 · ${scope}`,
               videos: top,
               source: 'dashboard',
               capturedAt: now,
               rankingSource: 'popular',
-              popularRank: Object.fromEntries(top.map((video, index) => [video.id, index + 1])),
+              popularRank: Object.fromEntries(
+                top.map((video, index) => [video.id, video.popularRank ?? index + 1]),
+              ),
             });
           }}
         >
@@ -280,28 +277,26 @@ export default function Dashboard({
         </button>
       </header>
       {tabs.length > 0 && (
-        <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 목록">
-          {['', ...tabs].map((id) => (
+        <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 차트">
+          {[{ id: '', count: chartVideos?.length ?? 0 }, ...tabs].map(({ id, count }) => (
             <button
               key={id || 'all'}
               type="button"
-              aria-pressed={tab === id}
+              aria-pressed={activeTab === id}
               onClick={() => selectTab(id)}
             >
-              {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'}
+              {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'} · {count}
             </button>
           ))}
         </nav>
       )}
-      {state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
-      {unsupported ? (
-        <NoticeView title="이 카테고리는 인기 목록을 제공하지 않습니다">
-          <p>YouTube API가 이 카테고리의 인기 차트를 제공하지 않습니다. 다른 탭을 선택해 보세요.</p>
-        </NoticeView>
-      ) : (
-        state.status === 'error' && (
-          <ErrorView title="인기 목록을 불러오지 못했습니다" error={state.error} onRetry={reload} />
-        )
+      {chart.state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
+      {chart.state.status === 'error' && (
+        <ErrorView
+          title="인기 목록을 불러오지 못했습니다"
+          error={chart.state.error}
+          onRetry={reload}
+        />
       )}
       {summary && videos && (
         <>
@@ -309,7 +304,11 @@ export default function Dashboard({
             <StatTile
               label="인기 영상"
               value={`${summary.count}개`}
-              note="YouTube API 제공 인기 목록"
+              note={
+                summary.count < SMALL_SAMPLE
+                  ? '표본이 적어 비율·순위 해석에 주의'
+                  : 'YouTube API 제공 인기 차트'
+              }
             />
             <StatTile
               label="24시간 내 업로드"
@@ -380,7 +379,7 @@ export default function Dashboard({
                     value={count}
                     max={categories[0].count}
                     valueLabel={`${count}개 · 조회수 ${percent(viewShare)}`}
-                    onClick={tab === key ? undefined : () => selectTab(key)}
+                    onClick={activeTab === key ? undefined : () => selectTab(key)}
                     actionLabel={`${categoryNames.get(key) ?? '카테고리 정보 없음'} 인기 목록 탭으로 보기`}
                   />
                 ))}

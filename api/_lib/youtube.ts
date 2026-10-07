@@ -46,6 +46,7 @@ interface RawSearchItem {
 
 interface ListResponse<T> {
   items?: T[];
+  nextPageToken?: string;
 }
 
 export interface ChannelInfo {
@@ -260,23 +261,44 @@ export function sortVideos(videos: Video[], order?: SortOrder): Video[] {
   return videos;
 }
 
-export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
-  try {
-    const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
+export async function listPopularVideos(): Promise<Video[]> {
+  const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
+    part: VIDEO_PART,
+    chart: 'mostPopular',
+    regionCode: REGION,
+    hl: 'ko',
+    maxResults: '50',
+  });
+  // API 제공 순서 = YouTube 인기 순위. 화면에서 다시 정렬해도 AI 분석의 인기순 기준으로 쓴다.
+  return items.map((raw, index) => ({ ...toVideo(raw), popularRank: index + 1 }));
+}
+
+/** 인기 차트 상한: 페이지당 50개 × 4페이지 */
+const POPULAR_MAX_PAGES = 4;
+
+/** 전체 인기 차트를 pageToken으로 끝까지 수집한다(페이지당 1 unit). 한 페이지라도 실패하면 전체를 실패로 처리한다. */
+export async function listAllPopularVideos(): Promise<Video[]> {
+  const videos: Video[] = [];
+  const seen = new Set<string>();
+  let pageToken: string | undefined;
+  for (let page = 0; page < POPULAR_MAX_PAGES; page += 1) {
+    const { items = [], nextPageToken } = await ytFetch<ListResponse<RawVideo>>('videos', {
       part: VIDEO_PART,
       chart: 'mostPopular',
       regionCode: REGION,
       hl: 'ko',
       maxResults: '50',
-      ...(categoryId ? { videoCategoryId: categoryId } : {}),
+      ...(pageToken ? { pageToken } : {}),
     });
-    // API 제공 순서 = YouTube 인기 순위. 화면에서 다시 정렬해도 AI 분석의 인기순 기준으로 쓴다.
-    return items.map((raw, index) => ({ ...toVideo(raw), popularRank: index + 1 }));
-  } catch (err) {
-    // 인기 차트가 없는 카테고리는 오류 대신 빈 목록
-    if (err instanceof ApiFailure && err.reason === 'videoChartNotFound') return [];
-    throw err;
+    for (const raw of items) {
+      if (seen.has(raw.id)) continue;
+      seen.add(raw.id);
+      videos.push({ ...toVideo(raw), popularRank: videos.length + 1 });
+    }
+    if (!nextPageToken) break;
+    pageToken = nextPageToken;
   }
+  return videos;
 }
 
 /** 검색의 별도 할당량과 통계 보완 호출을 사용한다. 비용은 공식 문서/프로젝트 설정으로 확인한다. */
