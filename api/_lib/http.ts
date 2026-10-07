@@ -34,6 +34,9 @@ export function errorResponse(err: unknown): Response {
   }
   // 예외 원문에 인증 URL·요청 메타데이터가 포함될 수 있어 로그하지 않는다.
   console.error('[api] unexpected error');
-  const body: ApiError = { code: 'INTERNAL_ERROR', message: '서버에서 알 수 없는 오류가 발생했습니다.' };
+  const body: ApiError = {
+    code: 'INTERNAL_ERROR',
+    message: '서버에서 알 수 없는 오류가 발생했습니다.',
+  };
   return json(body, { status: 500 });
 }

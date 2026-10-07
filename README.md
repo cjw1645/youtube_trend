@@ -58,6 +58,8 @@ npm run dev
 
 루트의 `.env.example`에는 `YOUTUBE_API_KEY`, `GEMINI_API_KEY` 이름과 공란 값만 있습니다. 개발자가 직접 루트 `.env.local`을 만들고 발급한 값을 설정하세요. 개발 서버의 기존 서버 로더가 이 파일을 읽습니다. 실제 환경 파일은 Git에 추가하지 않습니다. 로컬 `/api` 연결은 Vite 개발 전용 플러그인이 처리하며 Vercel Functions 통합 확인은 설치된 Vercel CLI의 `vercel dev`로 진행할 수 있습니다. `npm run build`는 타입 검사와 Production 번들을 생성합니다. `npm run preview`는 정적 번들 확인용이며 API 서버를 대신하지 않습니다.
 
+코드 형식은 Prettier 설정을 기준으로 통일합니다. 변경 후 `npm run format`으로 정리하고 `npm run format:check`와 `npm run build`로 확인하세요. 포맷 명령은 환경 파일과 로컬 평가 기록을 제외합니다.
+
 ## API Key 발급과 설정
 
 1. [YouTube Data API 시작 안내](https://developers.google.com/youtube/v3/getting-started)에 따라 Google Cloud 프로젝트에서 YouTube Data API v3를 활성화하고 API Key를 발급합니다. 공개 영상 조회에 이 키를 사용합니다.

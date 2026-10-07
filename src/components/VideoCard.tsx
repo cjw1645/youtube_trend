@@ -11,10 +11,18 @@ interface Props {
   onSelect: (video: Video) => void;
   saved: boolean;
   onFavoriteToggle: () => void;
-  analysisSelection?: {selected:boolean;toggle:()=>void};
+  analysisSelection?: { selected: boolean; toggle: () => void };
 }
 
-export default function VideoCard({ video, categoryName, rank, onSelect, saved, onFavoriteToggle, analysisSelection }: Props) {
+export default function VideoCard({
+  video,
+  categoryName,
+  rank,
+  onSelect,
+  saved,
+  onFavoriteToggle,
+  analysisSelection,
+}: Props) {
   return (
     <article className="video-card group flex flex-col">
       <button
@@ -43,7 +51,12 @@ export default function VideoCard({ video, categoryName, rank, onSelect, saved, 
 
       <div className="mt-3 flex flex-1 flex-col gap-1">
         <h3 className="text-[15px] font-semibold leading-snug text-zinc-900">
-          <button type="button" onClick={() => onSelect(video)} className="w-full text-left hover:underline focus-visible:outline-2 focus-visible:outline-red-600" title={video.title}>
+          <button
+            type="button"
+            onClick={() => onSelect(video)}
+            className="w-full text-left hover:underline focus-visible:outline-2 focus-visible:outline-red-600"
+            title={video.title}
+          >
             <span className="line-clamp-2">{video.title}</span>
           </button>
         </h3>
@@ -55,11 +68,29 @@ export default function VideoCard({ video, categoryName, rank, onSelect, saved, 
             {formatRelativeDate(video.publishedAt)}
           </time>
         </p>
-        {(
-          <span className="mt-1 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{categoryName ?? '카테고리 정보 없음'}</span>
+        {
+          <span className="mt-1 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+            {categoryName ?? '카테고리 정보 없음'}
+          </span>
+        }
+        <div className="mt-2">
+          <FavoriteButton saved={saved} title={video.title} onClick={onFavoriteToggle} />
+        </div>
+        {analysisSelection && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={analysisSelection.selected}
+            aria-label={`${video.title} 분석 대상으로 선택`}
+            className="secondary-button selection-button mt-2"
+            onClick={analysisSelection.toggle}
+          >
+            <span className="selection-check" aria-hidden="true">
+              {analysisSelection.selected && <CheckIcon />}
+            </span>
+            {analysisSelection.selected ? '분석 대상으로 선택됨' : '분석 대상 선택'}
+          </button>
         )}
-        <div className="mt-2"><FavoriteButton saved={saved} title={video.title} onClick={onFavoriteToggle} /></div>
-        {analysisSelection && <button type="button" role="checkbox" aria-checked={analysisSelection.selected} aria-label={`${video.title} 분석 대상으로 선택`} className="secondary-button selection-button mt-2" onClick={analysisSelection.toggle}><span className="selection-check" aria-hidden="true">{analysisSelection.selected && <CheckIcon/>}</span>{analysisSelection.selected?'분석 대상으로 선택됨':'분석 대상 선택'}</button>}
       </div>
     </article>
   );

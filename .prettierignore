@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.git/
+.vercel/
+.env*
+docs/
+AGENTS.md
+MILESTONE.md
+scripts/
+api/_fixtures/
+api/_lib/fixtures.ts
+api/_lib/fetch-fixtures.ts
+api/_lib/runtime.ts
+package-lock.json

@@ -1,4 +1,3 @@
-// GET /api/videos?q=&categoryId=&order=viewCount|date
 // 기본 홈은 카테고리 제한 없는 인기 목록. 키워드/카테고리는 검색 후 통계 일괄 보완.
 import type { SortOrder, VideosResponse } from '../src/types/video.js';
 import { ApiFailure, errorResponse, json } from './_lib/http.js';
@@ -20,13 +19,16 @@ export async function GET(request: Request): Promise<Response> {
     const categoryId = params.get('categoryId') || undefined;
     const order = parseOrder(params.get('order'));
 
-    if (q.length > 100) throw new ApiFailure('BAD_REQUEST', '검색어는 100자 이하로 입력해 주세요.', 400);
+    if (q.length > 100)
+      throw new ApiFailure('BAD_REQUEST', '검색어는 100자 이하로 입력해 주세요.', 400);
     if (categoryId && !/^\d+$/.test(categoryId)) {
       throw new ApiFailure('BAD_REQUEST', '카테고리 값이 올바르지 않습니다.', 400);
     }
 
     const searching = !!(q || categoryId);
-    const videos = searching ? await searchVideos(q, { categoryId, order }) : await listPopularVideos();
+    const videos = searching
+      ? await searchVideos(q, { categoryId, order })
+      : await listPopularVideos();
     const body: VideosResponse = { items: sortVideos(videos, order) };
     return json(body, { cache: searching ? CACHE_SEARCH : CACHE_POPULAR });
   } catch (err) {

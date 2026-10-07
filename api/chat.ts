@@ -10,7 +10,12 @@ export async function POST(request: Request): Promise<Response> {
     const { question, videoIds } = await readChatRequest(request);
     const context = await getAnalysisContext(videoIds);
     const result = await generateContent(buildChatInput(question, context));
-    const body: ChatResponse = { answer: renderChatReferences(result.text, context), model: result.model, question, context };
+    const body: ChatResponse = {
+      answer: renderChatReferences(result.text, context),
+      model: result.model,
+      question,
+      context,
+    };
     return json(body); // 질문·답변·모든 오류는 CDN/브라우저 캐시 제외
   } catch (error) {
     return errorResponse(error);

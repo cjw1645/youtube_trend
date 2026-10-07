@@ -46,28 +46,51 @@ HTML과 Markdown 이스케이프 없이 일반 텍스트로 답하세요. 숫자
 
 /** 전송 당시 순서와 전체 메타데이터를 보존하고 인용할 날짜만 명시한다. */
 export function buildChatInput(question: string, context: AnalysisContext): GeminiInput {
-  const viewRanking = context.videos.filter(video => video.viewCount !== null)
+  const viewRanking = context.videos
+    .filter((video) => video.viewCount !== null)
     .map((video, index) => ({ id: video.id, viewCount: video.viewCount!, index }))
     .sort((a, b) => b.viewCount - a.viewCount || a.index - b.index)
     .map(({ id }, index) => ({ id, rank: index + 1 }));
-  const likeViewRatios = context.videos.map(video => ({
+  const likeViewRatios = context.videos.map((video) => ({
     id: video.id,
-    percent: video.viewCount !== null && video.viewCount > 0 && video.likeCount !== null ? Math.round(video.likeCount / video.viewCount * 10000) / 100 : null,
-    unavailableReason: video.viewCount === null ? '조회수 정보 없음' : video.viewCount === 0 ? '분모 0' : video.likeCount === null ? '좋아요 정보 없음' : null,
+    percent:
+      video.viewCount !== null && video.viewCount > 0 && video.likeCount !== null
+        ? Math.round((video.likeCount / video.viewCount) * 10000) / 100
+        : null,
+    unavailableReason:
+      video.viewCount === null
+        ? '조회수 정보 없음'
+        : video.viewCount === 0
+          ? '분모 0'
+          : video.likeCount === null
+            ? '좋아요 정보 없음'
+            : null,
   }));
   return {
     systemInstruction: CHAT_SYSTEM_INSTRUCTION,
     prompt: JSON.stringify({
       question,
-      videos: context.videos.map(video => ({ ...video, publishedDate: video.publishedAt.slice(0, 10) })),
+      videos: context.videos.map((video) => ({
+        ...video,
+        publishedDate: video.publishedAt.slice(0, 10),
+      })),
       excludedIds: context.excludedIds,
       viewRanking,
       likeViewRatios,
-      scope: { label: '현재 요청의 영상', videoCount: context.videos.length, requestedCount: context.requestedIds.length },
+      scope: {
+        label: '현재 요청의 영상',
+        videoCount: context.videos.length,
+        requestedCount: context.requestedIds.length,
+      },
       responseChecks: {
-        citation: '기존 제목/조회수/업로드일/태그 인용은 {{title:ID}} / {{views:ID}} / {{date:ID}} / {{tags:ID}}로 출력한다. 태그 직접 재작성 금지.',
-        trendLimit: viewRanking.length < 3 ? `트렌드 답변의 근거 데이터에 조회수 근거가 ${viewRanking.length}개뿐이어서 상위3개를 채울 수 없다고 반드시 밝힌다.` : '트렌드 요약은 현재 대상 안의 수치/카테고리 관찰만, 전체 인기/관심/소비 반응 일반화 금지.',
-        proposals: '일반 아이디어에도 실행 가능한 구체적 구성 한 줄과 대상 근거를 연결한다. 사용자가 제목만/필드만 요청하면 추가하지 않는다.',
+        citation:
+          '기존 제목/조회수/업로드일/태그 인용은 {{title:ID}} / {{views:ID}} / {{date:ID}} / {{tags:ID}}로 출력한다. 태그 직접 재작성 금지.',
+        trendLimit:
+          viewRanking.length < 3
+            ? `트렌드 답변의 근거 데이터에 조회수 근거가 ${viewRanking.length}개뿐이어서 상위3개를 채울 수 없다고 반드시 밝힌다.`
+            : '트렌드 요약은 현재 대상 안의 수치/카테고리 관찰만, 전체 인기/관심/소비 반응 일반화 금지.',
+        proposals:
+          '일반 아이디어에도 실행 가능한 구체적 구성 한 줄과 대상 근거를 연결한다. 사용자가 제목만/필드만 요청하면 추가하지 않는다.',
       },
     }),
   };
@@ -75,27 +98,49 @@ export function buildChatInput(question: string, context: AnalysisContext): Gemi
 
 /** 모델이 선택한 인용만 서버 원문으로 표시한다. 분석 내용이나 제안을 대체하지 않는다. */
 export function renderChatReferences(text: string, context: AnalysisContext): string {
-  const videos = new Map(context.videos.map(video => [video.id, video]));
+  const videos = new Map(context.videos.map((video) => [video.id, video]));
   const fields = new Set(['title', 'views', 'date', 'tags', 'tag']);
   for (const reference of text.matchAll(/\{\{([A-Za-z][A-Za-z0-9]*):([^{}]*)(\}\})?/g)) {
     if (!fields.has(reference[1]) || !reference[2] || !reference[3]) {
-      throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
+      throw new ApiFailure(
+        'UPSTREAM_ERROR',
+        'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.',
+        502,
+      );
     }
   }
-  return text.replace(/\{\{(title|views|date|tags|tag):([^{}]+)\}\}/g, (_reference, field: string, reference: string) => {
-    const [id, tagNumber, extra] = field === 'tag' ? reference.split(':') : [reference];
-    const video = videos.get(id);
-    if (!video) throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
-    if (field === 'tag') {
-      const index = Number(tagNumber) - 1;
-      if (extra !== undefined || !/^[1-9]\d*$/.test(tagNumber ?? '') || !Number.isSafeInteger(index) || index >= video.tags.length) {
-        throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 태그 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
+  return text.replace(
+    /\{\{(title|views|date|tags|tag):([^{}]+)\}\}/g,
+    (_reference, field: string, reference: string) => {
+      const [id, tagNumber, extra] = field === 'tag' ? reference.split(':') : [reference];
+      const video = videos.get(id);
+      if (!video)
+        throw new ApiFailure(
+          'UPSTREAM_ERROR',
+          'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.',
+          502,
+        );
+      if (field === 'tag') {
+        const index = Number(tagNumber) - 1;
+        if (
+          extra !== undefined ||
+          !/^[1-9]\d*$/.test(tagNumber ?? '') ||
+          !Number.isSafeInteger(index) ||
+          index >= video.tags.length
+        ) {
+          throw new ApiFailure(
+            'UPSTREAM_ERROR',
+            'AI 답변의 태그 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.',
+            502,
+          );
+        }
+        return `${video.tags[index]} (영상 ID: ${id})`;
       }
-      return `${video.tags[index]} (영상 ID: ${id})`;
-    }
-    if (field === 'title') return video.title;
-    if (field === 'views') return video.viewCount === null ? '정보 없음' : video.viewCount.toLocaleString('ko-KR');
-    if (field === 'date') return video.publishedAt.slice(0, 10);
-    return `${video.tags.length ? video.tags.join(', ') : '등록된 태그 없음'} (영상 ID: ${id})`;
-  });
+      if (field === 'title') return video.title;
+      if (field === 'views')
+        return video.viewCount === null ? '정보 없음' : video.viewCount.toLocaleString('ko-KR');
+      if (field === 'date') return video.publishedAt.slice(0, 10);
+      return `${video.tags.length ? video.tags.join(', ') : '등록된 태그 없음'} (영상 ID: ${id})`;
+    },
+  );
 }

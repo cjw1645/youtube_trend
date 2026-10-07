@@ -37,10 +37,21 @@ export function useFavorites() {
   const remove = (id: string) => persist(current.current.videos.filter((video) => video.id !== id));
   const toggle = (video: Video) => {
     const saved = current.current.videos.some((item) => item.id === video.id);
-    persist(saved ? current.current.videos.filter((item) => item.id !== video.id) : [snapshotVideo(video), ...current.current.videos]);
+    persist(
+      saved
+        ? current.current.videos.filter((item) => item.id !== video.id)
+        : [snapshotVideo(video), ...current.current.videos],
+    );
   };
 
-  return { videos: state.videos, error: state.error, reload, remove, toggle, has: (id: string) => state.videos.some((video) => video.id === id) };
+  return {
+    videos: state.videos,
+    error: state.error,
+    reload,
+    remove,
+    toggle,
+    has: (id: string) => state.videos.some((video) => video.id === id),
+  };
 }
 
 export type FavoritesController = ReturnType<typeof useFavorites>;

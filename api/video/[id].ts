@@ -1,7 +1,6 @@
 import { ApiFailure, errorResponse, json } from '../_lib/http.js';
 import { getVideoDetail } from '../_lib/youtube.js';
 
-// GET /api/video/:id — videos.list + channels.list, 서버 전용 Key 사용.
 export async function GET(request: Request): Promise<Response> {
   try {
     const match = new URL(request.url).pathname.match(/^\/api\/video\/([A-Za-z0-9_-]{11})\/?$/);

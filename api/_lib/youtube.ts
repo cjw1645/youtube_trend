@@ -7,6 +7,7 @@ import type { AnalysisContext } from '../../src/types/chat.js';
 const BASE = 'https://www.googleapis.com/youtube/v3';
 const REGION = 'KR';
 const VIDEO_PART = 'snippet,statistics,contentDetails';
+const REQUEST_TIMEOUT_MS = 10_000;
 
 interface Thumbnails {
   [size: string]: { url: string } | undefined;
@@ -54,9 +55,12 @@ export interface ChannelInfo {
   subscriberCount: number | null;
 }
 
-// ---------- 호출 · 오류 판별 ----------
-
-const QUOTA_REASONS = new Set(['quotaExceeded', 'dailyLimitExceeded', 'rateLimitExceeded', 'userRateLimitExceeded']);
+const QUOTA_REASONS = new Set([
+  'quotaExceeded',
+  'dailyLimitExceeded',
+  'rateLimitExceeded',
+  'userRateLimitExceeded',
+]);
 const CONFIG_REASONS = new Set([
   'keyInvalid',
   'keyExpired',
@@ -67,29 +71,44 @@ const CONFIG_REASONS = new Set([
 ]);
 
 function toFailure(status: number, body: unknown): ApiFailure {
-  const error = (body as { error?: { errors?: { reason?: string }[]; details?: { reason?: string }[] } } | null)?.error;
+  const error = isRecord(body) && isRecord(body.error) ? body.error : {};
   // errors[].reason(예: badRequest)과 details[].reason(예: API_KEY_INVALID)이 함께 올 수 있어 모두 확인
-  const reasons = [...(error?.errors ?? []), ...(error?.details ?? [])]
-    .map((e) => e.reason)
-    .filter((r): r is string => !!r);
+  const reasons = [error.errors, error.details]
+    .flatMap((entries) => (Array.isArray(entries) ? entries : []))
+    .filter(isRecord)
+    .map((entry) => entry.reason)
+    .filter((reason): reason is string => typeof reason === 'string');
   const reason = reasons[0];
 
   const quotaReason = reasons.find((r) => QUOTA_REASONS.has(r));
-  if (quotaReason) {
+  if (quotaReason || status === 429) {
     return new ApiFailure(
       'QUOTA_EXCEEDED',
-      'YouTube API 일일 할당량을 모두 사용했습니다. 할당량이 초기화되는 오후 4–5시(한국 시간) 이후 다시 시도해 주세요.',
+      quotaReason === 'quotaExceeded' || quotaReason === 'dailyLimitExceeded'
+        ? 'YouTube API 할당량을 초과했습니다. 할당량이 복구된 후 다시 시도해 주세요.'
+        : 'YouTube API 호출이 일시적으로 제한되었습니다. 잠시 후 다시 시도해 주세요.',
       429,
       quotaReason,
     );
   }
   const configReason = reasons.find((r) => CONFIG_REASONS.has(r));
   if (configReason) {
-    return new ApiFailure('CONFIG_ERROR', '서버의 YouTube API 설정에 문제가 있습니다. 관리자에게 문의해 주세요.', 500, configReason);
+    return new ApiFailure(
+      'CONFIG_ERROR',
+      '서버의 YouTube API 설정에 문제가 있습니다. 관리자에게 문의해 주세요.',
+      500,
+      configReason,
+    );
   }
-  if (status === 404) return new ApiFailure('NOT_FOUND', '요청한 데이터를 찾을 수 없습니다.', 404, reason);
+  if (status === 404)
+    return new ApiFailure('NOT_FOUND', '요청한 데이터를 찾을 수 없습니다.', 404, reason);
   if (status === 400) return new ApiFailure('BAD_REQUEST', '잘못된 요청입니다.', 400, reason);
-  return new ApiFailure('UPSTREAM_ERROR', 'YouTube에서 데이터를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.', 502, reason);
+  return new ApiFailure(
+    'UPSTREAM_ERROR',
+    'YouTube에서 데이터를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    502,
+    reason,
+  );
 }
 
 async function ytFetch<T>(resource: string, params: Record<string, string>): Promise<T> {
@@ -98,21 +117,95 @@ async function ytFetch<T>(resource: string, params: Record<string, string>): Pro
     throw new ApiFailure('CONFIG_ERROR', '서버에 YouTube API Key가 설정되어 있지 않습니다.', 500);
   }
 
-  let res: Response;
+  const controller = new AbortController();
+  // 응답 헤더뿐 아니라 본문 수신에도 같은 제한을 적용한다. 자동 재시도는 하지 않는다.
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    res = await fetch(`${BASE}/${resource}?${new URLSearchParams(params)}`, {
+    const res = await fetch(`${BASE}/${resource}?${new URLSearchParams(params)}`, {
       headers: { 'X-Goog-Api-Key': apiKey },
+      signal: controller.signal,
     });
-  } catch {
+    const body: unknown = await res.json().catch(() => null);
+    controller.signal.throwIfAborted();
+    if (!res.ok) throw toFailure(res.status, body);
+    if (
+      !isRecord(body) ||
+      !Array.isArray(body.items) ||
+      !body.items.every((item) => validItem(resource, item))
+    ) {
+      throw new ApiFailure('UPSTREAM_ERROR', 'YouTube 응답 형식이 올바르지 않습니다.', 502);
+    }
+    return body as T;
+  } catch (error) {
+    if (controller.signal.aborted)
+      throw new ApiFailure(
+        'TIMEOUT',
+        'YouTube 응답 시간이 초과되었습니다. 다시 시도해 주세요.',
+        504,
+      );
+    if (error instanceof ApiFailure) throw error;
     throw new ApiFailure('UPSTREAM_ERROR', 'YouTube 서버에 연결하지 못했습니다.', 502);
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const body: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw toFailure(res.status, body);
-  return body as T;
 }
 
-// ---------- 변환 ----------
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validItem(resource: string, value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (resource === 'search')
+    return (
+      isRecord(value.id) && (value.id.videoId === undefined || typeof value.id.videoId === 'string')
+    );
+  if (typeof value.id !== 'string') return false;
+  const statistics = value.statistics;
+  if (
+    statistics !== undefined &&
+    (!isRecord(statistics) ||
+      !['viewCount', 'likeCount', 'commentCount', 'subscriberCount'].every(
+        (key) => statistics[key] === undefined || typeof statistics[key] === 'string',
+      ))
+  )
+    return false;
+  if (
+    resource === 'channels' &&
+    isRecord(statistics) &&
+    statistics.hiddenSubscriberCount !== undefined &&
+    typeof statistics.hiddenSubscriberCount !== 'boolean'
+  )
+    return false;
+  if (resource === 'videoCategories')
+    return (
+      isRecord(value.snippet) &&
+      typeof value.snippet.title === 'string' &&
+      typeof value.snippet.assignable === 'boolean'
+    );
+  if (resource === 'channels' && value.snippet === undefined) return true;
+  if (
+    !isRecord(value.snippet) ||
+    !isRecord(value.snippet.thumbnails) ||
+    !Object.values(value.snippet.thumbnails).every(
+      (thumbnail) => isRecord(thumbnail) && typeof thumbnail.url === 'string',
+    )
+  )
+    return false;
+  if (resource === 'channels') return typeof value.snippet.title === 'string';
+  const snippet = value.snippet;
+  return (
+    ['title', 'description', 'publishedAt', 'channelId', 'channelTitle', 'categoryId'].every(
+      (key) => typeof snippet[key] === 'string',
+    ) &&
+    (snippet.tags === undefined ||
+      (Array.isArray(snippet.tags) && snippet.tags.every((tag) => typeof tag === 'string'))) &&
+    (value.contentDetails === undefined ||
+      (isRecord(value.contentDetails) &&
+        (value.contentDetails.duration === undefined ||
+          typeof value.contentDetails.duration === 'string')))
+  );
+}
 
 function toNumber(value: string | undefined): number | null {
   if (value === undefined || value.trim() === '') return null;
@@ -159,14 +252,13 @@ function toChannel(raw: RawChannel): ChannelInfo {
 }
 
 export function sortVideos(videos: Video[], order?: SortOrder): Video[] {
-  if (order === 'viewCount') return [...videos].sort((a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1));
-  if (order === 'date') return [...videos].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  if (order === 'viewCount')
+    return [...videos].sort((a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1));
+  if (order === 'date')
+    return [...videos].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   return videos;
 }
 
-// ---------- 공개 API ----------
-
-/** videos.list(chart=mostPopular, regionCode=KR) — 1 unit */
 export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
   try {
     const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
@@ -186,7 +278,10 @@ export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
 }
 
 /** 검색의 별도 할당량과 통계 보완 호출을 사용한다. 비용은 공식 문서/프로젝트 설정으로 확인한다. */
-export async function searchVideos(q: string, opts: { categoryId?: string; order?: SortOrder } = {}): Promise<Video[]> {
+export async function searchVideos(
+  q: string,
+  opts: { categoryId?: string; order?: SortOrder } = {},
+): Promise<Video[]> {
   const search = await ytFetch<ListResponse<RawSearchItem>>('search', {
     part: 'id',
     ...(q ? { q } : {}),
@@ -205,7 +300,6 @@ export async function searchVideos(q: string, opts: { categoryId?: string; order
   return videos.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0)).map(toVideo);
 }
 
-/** videos.list(id=…) — 1 unit, 최대 50개 */
 async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
   const { items = [] } = await ytFetch<ListResponse<RawVideo>>('videos', {
     part: VIDEO_PART,
@@ -215,13 +309,17 @@ async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
   return items;
 }
 
-/** videoCategories.list(regionCode=KR) — 1 unit. 영상에 지정 가능한 카테고리만 반환 */
 export async function listCategories(): Promise<Category[]> {
-  const { items = [] } = await ytFetch<ListResponse<RawCategory>>('videoCategories', { part: 'snippet', regionCode: REGION, hl: 'ko' });
-  return items.filter((c) => c.snippet.assignable).map((c) => ({ id: c.id, title: c.snippet.title }));
+  const { items = [] } = await ytFetch<ListResponse<RawCategory>>('videoCategories', {
+    part: 'snippet',
+    regionCode: REGION,
+    hl: 'ko',
+  });
+  return items
+    .filter((c) => c.snippet.assignable)
+    .map((c) => ({ id: c.id, title: c.snippet.title }));
 }
 
-/** channels.list — 50개당 1 unit */
 export async function getChannels(ids: string[]): Promise<Map<string, ChannelInfo>> {
   const unique = [...new Set(ids)];
   const raws: RawChannel[] = [];
@@ -238,7 +336,12 @@ export async function getChannels(ids: string[]): Promise<Map<string, ChannelInf
 /** 상세: videos.list + channels.list — 2 unit */
 export async function getVideoDetail(id: string): Promise<VideoDetail> {
   const [raw] = await getRawVideos([id]);
-  if (!raw) throw new ApiFailure('NOT_FOUND', '영상을 찾을 수 없습니다. 삭제되었거나 비공개일 수 있습니다.', 404);
+  if (!raw)
+    throw new ApiFailure(
+      'NOT_FOUND',
+      '영상을 찾을 수 없습니다. 삭제되었거나 비공개일 수 있습니다.',
+      404,
+    );
 
   const channel = (await getChannels([raw.snippet.channelId])).get(raw.snippet.channelId);
   return {
@@ -253,7 +356,11 @@ export async function getVideoDetail(id: string): Promise<VideoDetail> {
 /** 분석 대상만 일괄 조회한다. 목록·상세 API를 영상마다 호출하지 않는다. */
 export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext> {
   const requestedIds = [...new Set(ids)];
-  if (!requestedIds.length || requestedIds.length > 20 || requestedIds.some((id) => !/^[A-Za-z0-9_-]{11}$/.test(id))) {
+  if (
+    !requestedIds.length ||
+    requestedIds.length > 20 ||
+    requestedIds.some((id) => !/^[A-Za-z0-9_-]{11}$/.test(id))
+  ) {
     throw new ApiFailure('BAD_REQUEST', '분석 대상은 올바른 영상 ID 1–20개여야 합니다.', 400);
   }
   const raws = await getRawVideos(requestedIds);
@@ -263,7 +370,11 @@ export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext
     return raw ? [raw] : [];
   });
   if (!ordered.length) {
-    throw new ApiFailure('NOT_FOUND', '분석할 영상이 없습니다. 삭제되었거나 비공개로 전환되었을 수 있습니다.', 404);
+    throw new ApiFailure(
+      'NOT_FOUND',
+      '분석할 영상이 없습니다. 삭제되었거나 비공개로 전환되었을 수 있습니다.',
+      404,
+    );
   }
   const [channels, categories] = await Promise.all([
     getChannels(ordered.map((raw) => raw.snippet.channelId)),
@@ -273,8 +384,12 @@ export async function getAnalysisContext(ids: string[]): Promise<AnalysisContext
   const videos = ordered.map((raw) => ({
     id: raw.id,
     title: raw.snippet.title,
-    description: Array.from(raw.snippet.description ?? '').slice(0, 200).join(''),
-    tags: (raw.snippet.tags ?? []).slice(0, 20).map((tag) => Array.from(tag).slice(0, 100).join('')),
+    description: Array.from(raw.snippet.description ?? '')
+      .slice(0, 200)
+      .join(''),
+    tags: (raw.snippet.tags ?? [])
+      .slice(0, 20)
+      .map((tag) => Array.from(tag).slice(0, 100).join('')),
     category: categoryNames.get(raw.snippet.categoryId) ?? null,
     publishedAt: raw.snippet.publishedAt,
     viewCount: toNumber(raw.statistics?.viewCount),

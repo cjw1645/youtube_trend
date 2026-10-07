@@ -10,7 +10,10 @@ export type ResourceState<T> =
 export function useApiResource<T>(path: string) {
   const [retry, setRetry] = useState(0);
   const key = `${retry}:${path}`;
-  const [result, setResult] = useState<{ key: string; state: ResourceState<T> }>({ key, state: { status: 'loading' } });
+  const [result, setResult] = useState<{ key: string; state: ResourceState<T> }>({
+    key,
+    state: { status: 'loading' },
+  });
   useEffect(() => {
     setResult({ key, state: { status: 'loading' } });
     return startRequest(

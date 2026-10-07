@@ -14,10 +14,10 @@ export interface VideoQuery {
 
 export type VideosState =
   | { status: 'loading' }
-  | { status: 'success'; videos: Video[]; fetchedAt:number }
+  | { status: 'success'; videos: Video[]; fetchedAt: number }
   | { status: 'error'; error: ApiRequestError };
 
-/** 조건이 바뀔 때만 /api/videos를 호출한다. 검색은 검색어 제출 시에만 q가 바뀌므로 입력 중에는 호출하지 않는다. */
+/** 검색은 적용 조건으로 조회하고, 기본 인기 목록의 재정렬은 클라이언트에서 처리한다. */
 export function useVideos({ q, categoryId, order }: VideoQuery) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
@@ -25,12 +25,19 @@ export function useVideos({ q, categoryId, order }: VideoQuery) {
   if (order && (q || categoryId)) params.set('order', order);
 
   const resource = useApiResource<VideosResponse>(`/api/videos?${params}`);
-  const fetchedAt=useMemo(()=>Date.now(),[resource.state]);
+  const fetchedAt = useMemo(() => Date.now(), [resource.state]);
   const state = useMemo<VideosState>(() => {
     if (resource.state.status !== 'success') return resource.state;
     const videos = resource.state.data.items;
-    const sorted = q || categoryId || !order ? videos : [...videos].sort(order === 'viewCount' ? (a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1) : (a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    const sorted =
+      q || categoryId || !order
+        ? videos
+        : [...videos].sort(
+            order === 'viewCount'
+              ? (a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1)
+              : (a, b) => b.publishedAt.localeCompare(a.publishedAt),
+          );
     return { status: 'success', videos: sorted, fetchedAt };
-  }, [resource.state, q, categoryId, order,fetchedAt]);
+  }, [resource.state, q, categoryId, order, fetchedAt]);
   return { state, reload: resource.reload };
 }

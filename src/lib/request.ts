@@ -5,14 +5,20 @@ export function startRequest<T>(
   onError: (error: unknown) => void,
 ): () => void {
   const controller = new AbortController();
-  void Promise.resolve().then(() => {
-    if (controller.signal.aborted) return;
-    return load(controller.signal).then(
-      (value) => { if (!controller.signal.aborted) onSuccess(value); },
-      (error: unknown) => { if (!controller.signal.aborted) onError(error); },
-    );
-  }).catch((error: unknown) => {
-    if (!controller.signal.aborted) onError(error);
-  });
+  void Promise.resolve()
+    .then(() => {
+      if (controller.signal.aborted) return;
+      return load(controller.signal).then(
+        (value) => {
+          if (!controller.signal.aborted) onSuccess(value);
+        },
+        (error: unknown) => {
+          if (!controller.signal.aborted) onError(error);
+        },
+      );
+    })
+    .catch((error: unknown) => {
+      if (!controller.signal.aborted) onError(error);
+    });
   return () => controller.abort();
 }
