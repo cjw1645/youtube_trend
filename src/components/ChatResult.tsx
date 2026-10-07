@@ -1,7 +1,62 @@
 import type { ChatState, ChatTarget } from '../lib/chat-session';
-import { formatNumericRanges } from '../lib/format';
+import { formatCount, formatDate, formatNumericRanges } from '../lib/format';
 import { useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
+import { findMentionedVideos, parseAnswerSections } from '../lib/answer-sections';
+import type { AnalysisVideo } from '../types/chat';
+
+function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
+  return (
+    <ul className="evidence-videos" aria-label="근거에 언급된 영상">
+      {videos.map((video) => (
+        <li key={video.id}>
+          <a
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(video.id)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img
+              src={`https://i.ytimg.com/vi/${encodeURIComponent(video.id)}/mqdefault.jpg`}
+              alt=""
+              loading="lazy"
+            />
+            <span className="evidence-title">{video.title}</span>
+            <span className="evidence-meta">
+              조회수 {formatCount(video.viewCount)} · {formatDate(video.publishedAt)}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** 머리말이 모두 있으면 섹션 카드로, 아니면 원문 그대로 텍스트로 표시한다. */
+function AnswerBody({ answer, videos }: { answer: string; videos: AnalysisVideo[] }) {
+  const parsed = parseAnswerSections(answer);
+  if (!parsed)
+    return (
+      <div aria-label="AI 답변" className="answer-plain">
+        <p className="whitespace-pre-wrap break-words">{answer}</p>
+      </div>
+    );
+  return (
+    <div aria-label="AI 답변" className="answer-sections">
+      {parsed.intro && <p className="whitespace-pre-wrap break-words">{parsed.intro}</p>}
+      {parsed.sections.map((section) => {
+        const mentioned =
+          section.title === '근거 데이터' ? findMentionedVideos(section.body, videos) : [];
+        return (
+          <section key={section.title} className="answer-section">
+            <h3>{section.title}</h3>
+            <p className="whitespace-pre-wrap break-words">{section.body}</p>
+            {mentioned.length > 0 && <EvidenceVideos videos={mentioned} />}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
 
 export function ChatVideoList({ videos }: { videos: ChatTarget['videos'] }) {
   return (
@@ -108,14 +163,10 @@ export default function ChatResult({
               {state.response.context.videos.length}개를 분석했습니다.
             </p>
           )}
-          <div
-            aria-label="AI 답변"
-            className="mt-3 rounded-xl bg-panel p-4 text-sm leading-7 text-zinc-800"
-          >
-            <p className="whitespace-pre-wrap break-words">
-              {formatNumericRanges(state.response.answer)}
-            </p>
-          </div>
+          <AnswerBody
+            answer={formatNumericRanges(state.response.answer)}
+            videos={state.response.context.videos}
+          />
           {completedAt && (
             <div className="mt-3">
               <p className="mb-2 text-xs text-zinc-500">
