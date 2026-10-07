@@ -10,6 +10,7 @@ import { selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
 import InfoDisclosure from '../components/InfoDisclosure';
+import KeywordChips from '../components/KeywordChips';
 
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 const EMPTY: Video[] = [];
@@ -40,12 +41,14 @@ export default function Home({
   const { state, reload } = useVideos(query);
 
   const update = (patch: Partial<VideoQuery>) => setDraft((prev) => ({ ...prev, ...patch }));
-  const apply = () => {
-    const next = { ...draft, q: draft.q.trim() };
+  const run = (next: VideoQuery) => {
     setDraft(next);
     if (JSON.stringify(query) === JSON.stringify(next)) reload();
     else setQuery(next);
   };
+  const apply = () => run({ ...draft, q: draft.q.trim() });
+  const searchKeyword = (keyword: string) =>
+    run({ ...query, q: Array.from(keyword).slice(0, 100).join('').trim() });
   const reset = () => {
     setDraft(INITIAL_QUERY);
     if (JSON.stringify(query) === JSON.stringify(INITIAL_QUERY)) reload();
@@ -160,6 +163,9 @@ export default function Home({
           )}
         </div>
 
+        {state.status === 'success' && state.videos.length > 0 && (
+          <KeywordChips videos={state.videos} onSearch={searchKeyword} />
+        )}
         {state.status === 'loading' && <LoadingGrid />}
         {state.status === 'error' && (
           <ErrorView title="영상 목록을 불러오지 못했습니다" error={state.error} onRetry={reload} />

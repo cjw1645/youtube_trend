@@ -812,3 +812,55 @@ button:active:not(:disabled) {
     align-items: stretch;
   }
 }
+.keyword-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.keyword-row h3 {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.keyword-row ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+.keyword-chip span {
+  color: var(--muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.keyword-chip:hover {
+  border-color: var(--color-red-200);
+  background: var(--color-zinc-100);
+}
+@media (max-width: 599px) {
+  .keyword-row ul {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -16px;
+    padding: 8px 16px;
+    scrollbar-width: thin;
+  }
+  .keyword-row li {
+    flex-shrink: 0;
+  }
+}
