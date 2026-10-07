@@ -873,3 +873,18 @@ button:active:not(:disabled) {
 .answer-video-link:hover {
   text-decoration-color: currentColor;
 }
+.keyword-scroll {
+  position: relative;
+}
+@media (max-width: 599px) {
+  .keyword-scroll[data-more]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -16px;
+    bottom: 0;
+    width: 48px;
+    background: linear-gradient(to right, transparent, var(--surface));
+    pointer-events: none;
+  }
+}

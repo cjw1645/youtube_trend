@@ -1,5 +1,5 @@
 import type { ChatState, ChatTarget } from '../lib/chat-session';
-import { formatCount, formatDate, formatNumericRanges } from '../lib/format';
+import { formatCount, formatNumericRanges } from '../lib/format';
 import { useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
 import { findMentionedVideos, parseAnswerSections, splitVideoIds } from '../lib/answer-sections';
@@ -22,7 +22,7 @@ function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
             />
             <span className="evidence-title">{video.title}</span>
             <span className="evidence-meta">
-              조회수 {formatCount(video.viewCount)} · {formatDate(video.publishedAt)}
+              조회수 {formatCount(video.viewCount)} · {video.publishedAt.slice(0, 10)}
             </span>
           </a>
         </li>

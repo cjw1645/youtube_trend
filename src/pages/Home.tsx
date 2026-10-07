@@ -103,16 +103,11 @@ export default function Home({
             <InfoDisclosure summary="목록 기준 안내">
               <p>
                 {query.q || query.categoryId
-                  ? '한국에서 시청 가능한 검색 결과입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.'
+                  ? `한국에서 시청 가능한 검색 결과${query.order ? '' : '(API 관련도순)'}입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.`
                   : query.order
                     ? '조회한 인기 목록 안에서 정렬합니다. 전체 YouTube 순위가 아닙니다.'
-                    : 'YouTube API 제공 목록입니다. 전체 YouTube의 인기 순위를 보장하지 않습니다.'}
+                    : 'YouTube API가 제공한 인기 목록을 응답 순서대로 보여줍니다. 전체 YouTube 인기 순위를 뜻하지 않습니다.'}
               </p>
-              {!query.order && (
-                <p>
-                  인기순은 API 응답 순서입니다(검색은 관련도순). 전체 인기 순위를 뜻하지 않습니다.
-                </p>
-              )}
             </InfoDisclosure>
           </div>
           <button
