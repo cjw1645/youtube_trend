@@ -194,7 +194,7 @@ export async function searchVideos(q: string, opts: { categoryId?: string; order
     regionCode: REGION,
     relevanceLanguage: 'ko',
     maxResults: '25',
-    order: opts.order ?? 'relevance',
+    ...(opts.order ? { order: opts.order } : {}),
     ...(opts.categoryId ? { videoCategoryId: opts.categoryId } : {}),
   });
   const ids = (search.items ?? []).map((i) => i.id.videoId).filter((id): id is string => !!id);

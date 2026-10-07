@@ -26,9 +26,8 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     const searching = !!(q || categoryId);
-    const effectiveOrder = order ?? (!q && categoryId ? 'viewCount' : undefined);
-    const videos = searching ? await searchVideos(q, { categoryId, order: effectiveOrder }) : await listPopularVideos();
-    const body: VideosResponse = { items: sortVideos(videos, effectiveOrder) };
+    const videos = searching ? await searchVideos(q, { categoryId, order }) : await listPopularVideos();
+    const body: VideosResponse = { items: sortVideos(videos, order) };
     return json(body, { cache: searching ? CACHE_SEARCH : CACHE_POPULAR });
   } catch (err) {
     return errorResponse(err);

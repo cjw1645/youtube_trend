@@ -8,7 +8,7 @@ export interface VideoQuery {
   q: string;
   /** 비어 있으면 전체 카테고리 */
   categoryId: string;
-  /** 비어 있으면 API 제공 순서 / 검색 관련도 / 카테고리 조회수순 */
+  /** 비어 있으면 인기순 표시로 API 제공 순서 유지(검색은 기본 관련도) */
   order: SortOrder | '';
 }
 
