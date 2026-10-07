@@ -5,12 +5,15 @@ import type { Video } from '../types/video';
 /** 현재 조회된 목록 안의 키워드만 보여주며, 클릭하면 해당 키워드로 검색한다. */
 export default function KeywordChips({
   videos,
+  query,
   onSearch,
 }: {
   videos: readonly Video[];
+  /** 현재 적용된 검색어. 같은 키워드 칩은 표시하지 않는다. */
+  query: string;
   onSearch: (keyword: string) => void;
 }) {
-  const keywords = useMemo(() => aggregateKeywords(videos), [videos]);
+  const keywords = useMemo(() => aggregateKeywords(videos, { query }), [videos, query]);
   if (!keywords.length) return null;
   return (
     <section className="keyword-row" aria-labelledby="keyword-row-title">

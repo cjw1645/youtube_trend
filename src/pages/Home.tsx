@@ -164,7 +164,7 @@ export default function Home({
         </div>
 
         {state.status === 'success' && state.videos.length > 0 && (
-          <KeywordChips videos={state.videos} onSearch={searchKeyword} />
+          <KeywordChips videos={state.videos} query={query.q} onSearch={searchKeyword} />
         )}
         {state.status === 'loading' && <LoadingGrid />}
         {state.status === 'error' && (
