@@ -1,4 +1,5 @@
 import { useId, type KeyboardEvent } from 'react';
+import { ChevronDownIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
 import type { ChatController } from '../hooks/useChat';
 import { selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import ChatResult, { ChatVideoList } from './ChatResult';
@@ -23,7 +24,7 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
     <section aria-label="AI 데이터 분석" className="chat-surface">
       <details open className="group">
       <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
-        <h2 className="font-bold">AI에게 데이터 분석 묻기 <span aria-hidden className="inline-block transition-transform group-open:rotate-180">⌄</span></h2>
+        <h2 className="flex items-center gap-2 font-bold">AI에게 데이터 분석 묻기 <ChevronDownIcon aria-hidden="true" className="transition-transform group-open:rotate-180"/></h2>
         <span className="max-w-full break-words rounded-full bg-panel px-3 py-1 text-xs font-semibold text-zinc-700">{target.label} · {videos.length}개 분석 대상</span>
       </summary>
       <div className="mt-3">
@@ -40,7 +41,7 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
         <p id={`${inputId}-help`} className="mt-1 text-xs text-zinc-500">Enter로 전송 · Shift+Enter로 줄바꿈</p>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className={`text-xs ${length > 2000 ? 'text-red-700' : 'text-zinc-500'}`}>{length.toLocaleString('ko-KR')} / 2,000자</span>
-          <button type="submit" disabled={disabled} className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-action-hover disabled:cursor-not-allowed disabled:bg-zinc-300">{pending ? '분석 중…' : '전송'}</button>
+          <button type="submit" disabled={disabled} className="primary-button"><PaperPlaneIcon aria-hidden="true"/>{pending ? '분석 중…' : '전송'}</button>
         </div>
       </form>
       {state.status !== 'idle' && <ChatResult key={state.status==='success'?chat.entries?.at(-1)?.completedAt:'active'} state={state} completedAt={state.status==='success'?chat.entries?.at(-1)?.completedAt:undefined}/>}

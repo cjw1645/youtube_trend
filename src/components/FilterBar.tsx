@@ -1,4 +1,5 @@
 import type { Category, SortOrder } from '../types/video';
+import { ResetIcon } from '@radix-ui/react-icons';
 interface Props {
   categories: Category[];
   categoryId: string;
@@ -13,6 +14,6 @@ export default function FilterBar({ categories, categoryId, onCategoryChange, or
     <label>카테고리<select value={categoryId} onChange={event => onCategoryChange(event.target.value)}><option value="">전체 카테고리</option>{categories.map(category => <option key={category.id} value={category.id}>{category.title}</option>)}</select></label>
     <label>정렬<select value={order} onChange={event => onOrderChange(event.target.value as SortOrder | '')}><option value="">인기순</option><option value="viewCount">조회수순</option><option value="date">최신순</option></select></label>
     <button type="button" className="primary-button" onClick={onApply}>적용</button>
-    <button type="button" className="secondary-button" onClick={onReset}>초기화</button>
+    <button type="button" className="secondary-button" onClick={onReset}><ResetIcon aria-hidden="true"/>초기화</button>
   </div>;
 }

@@ -1,8 +1,9 @@
 import type {AnalysisSelection} from '../hooks/useAnalysisSelection';
+import { CheckIcon } from '@radix-ui/react-icons';
 export default function AnalysisSelectionBar({selection,available}:{selection:AnalysisSelection;available:number}) {
- return <section aria-label="분석 영상 직접 선택" className="flex flex-col gap-2">
+ return <section aria-label="분석 영상 직접 선택" className="selection-toolbar">
   <div className="flex flex-wrap items-center gap-2">
-   {!selection.enabled?<button className="secondary-button" type="button" disabled={!available} onClick={selection.start}>분석 영상 직접 선택</button>:<>
+   {!selection.enabled?<button className="secondary-button" type="button" disabled={!available} onClick={selection.start}><CheckIcon aria-hidden="true"/>분석 영상 직접 선택</button>:<>
     <span role="status" className="mr-2 text-sm font-semibold">선택 {selection.selected.length} / 20개</span>
     <button className="secondary-button" type="button" onClick={selection.first}>앞쪽 최대 20개 선택</button>
     <button className="secondary-button" type="button" onClick={selection.clear}>선택 해제</button>

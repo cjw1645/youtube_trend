@@ -1,6 +1,7 @@
 import { formatCount, formatDate, formatDuration, formatRelativeDate } from '../lib/format';
 import type { Video } from '../types/video';
 import FavoriteButton from './FavoriteButton';
+import { CheckIcon } from '@radix-ui/react-icons';
 
 interface Props {
   video: Video;
@@ -15,7 +16,7 @@ interface Props {
 
 export default function VideoCard({ video, categoryName, rank, onSelect, saved, onFavoriteToggle, analysisSelection }: Props) {
   return (
-    <article className="group flex flex-col">
+    <article className="video-card group flex flex-col">
       <button
         type="button"
         onClick={() => onSelect(video)}
@@ -58,7 +59,7 @@ export default function VideoCard({ video, categoryName, rank, onSelect, saved, 
           <span className="mt-1 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{categoryName ?? '카테고리 정보 없음'}</span>
         )}
         <div className="mt-2"><FavoriteButton saved={saved} title={video.title} onClick={onFavoriteToggle} /></div>
-        {analysisSelection && <button type="button" role="checkbox" aria-checked={analysisSelection.selected} aria-label={`${video.title} 분석 대상으로 선택`} className="secondary-button mt-2 flex items-center gap-2" onClick={analysisSelection.toggle}><span aria-hidden>{analysisSelection.selected?'☑':'□'}</span>{analysisSelection.selected?'분석 대상으로 선택됨':'분석 대상 선택'}</button>}
+        {analysisSelection && <button type="button" role="checkbox" aria-checked={analysisSelection.selected} aria-label={`${video.title} 분석 대상으로 선택`} className="secondary-button selection-button mt-2" onClick={analysisSelection.toggle}><span className="selection-check" aria-hidden="true">{analysisSelection.selected && <CheckIcon/>}</span>{analysisSelection.selected?'분석 대상으로 선택됨':'분석 대상 선택'}</button>}
       </div>
     </article>
   );

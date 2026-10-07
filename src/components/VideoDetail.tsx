@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { useApiResource } from '../hooks/useApiResource';
 import { formatDate, formatDuration } from '../lib/format';
 import type { VideoDetail as VideoDetailData } from '../types/video';
@@ -122,8 +123,8 @@ function DetailContent({ video, categoryName }: { video: VideoDetailData; catego
           </ul>
         ) : <p className="text-sm text-zinc-500">등록된 태그가 없습니다.</p>}
       </section>
-      <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="w-fit rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-action-hover">
-        YouTube에서 보기 ↗
+      <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="primary-button w-fit">
+        YouTube에서 보기 <ExternalLinkIcon aria-hidden="true"/>
       </a>
     </article>
   );

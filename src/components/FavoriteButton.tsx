@@ -1,3 +1,4 @@
+import { BookmarkFilledIcon, BookmarkIcon } from '@radix-ui/react-icons';
 interface Props {
   saved: boolean;
   title: string;
@@ -13,9 +14,9 @@ export default function FavoriteButton({ saved, title, onClick, disabled }: Prop
       aria-label={`${title} ${saved ? '관심 영상 해제' : '관심 영상 저장'}`}
       onClick={onClick}
       disabled={disabled}
-      className={`w-fit shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-red-600 disabled:opacity-40 ${saved ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-zinc-200 bg-panel text-zinc-600 hover:bg-zinc-100'}`}
+      className={`favorite-button ${saved ? 'is-saved' : ''}`}
     >
-      <span aria-hidden>{saved ? '♥' : '♡'}</span> {saved ? '저장됨' : '관심 영상'}
+      {saved ? <BookmarkFilledIcon aria-hidden="true"/> : <BookmarkIcon aria-hidden="true"/>} {saved ? '저장됨' : '관심 영상'}
     </button>
   );
 }

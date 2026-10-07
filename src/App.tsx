@@ -46,7 +46,7 @@ export default function App() {
         {homeVisited && <Home initialQuery={lastHome?.query} favorites={favorites} categories={categories} nameById={nameById} onSelect={onSelect} onResults={receiveHome} onAnalyze={analyze}/>}
       </div>
       <div hidden={page !== 'ai'} className="ai-workspace">
-        <header className="page-heading"><p className="eyebrow">분석 작업</p><h1>AI 대화</h1><p>분석할 영상을 확인하고 공개 정보를 바탕으로 질문하세요.</p></header>
+        <header className="page-heading"><h1>AI 대화</h1><p>분석할 영상을 확인하고 공개 정보를 바탕으로 질문하세요.</p></header>
         <section className="target-toolbar" aria-label="분석 대상 선택"><span className="text-sm font-semibold">대상 가져오기</span><div className="flex flex-wrap gap-2">
           <button className="secondary-button" type="button" disabled={!lastHome?.videos.length} onClick={() => setActive(lastHome)}>현재 검색/홈 결과 사용 ({lastHome?.videos.length ?? 0})</button>
           <button className="secondary-button" type="button" disabled={!favorites.videos.length} onClick={() => setActive(makeTarget({ label: '관심 영상 · 전달 시점 기준', videos: favorites.videos }, 'favorites'))}>현재 관심 영상 사용 ({Math.min(favorites.videos.length, 20)})</button>
@@ -56,7 +56,7 @@ export default function App() {
         {targets.notice && <p role="status" className="mb-4 text-sm text-amber-900">{targets.notice}</p>}
         <ChatPanel chat={chat} target={target}/>
       </div>
-      <div hidden={page !== 'favorites'}><header className="page-heading"><p className="eyebrow">내 보관함</p><h1>관심 영상</h1><p>저장한 영상을 다시 살펴보고 다음 기획의 근거로 사용하세요.</p></header>
+      <div hidden={page !== 'favorites'}><header className="page-heading"><h1>관심 영상</h1><p>저장한 영상을 다시 살펴보고 다음 기획의 근거로 사용하세요.</p></header>
         <Favorites favorites={favorites} categoryNames={nameById} onSelect={onSelect} onBrowse={() => navigate('home')} onAnalyze={analyze}/>
       </div>
       {selectedVideoId && <VideoDetail key={selectedVideoId} videoId={selectedVideoId} categoryNames={nameById} onClose={() => setSelectedVideoId(null)} favorites={favorites} onAnalyze={value => { setSelectedVideoId(null); analyze(value); }}/>}
