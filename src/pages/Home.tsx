@@ -88,49 +88,51 @@ export default function Home({
           onReset={reset}
         />
         <div className="applied-query">
-          <p className="text-sm text-zinc-600">
-            적용 조건: {label}
-            {JSON.stringify(draft) !== JSON.stringify(query) && (
-              <span className="ml-2 font-semibold text-red-700">
-                변경한 조건은 아직 적용되지 않았습니다.
-              </span>
-            )}
-          </p>
-          <InfoDisclosure summary="목록 기준 안내">
-            <p>
-              {query.q || query.categoryId
-                ? '한국에서 시청 가능한 검색 결과입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.'
-                : query.order
-                  ? '조회한 인기 목록 안에서 정렬합니다. 전체 YouTube 순위가 아닙니다.'
-                  : 'YouTube API 제공 목록입니다. 전체 YouTube의 인기 순위를 보장하지 않습니다.'}
+          <div className="applied-query-text">
+            <p className="text-sm text-zinc-600">
+              적용 조건: {label}
+              {JSON.stringify(draft) !== JSON.stringify(query) && (
+                <span className="ml-2 font-semibold text-red-700">
+                  변경한 조건은 아직 적용되지 않았습니다.
+                </span>
+              )}
             </p>
-            {!query.order && (
+            <InfoDisclosure summary="목록 기준 안내">
               <p>
-                인기순은 API 응답 순서입니다(검색은 관련도순). 전체 인기 순위를 뜻하지 않습니다.
+                {query.q || query.categoryId
+                  ? '한국에서 시청 가능한 검색 결과입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.'
+                  : query.order
+                    ? '조회한 인기 목록 안에서 정렬합니다. 전체 YouTube 순위가 아닙니다.'
+                    : 'YouTube API 제공 목록입니다. 전체 YouTube의 인기 순위를 보장하지 않습니다.'}
               </p>
-            )}
-          </InfoDisclosure>
+              {!query.order && (
+                <p>
+                  인기순은 API 응답 순서입니다(검색은 관련도순). 전체 인기 순위를 뜻하지 않습니다.
+                </p>
+              )}
+            </InfoDisclosure>
+          </div>
+          <button
+            className="primary-button analyze-action"
+            type="button"
+            disabled={!analysisVideos.length}
+            onClick={() =>
+              onAnalyze({
+                label: label + (selection.enabled ? ' · 직접 선택' : ''),
+                videos: analysisVideos,
+                source: 'home',
+                query,
+                capturedAt: fetchedAt,
+              })
+            }
+          >
+            {selection.enabled
+              ? `선택 ${analysisVideos.length}개로 AI 질문`
+              : '이 목록으로 AI 질문'}
+          </button>
         </div>
       </section>
 
-      <div className="result-actions">
-        <button
-          className="primary-button"
-          type="button"
-          disabled={!analysisVideos.length}
-          onClick={() =>
-            onAnalyze({
-              label: label + (selection.enabled ? ' · 직접 선택' : ''),
-              videos: analysisVideos,
-              source: 'home',
-              query,
-              capturedAt: fetchedAt,
-            })
-          }
-        >
-          {selection.enabled ? `선택 ${analysisVideos.length}개로 AI 질문` : '이 목록으로 AI 질문'}
-        </button>
-      </div>
       <AnalysisSelectionBar selection={selection} available={videos?.length ?? 0} />
 
       <section aria-live="polite" className="flex flex-col gap-4">

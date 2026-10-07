@@ -42,7 +42,7 @@ export default function FilterBar({
           <option value="date">최신순</option>
         </select>
       </label>
-      <button type="button" className="primary-button" onClick={onApply}>
+      <button type="button" className="secondary-button" onClick={onApply}>
         적용
       </button>
       <button type="button" className="secondary-button" onClick={onReset}>

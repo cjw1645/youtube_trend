@@ -61,19 +61,17 @@ export default function VideoCard({
           </button>
         </h3>
         <p className="truncate text-sm text-zinc-600">{video.channelTitle}</p>
-        <p className="text-sm text-zinc-500">
-          조회수 <span className="font-medium text-zinc-700">{formatCount(video.viewCount)}</span>
-          <span className="mx-1.5">·</span>
+        <p className="card-stats">
+          <span>
+            조회수 <span className="font-medium text-zinc-700">{formatCount(video.viewCount)}</span>
+          </span>
+          <span aria-hidden="true">·</span>
           <time dateTime={video.publishedAt} title={formatDate(video.publishedAt)}>
             {formatRelativeDate(video.publishedAt)}
           </time>
         </p>
-        {
-          <span className="mt-1 w-fit rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-            {categoryName ?? '카테고리 정보 없음'}
-          </span>
-        }
-        <div className="mt-2">
+        <div className="card-footer">
+          <span className="category-badge">{categoryName ?? '카테고리 정보 없음'}</span>
           <FavoriteButton saved={saved} title={video.title} onClick={onFavoriteToggle} />
         </div>
         {analysisSelection && (
@@ -82,7 +80,7 @@ export default function VideoCard({
             role="checkbox"
             aria-checked={analysisSelection.selected}
             aria-label={`${video.title} 분석 대상으로 선택`}
-            className="secondary-button selection-button mt-2"
+            className="secondary-button selection-button"
             onClick={analysisSelection.toggle}
           >
             <span className="selection-check" aria-hidden="true">
