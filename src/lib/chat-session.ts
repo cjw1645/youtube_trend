@@ -1,7 +1,7 @@
 import { ApiRequestError, postJson, toApiRequestError } from './api';
 import type { ChatRequest, ChatResponse } from '../types/chat';
 
-export interface ChatTarget { label: string; videos: readonly { id: string; title: string }[] }
+export interface ChatTarget { label: string; videos: readonly { id: string; title: string }[]; source?: 'home' | 'favorites' | 'detail'; capturedAt?: number; query?: { q: string; categoryId: string; order: '' | 'viewCount' | 'date' } }
 export interface ChatSnapshot extends ChatTarget { question: string }
 export type ChatState = { status: 'idle' }
   | { status: 'pending'; snapshot: ChatSnapshot }
@@ -38,7 +38,7 @@ export function createChatSession(onChange: (state: ChatState) => void,
       const trimmed = question.trim();
       const videos = selectChatVideos(target.videos);
       if (active || !trimmed || [...trimmed].length > 2000 || !videos.length) return false;
-      const snapshot: ChatSnapshot = { question: trimmed, label: target.label, videos };
+      const snapshot: ChatSnapshot = { ...target, question: trimmed, videos, ...(target.query ? { query: { ...target.query } } : {}) };
       const controller = new AbortController();
       const request = { controller, timer: setTimeout(() => {
         if (active !== request) return;

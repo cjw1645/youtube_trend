@@ -5,11 +5,10 @@ import type { VideoDetail as VideoDetailData } from '../types/video';
 import { ErrorView } from './StatusView';
 import FavoriteButton from './FavoriteButton';
 import type { FavoritesController } from '../hooks/useFavorites';
-import type { ChatController } from '../hooks/useChat';
-import ChatPanel from './ChatPanel';
+import type { ChatTarget } from '../lib/chat-session';
 
 interface Props {
-  chat: ChatController;
+  onAnalyze: (target: ChatTarget) => void;
   videoId: string;
   categoryNames: ReadonlyMap<string, string>;
   onClose: () => void;
@@ -20,7 +19,7 @@ export function formatDetailCount(value: number | null): string {
   return value === null ? '정보 없음' : value.toLocaleString('ko-KR');
 }
 
-export default function VideoDetail({ chat, videoId, categoryNames, onClose, favorites }: Props) {
+export default function VideoDetail({ onAnalyze, videoId, categoryNames, onClose, favorites }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const { state, reload } = useApiResource<VideoDetailData>(`/api/video/${encodeURIComponent(videoId)}`);
@@ -35,8 +34,8 @@ export default function VideoDetail({ chat, videoId, categoryNames, onClose, fav
     return () => {
       element.close();
       document.body.style.overflow = previousOverflow;
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
-      else document.querySelector<HTMLButtonElement>('nav[aria-label="화면 전환"] button[aria-current="page"]')?.focus();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected && previousFocus.getClientRects().length) previousFocus.focus();
+      else document.getElementById('workspace')?.focus();
     };
   }, []);
 
@@ -65,7 +64,7 @@ export default function VideoDetail({ chat, videoId, categoryNames, onClose, fav
         </div>
       </header>
       <div className="p-5 sm:p-6" aria-live="polite">
-        <div className="mb-6"><ChatPanel chat={chat} target={{ label: '선택 영상 상세', videos: state.status === 'success' ? [state.data] : [] }} /></div>
+        {state.status === 'success' && <div className="mb-6"><button type="button" className="primary-button" onClick={() => onAnalyze({ label: '선택 영상 상세', videos: [state.data] })}>이 영상으로 AI 질문</button></div>}
         {favorites.error && <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{favorites.error}</p>}
         {state.status === 'loading' && (
           <div role="status" className="py-16 text-center text-zinc-500">영상 상세를 불러오는 중…</div>

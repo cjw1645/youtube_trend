@@ -42,7 +42,9 @@ export type ApiErrorCode =
   | 'EMPTY_RESPONSE'
   | 'INTERNAL_ERROR'
   /** 클라이언트 전용: /api에 연결하지 못함 */
-  | 'NETWORK_ERROR';
+  | 'NETWORK_ERROR'
+  /** 클라이언트 전용: 새로고침 후 결과 수신 중단 */
+  | 'INTERRUPTED';
 
 /** /api 오류 응답 본문 */
 export interface ApiError {

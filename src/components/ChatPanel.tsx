@@ -20,14 +20,15 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
   const length = [...question.trim()].length;
   const disabled = pending || !videos.length || !length || length > 2000;
   return (
-    <section aria-label="AI 데이터 분석" className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5">
-      <details open={state.status !== 'idle' ? true : undefined} className="group">
+    <section aria-label="AI 데이터 분석" className="chat-surface">
+      <details open className="group">
       <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
         <h2 className="font-bold">AI에게 데이터 분석 묻기 <span aria-hidden className="inline-block transition-transform group-open:rotate-180">⌄</span></h2>
         <span className="max-w-full break-words rounded-full bg-white px-3 py-1 text-xs font-semibold text-zinc-700">{target.label} · {videos.length}개 분석 대상</span>
       </summary>
       <div className="mt-3">
-      <p className="mt-2 text-xs leading-relaxed text-zinc-500">영상의 제목·설명·조회수 등 공개 정보를 분석합니다. 현재 목록에서 최대 20개, 상세 화면에서는 선택 영상 1개를 사용합니다.</p>
+      <p className="mt-2 text-sm leading-relaxed text-zinc-500">기본은 목록 앞쪽 최대 20개, 직접 선택은 화면 안의 1~20개, 상세는 선택한 1개입니다. 영상·음성 자체는 분석하지 않습니다.</p>
+      {chat.notice && <p role="status" className="mt-3 text-sm text-amber-900">{chat.notice}</p>}
       {videos.length > 0 ? <details className="mt-2 text-xs text-zinc-600"><summary className="cursor-pointer">전송할 영상 확인 ({videos.length}개)</summary><ChatVideoList videos={videos} /></details>
         : <p className="mt-2 text-sm text-amber-800">분석할 영상이 없습니다. 영상을 조회한 뒤 질문해 주세요.</p>}
       <div className="mt-4 flex flex-wrap gap-2" aria-label="예시 질문">
@@ -42,7 +43,9 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
           <button type="submit" disabled={disabled} className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-300">{pending ? '분석 중…' : '전송'}</button>
         </div>
       </form>
-      {state.status !== 'idle' && <ChatResult state={state} />}
+      {state.status !== 'idle' && <ChatResult key={state.status==='success'?chat.entries?.at(-1)?.completedAt:'active'} state={state} completedAt={state.status==='success'?chat.entries?.at(-1)?.completedAt:undefined}/>}
+      {chat.entries?.length > (state.status === 'success' ? 1 : 0) && <details className="mt-6"><summary className="text-sm font-semibold">이전 완료 대화 ({chat.entries.length - (state.status === 'success' ? 1 : 0)}개)</summary>{chat.entries.slice(0, state.status === 'success' ? -1 : undefined).map((entry, index) => <ChatResult key={`${entry.completedAt}-${index}`} state={{ status: 'success', snapshot: entry.snapshot, response: entry.response }} completedAt={entry.completedAt}/>)}</details>}
+      {chat.clear && <div className="mt-6 border-t border-zinc-200 pt-4"><button type="button" disabled={pending} className="secondary-button" onClick={chat.clear}>대화 기록 지우기</button><p className="mt-2 text-xs text-zinc-500">이 탭에 초안과 완료 대화를 최대 24시간 보관합니다. 최근 10건까지 복원하며 대화 이력은 AI에 보내지 않습니다. 탭을 닫아도 브라우저 세션 복원 설정에 따라 남을 수 있습니다.</p></div>}
       </div>
       </details>
     </section>

@@ -3,9 +3,9 @@ export function formatNumericRanges(text: string): string {
   return text.replace(/(\d[\d,.]*\s*(?:개|자|초|분|시간|명|만|억|%|원)?)[ \t]*~+[ \t]*(?=\d)/g, '$1–');
 }
 
-/** 1234 → "1,234", 12345 → "1.2만", 123456789 → "1.2억". 비공개(null)는 "비공개" */
+/** 1234 → "1,234", 12345 → "1.2만", 123456789 → "1.2억". null은 정보 없음. */
 export function formatCount(n: number | null): string {
-  if (n === null) return '비공개';
+  if (n === null) return '정보 없음';
   if (n >= 1e8) return `${trim(n / 1e8)}억`;
   if (n >= 1e4) return `${trim(n / 1e4)}만`;
   return n.toLocaleString('ko-KR');
