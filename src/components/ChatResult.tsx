@@ -39,7 +39,7 @@ export default function ChatResult({ state,completedAt }: { state: Exclude<ChatS
     </div>}
     {state.status === 'success' && <>
       {state.response.context.excludedIds.length > 0 && <p className="mt-2 text-sm text-amber-800">조회할 수 없는 영상 {state.response.context.excludedIds.length}개를 제외하고 {state.response.context.videos.length}개를 분석했습니다.</p>}
-      <div aria-label="AI 답변" className="mt-3 rounded-xl bg-white p-4 text-sm leading-7 text-zinc-800">
+      <div aria-label="AI 답변" className="mt-3 rounded-xl bg-panel p-4 text-sm leading-7 text-zinc-800">
         <p className="whitespace-pre-wrap break-words">{formatNumericRanges(state.response.answer)}</p>
       </div>
       {completedAt&&<div className="mt-3"><p className="mb-2 text-xs text-zinc-500">완료 시각: {new Date(completedAt).toLocaleString('ko-KR')} · 복사/내보내기에 질문과 당시 서버 근거가 포함됩니다.</p><div className="flex flex-wrap gap-2"><button className="secondary-button" type="button" disabled={copying} onClick={()=>void copy()}>{copying?'복사 중…':'답변 복사'}</button><button className="secondary-button" type="button" onClick={download}>텍스트 내보내기</button></div>{exportNotice&&<p role="status" className="mt-2 text-sm text-zinc-600">{exportNotice}</p>}</div>}

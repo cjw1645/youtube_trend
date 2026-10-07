@@ -33,7 +33,7 @@ export function EmptyView({ query, onReset }: { query: string; onReset: () => vo
   return (
     <Panel icon="🔍" title={query ? `'${query}' 검색 결과가 없습니다` : '조회한 영상이 없습니다'}>
       <p>다른 키워드나 카테고리를 선택해 보세요.</p>
-      <button type="button" onClick={onReset} className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">
+      <button type="button" onClick={onReset} className="mt-4 primary-button">
         기본 인기 목록 보기
       </button>
     </Panel>
@@ -43,7 +43,7 @@ export function EmptyView({ query, onReset }: { query: string; onReset: () => vo
 export function EmptyFavoritesView({ onBrowse }: { onBrowse: () => void }) {
   return <Panel icon="♡" title="아직 관심 영상이 없습니다">
     <p>영상 카드의 관심 영상 버튼을 눌러 저장해 보세요.</p>
-    <button type="button" onClick={onBrowse} className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">영상 둘러보기</button>
+    <button type="button" onClick={onBrowse} className="mt-4 primary-button">영상 둘러보기</button>
   </Panel>;
 }
 
@@ -55,7 +55,7 @@ export function ErrorView({ error, onRetry, title, compact }: { error: ApiReques
       <p>{error.message}</p>
       {quota && <p className="mt-2 text-xs text-zinc-500">잠시 후 다시 확인해 주세요. 자동으로 재시도하지 않습니다.</p>}
       {missing && !title && <p className="mt-2 text-xs text-zinc-500">삭제되었거나 비공개로 전환된 영상일 수 있습니다.</p>}
-      <button type="button" onClick={onRetry} className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">
+      <button type="button" onClick={onRetry} className="mt-4 primary-button">
         {quota ? '다시 확인' : '다시 시도'}
       </button>
     </Panel>

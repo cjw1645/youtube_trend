@@ -44,9 +44,9 @@ export default function VideoDetail({ onAnalyze, videoId, categoryNames, onClose
       ref={dialog}
       aria-labelledby="video-detail-title"
       onCancel={(event) => { event.preventDefault(); onClose(); }}
-      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl border-0 bg-white p-0 text-zinc-900 shadow-2xl backdrop:bg-black/60"
+      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl border-0 bg-panel p-0 text-zinc-900 shadow-2xl backdrop:bg-black/60"
     >
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-zinc-200 bg-panel px-5 py-4">
         <h2 id="video-detail-title" className="font-bold">영상 상세</h2>
         <div className="ml-auto flex items-center gap-2">
           <FavoriteButton
@@ -122,7 +122,7 @@ function DetailContent({ video, categoryName }: { video: VideoDetailData; catego
           </ul>
         ) : <p className="text-sm text-zinc-500">등록된 태그가 없습니다.</p>}
       </section>
-      <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="w-fit rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+      <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer" className="w-fit rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-action-hover">
         YouTube에서 보기 ↗
       </a>
     </article>

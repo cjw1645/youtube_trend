@@ -40,7 +40,7 @@ export default function Home({ onResults, onAnalyze, favorites, categories, name
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="page-heading"><p className="eyebrow">영상 탐색</p><h1>홈</h1><p>관심 있는 영상을 찾고, 다음 콘텐츠의 방향을 살펴보세요.</p></header>
+      <header className="page-heading"><p className="eyebrow">영상 탐색</p><h1>지금 트렌드</h1><p>관심 있는 영상을 찾고, 다음 콘텐츠의 방향을 살펴보세요.</p></header>
       <section className="flex flex-col gap-4">
         <SearchBar value={draft.q} onChange={(q) => update({ q })} onSearch={apply} />
         <FilterBar
