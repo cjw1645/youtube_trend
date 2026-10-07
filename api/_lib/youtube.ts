@@ -185,11 +185,11 @@ export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
   }
 }
 
-/** search.list(100 unit) + videos.list(1 unit). search.list에는 통계가 없어 videos.list로 재조회한다. */
+/** 검색의 별도 할당량과 통계 보완 호출을 사용한다. 비용은 공식 문서/프로젝트 설정으로 확인한다. */
 export async function searchVideos(q: string, opts: { categoryId?: string; order?: SortOrder } = {}): Promise<Video[]> {
   const search = await ytFetch<ListResponse<RawSearchItem>>('search', {
     part: 'id',
-    q,
+    ...(q ? { q } : {}),
     type: 'video',
     regionCode: REGION,
     relevanceLanguage: 'ko',
