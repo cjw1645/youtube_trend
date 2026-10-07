@@ -16,7 +16,7 @@ export async function POST(request: Request): Promise<Response> {
     // 화면의 근거 미니카드를 답변과 같은 서버 기준 순서로 보여준다.
     const { topRanking } = buildChatStats(context, { source, popularRanks }, now);
     const body: ChatResponse = {
-      answer: renderChatReferences(result.text, context),
+      answer: renderChatReferences(result.text, context, now),
       model: result.model,
       question,
       context,
