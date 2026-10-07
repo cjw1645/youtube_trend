@@ -14,17 +14,19 @@ export default function KeywordChips({
   if (!keywords.length) return null;
   return (
     <section className="keyword-row" aria-labelledby="keyword-row-title">
-      <h3 id="keyword-row-title">현재 목록 {videos.length}개 기준 키워드</h3>
+      <h3 id="keyword-row-title">
+        현재 목록 {videos.length}개 기준 키워드 · 2개 이상 채널에 등장한 단어
+      </h3>
       <ul>
-        {keywords.map(({ keyword, count }) => (
+        {keywords.map(({ keyword, channels }) => (
           <li key={keyword}>
             <button
               type="button"
               className="keyword-chip"
-              aria-label={`${keyword} 검색 (현재 목록 영상 ${count}개에 등장)`}
+              aria-label={`${keyword} 검색 (현재 목록의 채널 ${channels}곳에 등장)`}
               onClick={() => onSearch(keyword)}
             >
-              {keyword} <span aria-hidden="true">· {count}</span>
+              {keyword} <span aria-hidden="true">· 채널 {channels}곳</span>
             </button>
           </li>
         ))}

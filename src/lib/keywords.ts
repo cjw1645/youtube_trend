@@ -82,8 +82,10 @@ const TITLE_SEPARATOR = /[\s|/\\·•,.!?"'“”‘’()[\]{}<>【】「」『�
 
 export interface KeywordCount {
   keyword: string;
+  /** 키워드가 등장한 채널 수 (같은 채널의 반복 태그는 1회) */
+  channels: number;
   /** 키워드가 등장한 영상 수 (한 영상 안의 중복은 1회) */
-  count: number;
+  videos: number;
 }
 
 /** 소문자, # 제거, 앞뒤 공백·특수문자 제거. 불용어·숫자/회차·자모 반복·1글자는 null. */
@@ -106,21 +108,32 @@ export function videoKeywords(video: { title: string; tags?: readonly string[] }
 }
 
 /**
- * 2개 이상 영상에 등장한 키워드를 영상 수 내림차순으로 상위 limit개 반환한다.
+ * 2개 이상 채널에 등장한 키워드를 채널 수 → 영상 수 내림차순으로 상위 limit개 반환한다.
+ * 한 채널이 여러 영상에 단 같은 태그가 목록 전체의 흐름처럼 보이지 않게 채널 수를 기준으로 한다.
  * 동률이면 목록에서 먼저 등장한 키워드가 앞선다.
  */
 export function aggregateKeywords(
-  videos: readonly { title: string; tags?: readonly string[] }[],
+  videos: readonly { title: string; channelId: string; tags?: readonly string[] }[],
   limit = 10,
-  minVideos = 2,
+  minChannels = 2,
 ): KeywordCount[] {
-  const counts = new Map<string, number>();
+  const counts = new Map<string, { channels: Set<string>; videos: number }>();
   for (const video of videos)
-    for (const keyword of videoKeywords(video)) counts.set(keyword, (counts.get(keyword) ?? 0) + 1);
+    for (const keyword of videoKeywords(video)) {
+      const entry = counts.get(keyword) ?? { channels: new Set<string>(), videos: 0 };
+      entry.channels.add(video.channelId);
+      entry.videos += 1;
+      counts.set(keyword, entry);
+    }
   return [...counts]
-    .map(([keyword, count], order) => ({ keyword, count, order }))
-    .filter(({ count }) => count >= minVideos)
-    .sort((a, b) => b.count - a.count || a.order - b.order)
+    .map(([keyword, entry], order) => ({
+      keyword,
+      channels: entry.channels.size,
+      videos: entry.videos,
+      order,
+    }))
+    .filter(({ channels }) => channels >= minChannels)
+    .sort((a, b) => b.channels - a.channels || b.videos - a.videos || a.order - b.order)
     .slice(0, limit)
-    .map(({ keyword, count }) => ({ keyword, count }));
+    .map(({ keyword, channels, videos }) => ({ keyword, channels, videos }));
 }
