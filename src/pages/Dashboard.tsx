@@ -4,6 +4,8 @@ import { ErrorView, LoadingPanel } from '../components/StatusView';
 import {
   aggregateKeywords,
   categoryDistribution,
+  ENGAGEMENT_MIN_VIEWS,
+  engagementRate,
   formatSplit,
   summarizeList,
   topBy,
@@ -196,6 +198,7 @@ export default function Dashboard({
     [videos],
   );
   const split = useMemo(() => (videos ? formatSplit(videos) : null), [videos]);
+  const engaged = useMemo(() => (videos ? topBy(videos, engagementRate, 5) : []), [videos]);
   const fastest = useMemo(
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 5) : []),
     [videos, now],
@@ -308,6 +311,22 @@ export default function Dashboard({
                 <FormatSplitView split={split} />
               </DashCard>
             )}
+            <DashCard
+              title="참여율 Top 5"
+              basis={`참여율 = (좋아요 + 댓글) ÷ 조회수 · 조회수 ${ENGAGEMENT_MIN_VIEWS.toLocaleString('ko-KR')} 미만·통계 비공개 영상 제외`}
+            >
+              {engaged.length ? (
+                <VideoRankList
+                  entries={engaged}
+                  onSelect={onSelect}
+                  metric={({ item, score }) =>
+                    `참여율 ${score.toFixed(2)}% · 좋아요 ${formatCount(item.likeCount)} · 댓글 ${formatCount(item.commentCount)} · 조회수 ${formatCount(item.viewCount)}`
+                  }
+                />
+              ) : (
+                <p className="dash-empty">기준을 만족하는 영상이 없습니다.</p>
+              )}
+            </DashCard>
           </div>
         </>
       )}
