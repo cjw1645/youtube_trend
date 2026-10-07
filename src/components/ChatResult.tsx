@@ -2,7 +2,13 @@ import type { ChatState, ChatTarget } from '../lib/chat-session';
 import { formatCount, formatNumericRanges } from '../lib/format';
 import { Fragment, useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
-import { findMentionedVideos, parseAnswerSections, splitVideoIds } from '../lib/answer-sections';
+import {
+  findMentionedVideos,
+  parseAnswerSections,
+  splitVideoIds,
+  withoutTagCitations,
+  type AnswerVideoInfo,
+} from '../lib/answer-sections';
 import type { AnalysisVideo } from '../types/chat';
 
 function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
@@ -31,13 +37,37 @@ function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
   );
 }
 
+const SHOWN_TAGS = 5;
+
+/** 서버가 치환한 태그 목록은 앞쪽 일부만 #태그로 보여주고 전체는 툴팁으로 둔다. */
+function CitedTags({ tags, title }: { tags: string[]; title: string }) {
+  const rest = tags.length - SHOWN_TAGS;
+  return (
+    <span className="answer-tags" title={`${title} 태그: ${tags.join(', ')}`}>
+      {tags
+        .slice(0, SHOWN_TAGS)
+        .map((tag) => `#${tag}`)
+        .join(' ')}
+      {rest > 0 && <span className="answer-tags-more"> 외 {rest}개</span>}
+    </span>
+  );
+}
+
 /** 답변 속 대상 영상 ID를 짧은 제목 링크로 보여준다. 복사·내보내기 원문은 그대로다. */
-function AnswerText({ text, titles }: { text: string; titles: ReadonlyMap<string, string> }) {
+function AnswerText({
+  text,
+  videos,
+}: {
+  text: string;
+  videos: ReadonlyMap<string, AnswerVideoInfo>;
+}) {
   return (
     <p className="whitespace-pre-wrap break-words">
-      {splitVideoIds(text, titles).map((part, index) =>
+      {splitVideoIds(text, videos).map((part, index) =>
         typeof part === 'string' ? (
           part
+        ) : part.kind === 'tags' ? (
+          <CitedTags key={index} tags={part.tags} title={part.title} />
         ) : (
           <Fragment key={index}>
             {part.labeled && '영상 제목: '}
@@ -61,29 +91,31 @@ function AnswerText({ text, titles }: { text: string; titles: ReadonlyMap<string
 function AnswerBody({
   answer,
   videos,
-  titles,
+  info,
 }: {
   answer: string;
   videos: AnalysisVideo[];
-  titles: ReadonlyMap<string, string>;
+  info: ReadonlyMap<string, AnswerVideoInfo>;
 }) {
   const parsed = parseAnswerSections(answer);
   if (!parsed)
     return (
       <div aria-label="AI 답변" className="answer-plain">
-        <AnswerText text={answer} titles={titles} />
+        <AnswerText text={answer} videos={info} />
       </div>
     );
   return (
     <div aria-label="AI 답변" className="answer-sections">
-      {parsed.intro && <AnswerText text={parsed.intro} titles={titles} />}
+      {parsed.intro && <AnswerText text={parsed.intro} videos={info} />}
       {parsed.sections.map((section) => {
         const mentioned =
-          section.title === '근거 데이터' ? findMentionedVideos(section.body, videos) : [];
+          section.title === '근거 데이터'
+            ? findMentionedVideos(withoutTagCitations(section.body, info), videos)
+            : [];
         return (
           <section key={section.title} className="answer-section">
             <h3>{section.title}</h3>
-            <AnswerText text={section.body} titles={titles} />
+            <AnswerText text={section.body} videos={info} />
             {mentioned.length > 0 && <EvidenceVideos videos={mentioned} />}
           </section>
         );
@@ -200,10 +232,12 @@ export default function ChatResult({
           <AnswerBody
             answer={formatNumericRanges(state.response.answer)}
             videos={state.response.context.videos}
-            titles={
-              new Map([
-                ...state.snapshot.videos.map(({ id, title }) => [id, title] as const),
-                ...state.response.context.videos.map(({ id, title }) => [id, title] as const),
+            info={
+              new Map<string, AnswerVideoInfo>([
+                ...state.snapshot.videos.map(({ id, title }) => [id, { title }] as const),
+                ...state.response.context.videos.map(
+                  ({ id, title, tags }) => [id, { title, tags }] as const,
+                ),
               ])
             }
           />

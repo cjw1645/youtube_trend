@@ -888,3 +888,10 @@ button:active:not(:disabled) {
     pointer-events: none;
   }
 }
+.answer-tags {
+  color: var(--color-zinc-700);
+  overflow-wrap: anywhere;
+}
+.answer-tags-more {
+  color: var(--muted);
+}
