@@ -202,3 +202,75 @@ export function topBy<T>(
     .slice(0, limit)
     .map(({ item, score }) => ({ item, score }));
 }
+
+export interface MetricAggregate {
+  /** 대상 영상 수 */
+  total: number;
+  /** 값이 null이라 계산에서 뺀 영상 수 */
+  nullExcluded: number;
+  /** 값이 있는 영상의 합계. 값이 하나도 없으면 null */
+  sum: number | null;
+  /** 합계 ÷ (total − nullExcluded), 정수 반올림 */
+  average: number | null;
+  median: number | null;
+  /** 동률이면 목록에서 먼저 나온 영상 */
+  max: { value: number; id: string } | null;
+  min: { value: number; id: string } | null;
+}
+
+/** 한 지표의 합계·평균·중앙값·최댓값·최솟값. null은 제외하고 0은 유효한 값으로 센다. */
+export function aggregateMetric<T extends { id: string }>(
+  items: readonly T[],
+  valueOf: (item: T) => number | null,
+): MetricAggregate {
+  const entries = items.flatMap((item) => {
+    const value = valueOf(item);
+    return value === null ? [] : [{ id: item.id, value }];
+  });
+  const total = items.length;
+  if (!entries.length)
+    return {
+      total,
+      nullExcluded: total,
+      sum: null,
+      average: null,
+      median: null,
+      max: null,
+      min: null,
+    };
+  const sum = entries.reduce((acc, entry) => acc + entry.value, 0);
+  const pick = (better: (a: number, b: number) => boolean) =>
+    entries.reduce((best, entry) => (better(entry.value, best.value) ? entry : best));
+  return {
+    total,
+    nullExcluded: total - entries.length,
+    sum,
+    average: Math.round(sum / entries.length),
+    median: median(entries.map((entry) => entry.value)),
+    max: pick((a, b) => a > b),
+    min: pick((a, b) => a < b),
+  };
+}
+
+/**
+ * AI 통계 질문용 집계: 조회수·좋아요·댓글·업로드 후 일평균 조회수.
+ * 일평균 조회수는 영상별로 정수 반올림한 값(답변의 영상별 값과 같은 값)을 모은다.
+ */
+export function aggregates(
+  videos: readonly (Timed & {
+    id: string;
+    likeCount: number | null;
+    commentCount: number | null;
+  })[],
+  now: number,
+) {
+  return {
+    viewCount: aggregateMetric(videos, (video) => video.viewCount),
+    likeCount: aggregateMetric(videos, (video) => video.likeCount),
+    commentCount: aggregateMetric(videos, (video) => video.commentCount),
+    viewsPerDay: aggregateMetric(videos, (video) => {
+      const value = viewsPerDay(video, now);
+      return value === null ? null : Math.round(value);
+    }),
+  };
+}

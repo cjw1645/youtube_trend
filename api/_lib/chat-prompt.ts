@@ -1,6 +1,7 @@
 import type { AnalysisContext, ChatRequest } from '../../src/types/chat.js';
 import {
   aggregateKeywords,
+  aggregates,
   categoryDistribution,
   topRanking,
   viewsPerDay,
@@ -84,6 +85,8 @@ export function buildChatStats(
       keyword,
       videoCount,
     })),
+    // 평균·합계·중앙값 질문에 모델이 직접 더하거나 나누지 않고 인용할 값
+    aggregates: aggregates(videos, now),
   };
 }
 
