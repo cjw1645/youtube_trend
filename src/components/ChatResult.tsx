@@ -2,7 +2,7 @@ import type { ChatState, ChatTarget } from '../lib/chat-session';
 import { formatCount, formatDate, formatNumericRanges } from '../lib/format';
 import { useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
-import { findMentionedVideos, parseAnswerSections } from '../lib/answer-sections';
+import { findMentionedVideos, parseAnswerSections, splitVideoIds } from '../lib/answer-sections';
 import type { AnalysisVideo } from '../types/chat';
 
 function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
@@ -31,25 +31,57 @@ function EvidenceVideos({ videos }: { videos: AnalysisVideo[] }) {
   );
 }
 
+/** 답변 속 대상 영상 ID를 짧은 제목 링크로 보여준다. 복사·내보내기 원문은 그대로다. */
+function AnswerText({ text, titles }: { text: string; titles: ReadonlyMap<string, string> }) {
+  return (
+    <p className="whitespace-pre-wrap break-words">
+      {splitVideoIds(text, titles).map((part, index) =>
+        typeof part === 'string' ? (
+          part
+        ) : (
+          <a
+            key={index}
+            className="answer-video-link"
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(part.id)}`}
+            target="_blank"
+            rel="noreferrer"
+            title={part.title}
+          >
+            「{part.label}」
+          </a>
+        ),
+      )}
+    </p>
+  );
+}
+
 /** 머리말이 모두 있으면 섹션 카드로, 아니면 원문 그대로 텍스트로 표시한다. */
-function AnswerBody({ answer, videos }: { answer: string; videos: AnalysisVideo[] }) {
+function AnswerBody({
+  answer,
+  videos,
+  titles,
+}: {
+  answer: string;
+  videos: AnalysisVideo[];
+  titles: ReadonlyMap<string, string>;
+}) {
   const parsed = parseAnswerSections(answer);
   if (!parsed)
     return (
       <div aria-label="AI 답변" className="answer-plain">
-        <p className="whitespace-pre-wrap break-words">{answer}</p>
+        <AnswerText text={answer} titles={titles} />
       </div>
     );
   return (
     <div aria-label="AI 답변" className="answer-sections">
-      {parsed.intro && <p className="whitespace-pre-wrap break-words">{parsed.intro}</p>}
+      {parsed.intro && <AnswerText text={parsed.intro} titles={titles} />}
       {parsed.sections.map((section) => {
         const mentioned =
           section.title === '근거 데이터' ? findMentionedVideos(section.body, videos) : [];
         return (
           <section key={section.title} className="answer-section">
             <h3>{section.title}</h3>
-            <p className="whitespace-pre-wrap break-words">{section.body}</p>
+            <AnswerText text={section.body} titles={titles} />
             {mentioned.length > 0 && <EvidenceVideos videos={mentioned} />}
           </section>
         );
@@ -166,6 +198,12 @@ export default function ChatResult({
           <AnswerBody
             answer={formatNumericRanges(state.response.answer)}
             videos={state.response.context.videos}
+            titles={
+              new Map([
+                ...state.snapshot.videos.map(({ id, title }) => [id, title] as const),
+                ...state.response.context.videos.map(({ id, title }) => [id, title] as const),
+              ])
+            }
           />
           {completedAt && (
             <div className="mt-3">

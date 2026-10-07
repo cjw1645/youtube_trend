@@ -864,3 +864,12 @@ button:active:not(:disabled) {
     flex-shrink: 0;
   }
 }
+.answer-video-link {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-red-200);
+  text-underline-offset: 3px;
+}
+.answer-video-link:hover {
+  text-decoration-color: currentColor;
+}
