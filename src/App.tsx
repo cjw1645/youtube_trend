@@ -26,7 +26,16 @@ export default function App() {
   const scroll = useRef<Record<Page, number>>({ home: 0, ai: 0, favorites: 0 });
   const favorites = useFavorites();
   const chat = useChat();
-  const { categories, nameById, state: categoryState, reload: reloadCategories } = useCategories();
+  const {
+    categories,
+    nameById,
+    resolveNames,
+    state: categoryState,
+    reload: reloadCategories,
+  } = useCategories();
+  useEffect(() => {
+    resolveNames(favorites.videos.map((video) => video.categoryId));
+  }, [favorites.videos, resolveNames]);
   const navigate = (next: Page) => {
     scroll.current[page] = window.scrollY;
     if (next === 'home') setHomeVisited(true);
@@ -91,6 +100,7 @@ export default function App() {
               favorites={favorites}
               categories={categories}
               nameById={nameById}
+              resolveCategoryNames={resolveNames}
               onSelect={onSelect}
               onResults={receiveHome}
               onAnalyze={analyze}

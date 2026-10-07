@@ -320,6 +320,16 @@ export async function listCategories(): Promise<Category[]> {
     .map((c) => ({ id: c.id, title: c.snippet.title }));
 }
 
+/** 지역 목록에 없는 카테고리 ID를 id 조회로 보완한다. assignable 여부와 관계없이 이름만 사용한다. */
+export async function listCategoriesById(ids: string[]): Promise<Category[]> {
+  const { items = [] } = await ytFetch<ListResponse<RawCategory>>('videoCategories', {
+    part: 'snippet',
+    id: ids.join(','),
+    hl: 'ko',
+  });
+  return items.map((c) => ({ id: c.id, title: c.snippet.title }));
+}
+
 export async function getChannels(ids: string[]): Promise<Map<string, ChannelInfo>> {
   const unique = [...new Set(ids)];
   const raws: RawChannel[] = [];

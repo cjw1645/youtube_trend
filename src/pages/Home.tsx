@@ -22,6 +22,7 @@ interface Props {
   categories: Category[];
   nameById: ReadonlyMap<string, string>;
   onSelect: (video: Video) => void;
+  resolveCategoryNames: (ids: readonly string[]) => void;
 }
 
 export default function Home({
@@ -32,6 +33,7 @@ export default function Home({
   nameById,
   onSelect,
   initialQuery,
+  resolveCategoryNames,
 }: Props) {
   const [query, setQuery] = useState<VideoQuery>(initialQuery ?? INITIAL_QUERY);
   const [draft, setDraft] = useState<VideoQuery>(initialQuery ?? INITIAL_QUERY);
@@ -54,6 +56,9 @@ export default function Home({
   const fetchedAt = state.status === 'success' ? state.fetchedAt : undefined;
   const selection = useAnalysisSelection(videos ?? EMPTY, JSON.stringify(query));
   const analysisVideos = selection.enabled ? selection.selected : (videos ?? EMPTY);
+  useEffect(() => {
+    if (videos) resolveCategoryNames(videos.map((video) => video.categoryId));
+  }, [videos, resolveCategoryNames]);
   useEffect(() => {
     if (videos)
       onResults({
