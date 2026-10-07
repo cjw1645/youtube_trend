@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { aggregateKeywords } from '../lib/keywords';
+import { aggregateKeywords } from '../lib/stats';
 import type { Video } from '../types/video';
 
 /** 현재 조회된 목록 안의 키워드만 보여주며, 클릭하면 해당 키워드로 검색한다. */
