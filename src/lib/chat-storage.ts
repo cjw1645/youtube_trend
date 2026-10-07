@@ -1,4 +1,10 @@
-import type { ChatSnapshot, ChatState } from './chat-session';
+import {
+  TARGET_SOURCES,
+  validRanking,
+  type ChatSnapshot,
+  type ChatState,
+  type TargetSource,
+} from './chat-session';
 import type { ChatResponse, AnalysisVideo } from '../types/chat';
 import {
   object,
@@ -38,7 +44,8 @@ function validSnapshot(v: unknown): v is ChatSnapshot {
     textWithin(v.label, 300) &&
     validVideos(v.videos) &&
     (v.source === undefined ||
-      (typeof v.source === 'string' && ['home', 'detail', 'favorites'].includes(v.source))) &&
+      (typeof v.source === 'string' && TARGET_SOURCES.includes(v.source as TargetSource))) &&
+    validRanking(v) &&
     (v.capturedAt === undefined ||
       (typeof v.capturedAt === 'number' &&
         Number.isFinite(v.capturedAt) &&

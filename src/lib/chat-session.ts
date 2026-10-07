@@ -1,12 +1,49 @@
 import { ApiRequestError, postJson, toApiRequestError } from './api';
-import type { ChatRequest, ChatResponse } from '../types/chat';
+import {
+  RANKING_SOURCES,
+  type ChatRequest,
+  type ChatResponse,
+  type RankingSource,
+} from '../types/chat';
+
+export type TargetSource = 'home' | 'favorites' | 'detail' | 'dashboard';
+export const TARGET_SOURCES: readonly TargetSource[] = ['home', 'favorites', 'detail', 'dashboard'];
 
 export interface ChatTarget {
   label: string;
   videos: readonly { id: string; title: string }[];
-  source?: 'home' | 'favorites' | 'detail';
+  source?: TargetSource;
   capturedAt?: number;
   query?: { q: string; categoryId: string; order: '' | 'viewCount' | 'date' };
+  /** 서버가 「인기순」 상위 3개를 고를 기준. popular면 popularRank를 함께 보낸다. */
+  rankingSource?: RankingSource;
+  /** 영상 ID → YouTube 인기 순위(1부터, API 제공 순서) */
+  popularRank?: Readonly<Record<string, number>>;
+}
+
+/** 저장·복원한 순위 정보가 올바른지 확인한다. popular일 때만 popularRank를 허용한다. */
+export function validRanking(value: {
+  rankingSource?: unknown;
+  popularRank?: unknown;
+  videos?: unknown;
+}): boolean {
+  const { rankingSource, popularRank } = value;
+  if (rankingSource === undefined) return popularRank === undefined;
+  if (
+    typeof rankingSource !== 'string' ||
+    !RANKING_SOURCES.includes(rankingSource as RankingSource)
+  )
+    return false;
+  if (popularRank === undefined) return true;
+  if (rankingSource !== 'popular' || !popularRank || typeof popularRank !== 'object') return false;
+  const entries = Object.entries(popularRank);
+  return (
+    entries.length <= 20 &&
+    entries.every(
+      ([id, rank]) =>
+        /^[A-Za-z0-9_-]{11}$/.test(id) && Number.isInteger(rank) && rank >= 1 && rank <= 200,
+    )
+  );
 }
 export interface ChatSnapshot extends ChatTarget {
   question: string;
@@ -27,6 +64,20 @@ export function selectChatVideos(videos: ChatTarget['videos']) {
     if (selected.length === 20) break;
   }
   return selected;
+}
+
+/** 요청 본문의 순위 필드. popularRanks는 videoIds와 같은 순서·길이다. */
+function rankingFields(
+  target: ChatTarget,
+  videos: readonly { id: string }[],
+): Pick<ChatRequest, 'source' | 'popularRanks'> {
+  if (!target.rankingSource) return {};
+  const ranks = target.popularRank;
+  if (target.rankingSource !== 'popular' || !ranks) return { source: target.rankingSource };
+  const popularRanks = videos.map(({ id }) => ranks[id]);
+  return popularRanks.every((rank) => Number.isInteger(rank))
+    ? { source: 'popular', popularRanks }
+    : { source: 'popular' };
 }
 
 type Send = (request: ChatRequest, signal: AbortSignal) => Promise<ChatResponse>;
@@ -78,7 +129,11 @@ export function createChatSession(
       onChange({ status: 'pending', snapshot });
       try {
         const response = await send(
-          { question: trimmed, videoIds: videos.map(({ id }) => id) },
+          {
+            question: trimmed,
+            videoIds: videos.map(({ id }) => id),
+            ...rankingFields(snapshot, videos),
+          },
           controller.signal,
         );
         if (active !== request) return true;

@@ -132,8 +132,8 @@ export function formatSplit(videos: readonly (Timed & { durationSeconds: number 
   };
 }
 
-/** 분석 대상 출처. popular만 YouTube 인기 순위가 있다. */
-export type RankingSource = 'popular' | 'search' | 'favorites' | 'selection' | 'detail';
+export type { RankingSource } from '../../types/chat.js';
+import type { RankingSource } from '../../types/chat.js';
 
 export interface TopRanking {
   basis: 'popularRank' | 'viewsPerDay';

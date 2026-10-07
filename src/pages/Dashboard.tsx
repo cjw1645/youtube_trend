@@ -190,6 +190,7 @@ export default function Dashboard({
   resolveCategoryNames,
   onSearchKeyword,
   onSelect,
+  onAnalyze,
 }: Props) {
   // 전체 인기 목록은 영상 검색 화면과 같은 응답을 공유하고, 탭 목록도 이 목록의 카테고리로 만든다.
   const base = useVideos(POPULAR_QUERY);
@@ -249,13 +250,35 @@ export default function Dashboard({
 
   return (
     <div className="dashboard flex flex-col gap-6">
-      <header className="page-heading">
-        <h1>대시보드</h1>
-        <p className="dash-scope">
-          {videos
-            ? `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} ${videos.length}개 기준 · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
-            : `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} 기준`}
-        </p>
+      <header className="page-heading dash-heading">
+        <div>
+          <h1>대시보드</h1>
+          <p className="dash-scope">
+            {videos
+              ? `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} ${videos.length}개 기준 · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
+              : `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} 기준`}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="primary-button"
+          disabled={!videos?.length}
+          onClick={() => {
+            if (!videos) return;
+            // 현재 탭 인기 목록의 앞 20개를 YouTube 인기 순위와 함께 전달한다.
+            const top = videos.slice(0, 20);
+            onAnalyze({
+              label: `대시보드 · YouTube 인기 목록${tabName ? ` · ${tabName}` : ''}`,
+              videos: top,
+              source: 'dashboard',
+              capturedAt: now,
+              rankingSource: 'popular',
+              popularRank: Object.fromEntries(top.map((video, index) => [video.id, index + 1])),
+            });
+          }}
+        >
+          이 대시보드 데이터로 AI 질문
+        </button>
       </header>
       {tabs.length > 0 && (
         <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 목록">

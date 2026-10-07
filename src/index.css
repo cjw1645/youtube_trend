@@ -896,7 +896,7 @@ button:active:not(:disabled) {
   color: var(--muted);
 }
 /* 대시보드: 수치는 tabular, 강조색은 막대·주요 행동에만 쓴다. */
-.page-heading > p.dash-scope {
+.page-heading p.dash-scope {
   margin-top: 8px;
   color: var(--muted);
   font-size: 14px;
@@ -1225,4 +1225,11 @@ button.bar-row:hover {
   .dash-tabs button {
     flex-shrink: 0;
   }
+}
+.dash-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }

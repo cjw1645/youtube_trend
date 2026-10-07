@@ -1,11 +1,17 @@
-import { selectChatVideos, type ChatTarget } from './chat-session';
+import {
+  selectChatVideos,
+  TARGET_SOURCES,
+  validRanking,
+  type ChatTarget,
+  type TargetSource,
+} from './chat-session';
 import type { VideoQuery } from '../hooks/useVideos';
 
 export const TARGET_KEY = 'youtube-trend:targets:v1';
 export const MAX_TARGET_BYTES = 128 * 1024;
 export const SESSION_TTL = 24 * 60 * 60 * 1000;
 export interface AnalysisTarget extends ChatTarget {
-  source: 'home' | 'favorites' | 'detail';
+  source: TargetSource;
   capturedAt: number;
   query?: VideoQuery;
 }
@@ -50,7 +56,8 @@ export function validTarget(value: unknown, now = Date.now()): value is Analysis
   return (
     object(value) &&
     typeof value.source === 'string' &&
-    ['home', 'favorites', 'detail'].includes(value.source) &&
+    TARGET_SOURCES.includes(value.source as TargetSource) &&
+    validRanking(value) &&
     textWithin(value.label, 300) &&
     validTime(value.capturedAt, now) &&
     validVideos(value.videos) &&
@@ -71,6 +78,8 @@ export function makeTarget(
         videos,
         capturedAt: value.capturedAt ?? Date.now(),
         ...(query ? { query: { ...query } } : {}),
+        ...(value.rankingSource ? { rankingSource: value.rankingSource } : {}),
+        ...(value.popularRank ? { popularRank: { ...value.popularRank } } : {}),
       }
     : null;
 }

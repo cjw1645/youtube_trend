@@ -53,8 +53,8 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
   if (!body || typeof body !== 'object' || Array.isArray(body))
     throw badRequest('질문과 영상 ID 목록을 보내 주세요.');
   const fields = body as Record<string, unknown>;
-  if (Object.keys(fields).some((key) => key !== 'question' && key !== 'videoIds')) {
-    throw badRequest('question과 videoIds만 보낼 수 있습니다.');
+  if (Object.keys(fields).some((key) => !ALLOWED_FIELDS.has(key))) {
+    throw badRequest('question, videoIds, source, popularRanks만 보낼 수 있습니다.');
   }
   if (typeof fields.question !== 'string') throw badRequest('질문을 입력해 주세요.');
   const question = fields.question.trim();
@@ -69,5 +69,38 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
   const videoIds = [...new Set(fields.videoIds as string[])];
   if (!videoIds.length || videoIds.length > 20)
     throw badRequest('분석할 영상은 1–20개 선택해 주세요.');
-  return { question, videoIds };
+  return { question, videoIds, ...readRanking(fields, fields.videoIds as string[]) };
+}
+
+const ALLOWED_FIELDS = new Set(['question', 'videoIds', 'source', 'popularRanks']);
+const SOURCES = new Set<string>(['popular', 'search', 'favorites', 'selection', 'detail']);
+
+/** 출처와 YouTube 인기 순위. popularRanks는 원래 videoIds와 같은 길이이며 중복 ID는 첫 순위를 쓴다. */
+function readRanking(
+  fields: Record<string, unknown>,
+  rawIds: string[],
+): Pick<ChatRequest, 'source' | 'popularRanks'> {
+  const { source, popularRanks } = fields;
+  if (source === undefined) {
+    if (popularRanks !== undefined)
+      throw badRequest('popularRanks는 source=popular와 함께 보내 주세요.');
+    return {};
+  }
+  if (typeof source !== 'string' || !SOURCES.has(source))
+    throw badRequest('source 값이 올바르지 않습니다.');
+  if (popularRanks === undefined) return { source: source as ChatRequest['source'] };
+  if (
+    source !== 'popular' ||
+    !Array.isArray(popularRanks) ||
+    popularRanks.length !== rawIds.length ||
+    popularRanks.some((rank) => !Number.isInteger(rank) || rank < 1 || rank > 200)
+  )
+    throw badRequest('popularRanks는 source=popular일 때 영상마다 1–200 정수로 보내 주세요.');
+  const seen = new Set<string>();
+  const ranks = rawIds.flatMap((id, index) => {
+    if (seen.has(id)) return [];
+    seen.add(id);
+    return [popularRanks[index] as number];
+  });
+  return { source: 'popular', popularRanks: ranks };
 }
