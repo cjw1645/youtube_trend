@@ -43,15 +43,8 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
               className="transition-transform group-open:rotate-180"
             />
           </h2>
-          <span className="max-w-full break-words rounded-full bg-panel px-3 py-1 text-xs font-semibold text-zinc-700">
-            {target.label} · {videos.length}개 분석 대상
-          </span>
         </summary>
         <div className="mt-3">
-          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-            기본은 목록 앞쪽 최대 20개, 직접 선택은 화면 안의 1~20개, 상세는 선택한 1개입니다.
-            영상·음성 자체는 분석하지 않습니다.
-          </p>
           {chat.notice && (
             <p role="status" className="mt-3 text-sm text-amber-900">
               {chat.notice}
@@ -153,11 +146,6 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
               >
                 대화 기록 지우기
               </button>
-              <p className="mt-2 text-xs text-zinc-500">
-                이 탭에 초안과 완료 대화를 최대 24시간 보관합니다. 최근 10건까지 복원하며 대화
-                이력은 AI에 보내지 않습니다. 탭을 닫아도 브라우저 세션 복원 설정에 따라 남을 수
-                있습니다.
-              </p>
             </div>
           )}
         </div>

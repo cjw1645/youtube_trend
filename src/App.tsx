@@ -8,7 +8,8 @@ import { ErrorView } from './components/StatusView';
 import { useChat } from './hooks/useChat';
 import ChatPanel from './components/ChatPanel';
 import Sidebar, { type Page } from './components/Sidebar';
-import { type ChatTarget } from './lib/chat-session';
+import { selectChatVideos, type ChatTarget } from './lib/chat-session';
+import InfoDisclosure from './components/InfoDisclosure';
 import { useTargets } from './hooks/useTargets';
 import { makeTarget } from './lib/analysis-target';
 
@@ -99,8 +100,31 @@ export default function App() {
         <div hidden={page !== 'ai'} className="ai-workspace">
           <header className="page-heading">
             <h1>AI 대화</h1>
-            <p>분석할 영상을 확인하고 공개 정보를 바탕으로 질문하세요.</p>
+            <p className="target-line">
+              분석 대상 {selectChatVideos(target.videos).length}개 · {target.label}
+            </p>
           </header>
+          <InfoDisclosure summary="분석 대상과 대화 보관 기준">
+            <p>분석할 영상을 확인하고 공개 정보를 바탕으로 질문하세요.</p>
+            <p>
+              기본은 목록 앞쪽 최대 20개, 직접 선택은 화면 안의 1~20개, 상세는 선택한 1개입니다.
+              영상·음성 자체는 분석하지 않습니다.
+            </p>
+            <p>
+              목록을 바꿔도 전달한 대상은 유지됩니다. 전송 시 서버가 최신 공개 정보를 다시
+              조회합니다.
+            </p>
+            {target.capturedAt && (
+              <p>
+                대상 목록 시점: {new Date(target.capturedAt).toLocaleString('ko-KR')} · 저장된 영상
+                구성입니다. 답변의 통계는 전송 시점에 다시 조회합니다.
+              </p>
+            )}
+            <p>
+              이 탭에 초안과 완료 대화를 최대 24시간 보관합니다. 최근 10건까지 복원하며 대화 이력은
+              AI에 보내지 않습니다. 탭을 닫아도 브라우저 세션 복원 설정에 따라 남을 수 있습니다.
+            </p>
+          </InfoDisclosure>
           <section className="target-toolbar" aria-label="분석 대상 선택">
             <span className="text-sm font-semibold">대상 가져오기</span>
             <div className="flex flex-wrap gap-2">
@@ -131,17 +155,7 @@ export default function App() {
                 대상 기록 지우기
               </button>
             </div>
-            <p>
-              목록을 바꿔도 전달한 대상은 유지됩니다. 전송 시 서버가 최신 공개 정보를 다시
-              조회합니다.
-            </p>
           </section>
-          {target.capturedAt && (
-            <p className="mb-4 text-sm text-zinc-600">
-              대상 목록 시점: {new Date(target.capturedAt).toLocaleString('ko-KR')} · 저장된 영상
-              구성입니다. 답변의 통계는 전송 시점에 다시 조회합니다.
-            </p>
-          )}
           {targets.notice && (
             <p role="status" className="mb-4 text-sm text-amber-900">
               {targets.notice}

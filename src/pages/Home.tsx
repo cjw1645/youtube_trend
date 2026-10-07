@@ -9,6 +9,7 @@ import type { Category, Video } from '../types/video';
 import { selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
+import InfoDisclosure from '../components/InfoDisclosure';
 
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 const EMPTY: Video[] = [];
@@ -90,22 +91,24 @@ export default function Home({
               </span>
             )}
           </p>
-          {!query.order && (
-            <p className="mt-1 text-xs text-zinc-500">
-              인기순은 API 응답 순서입니다(검색은 관련도순). 전체 인기 순위를 뜻하지 않습니다.
+          <InfoDisclosure summary="목록 기준 안내">
+            <p>
+              {query.q || query.categoryId
+                ? '한국에서 시청 가능한 검색 결과입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.'
+                : query.order
+                  ? '조회한 인기 목록 안에서 정렬합니다. 전체 YouTube 순위가 아닙니다.'
+                  : 'YouTube API 제공 목록입니다. 전체 YouTube의 인기 순위를 보장하지 않습니다.'}
             </p>
-          )}
+            {!query.order && (
+              <p>
+                인기순은 API 응답 순서입니다(검색은 관련도순). 전체 인기 순위를 뜻하지 않습니다.
+              </p>
+            )}
+          </InfoDisclosure>
         </div>
       </section>
 
       <div className="result-actions">
-        <p>
-          {query.q || query.categoryId
-            ? '한국에서 시청 가능한 검색 결과입니다. 한국 채널·한국어 영상만을 보장하지 않습니다.'
-            : query.order
-              ? '조회한 인기 목록 안에서 정렬합니다. 전체 YouTube 순위가 아닙니다.'
-              : 'YouTube API 제공 목록입니다. 전체 YouTube의 인기 순위를 보장하지 않습니다.'}
-        </p>
         <button
           className="primary-button"
           type="button"
