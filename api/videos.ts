@@ -25,6 +25,16 @@ export async function GET(request: Request): Promise<Response> {
       throw new ApiFailure('BAD_REQUEST', '카테고리 값이 올바르지 않습니다.', 400);
     }
 
+    // chart=popular: 카테고리별 인기 차트(videos.list). 검색(search.list)을 쓰지 않는다.
+    const chart = params.get('chart');
+    if (chart !== null && (chart !== 'popular' || q || order)) {
+      throw new ApiFailure('BAD_REQUEST', 'chart=popular는 categoryId만 함께 쓸 수 있습니다.', 400);
+    }
+    if (chart) {
+      const body: VideosResponse = { items: await listPopularVideos(categoryId) };
+      return json(body, { cache: CACHE_POPULAR });
+    }
+
     const searching = !!(q || categoryId);
     const videos = searching
       ? await searchVideos(q, { categoryId, order })

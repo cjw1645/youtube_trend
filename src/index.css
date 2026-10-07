@@ -1192,3 +1192,37 @@ button.bar-row:hover {
   margin-top: 12px;
   font-size: 12px;
 }
+.dash-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  scroll-margin-top: 80px;
+}
+.dash-tabs button {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.dash-tabs button:hover {
+  color: var(--ink);
+}
+.dash-tabs button[aria-pressed='true'] {
+  border-color: #783039;
+  background: #30191d;
+  color: var(--accent-text);
+}
+@media (max-width: 599px) {
+  .dash-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -16px;
+    padding: 4px 16px 8px;
+  }
+  .dash-tabs button {
+    flex-shrink: 0;
+  }
+}

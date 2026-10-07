@@ -1,6 +1,7 @@
-import { type ReactNode, useEffect, useId, useMemo } from 'react';
-import { useVideos } from '../hooks/useVideos';
-import { ErrorView, LoadingPanel } from '../components/StatusView';
+import { type ReactNode, useEffect, useId, useMemo, useState } from 'react';
+import { POPULAR_CACHE_MS, useVideos } from '../hooks/useVideos';
+import { useApiResource } from '../hooks/useApiResource';
+import { ErrorView, LoadingPanel, NoticeView } from '../components/StatusView';
 import {
   aggregateKeywords,
   categoryDistribution,
@@ -13,9 +14,11 @@ import {
 } from '../lib/stats';
 import { formatCount, formatRelativeDate } from '../lib/format';
 import type { ChatTarget } from '../lib/chat-session';
-import type { Video } from '../types/video';
+import type { Video, VideosResponse } from '../types/video';
 
 const POPULAR_QUERY = { q: '', categoryId: '', order: '' } as const;
+/** 전체 인기 목록에서 영상이 많은 카테고리 순으로 탭을 만든다. */
+const MAX_TABS = 6;
 
 interface Props {
   categoryNames: ReadonlyMap<string, string>;
@@ -188,9 +191,46 @@ export default function Dashboard({
   onSearchKeyword,
   onSelect,
 }: Props) {
-  const { state, reload } = useVideos(POPULAR_QUERY);
-  const videos = state.status === 'success' ? state.videos : undefined;
+  // 전체 인기 목록은 영상 검색 화면과 같은 응답을 공유하고, 탭 목록도 이 목록의 카테고리로 만든다.
+  const base = useVideos(POPULAR_QUERY);
+  const baseVideos = base.state.status === 'success' ? base.state.videos : undefined;
+  const [tab, setTab] = useState('');
+  const chart = useApiResource<VideosResponse>(
+    tab ? `/api/videos?chart=popular&categoryId=${encodeURIComponent(tab)}` : '/api/videos?',
+    { cacheMs: POPULAR_CACHE_MS },
+  );
+  const tabs = useMemo(() => {
+    const ids = baseVideos
+      ? categoryDistribution(baseVideos, (video) => video.categoryId)
+          .slice(0, MAX_TABS)
+          .map(({ key }) => key)
+      : [];
+    return tab && !ids.includes(tab) ? [...ids, tab] : ids;
+  }, [baseVideos, tab]);
+  const tabState = tab ? chart.state : null;
+  // 인기 차트가 없는 카테고리는 빈 목록 또는 NOT_FOUND로 온다.
+  const unsupported =
+    !!tabState &&
+    ((tabState.status === 'success' && !tabState.data.items.length) ||
+      (tabState.status === 'error' && tabState.error.code === 'NOT_FOUND'));
+  const state = tabState
+    ? tabState.status === 'success'
+      ? {
+          status: 'success' as const,
+          videos: tabState.data.items,
+          fetchedAt: tabState.receivedAt,
+        }
+      : tabState
+    : base.state;
+  const reload = tab ? chart.reload : base.reload;
+  const videos = state.status === 'success' && !unsupported ? state.videos : undefined;
   const now = state.status === 'success' ? state.fetchedAt : 0;
+  const tabsId = useId();
+  const tabName = tab ? (categoryNames.get(tab) ?? '선택 카테고리') : '';
+  const selectTab = (id: string) => {
+    setTab(id);
+    document.getElementById(tabsId)?.scrollIntoView({ block: 'nearest' });
+  };
   const summary = useMemo(() => (videos ? summarizeList(videos, now) : null), [videos, now]);
   const keywords = useMemo(() => (videos ? aggregateKeywords(videos) : []), [videos]);
   const categories = useMemo(
@@ -213,13 +253,33 @@ export default function Dashboard({
         <h1>대시보드</h1>
         <p className="dash-scope">
           {videos
-            ? `현재 YouTube 인기 목록 ${videos.length}개 기준 · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
-            : '현재 YouTube 인기 목록 기준'}
+            ? `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} ${videos.length}개 기준 · ${new Date(now).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회`
+            : `현재 YouTube 인기 목록${tabName ? ` · ${tabName}` : ''} 기준`}
         </p>
       </header>
+      {tabs.length > 0 && (
+        <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 목록">
+          {['', ...tabs].map((id) => (
+            <button
+              key={id || 'all'}
+              type="button"
+              aria-pressed={tab === id}
+              onClick={() => selectTab(id)}
+            >
+              {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'}
+            </button>
+          ))}
+        </nav>
+      )}
       {state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
-      {state.status === 'error' && (
-        <ErrorView title="인기 목록을 불러오지 못했습니다" error={state.error} onRetry={reload} />
+      {unsupported ? (
+        <NoticeView title="이 카테고리는 인기 목록을 제공하지 않습니다">
+          <p>YouTube API가 이 카테고리의 인기 차트를 제공하지 않습니다. 다른 탭을 선택해 보세요.</p>
+        </NoticeView>
+      ) : (
+        state.status === 'error' && (
+          <ErrorView title="인기 목록을 불러오지 못했습니다" error={state.error} onRetry={reload} />
+        )
       )}
       {summary && videos && (
         <>
@@ -287,7 +347,7 @@ export default function Dashboard({
             </DashCard>
             <DashCard
               title="카테고리 분포"
-              basis="막대는 영상 수 · 조회수 비중은 목록 전체 조회수 합계 대비"
+              basis="막대는 영상 수 · 조회수 비중은 목록 전체 조회수 합계 대비 · 누르면 해당 카테고리 탭"
               className="dash-categories"
             >
               <ol className="bar-list">
@@ -298,6 +358,8 @@ export default function Dashboard({
                     value={count}
                     max={categories[0].count}
                     valueLabel={`${count}개 · 조회수 ${percent(viewShare)}`}
+                    onClick={tab === key ? undefined : () => selectTab(key)}
+                    actionLabel={`${categoryNames.get(key) ?? '카테고리 정보 없음'} 인기 목록 탭으로 보기`}
                   />
                 ))}
               </ol>
