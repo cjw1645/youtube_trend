@@ -238,6 +238,7 @@ function toVideo(raw: RawVideo): Video {
     viewCount: toNumber(raw.statistics?.viewCount),
     likeCount: toNumber(raw.statistics?.likeCount),
     commentCount: toNumber(raw.statistics?.commentCount),
+    tags: raw.snippet.tags ?? [],
   };
 }
 

@@ -49,7 +49,9 @@ function isVideo(value: unknown): value is RecordValue {
     typeof value.durationSeconds === 'number' &&
     Number.isFinite(value.durationSeconds) &&
     value.durationSeconds >= 0 &&
-    ['viewCount', 'likeCount', 'commentCount'].every((key) => isNullableCount(value[key]))
+    ['viewCount', 'likeCount', 'commentCount'].every((key) => isNullableCount(value[key])) &&
+    (value.tags === undefined ||
+      (Array.isArray(value.tags) && value.tags.every((tag) => typeof tag === 'string')))
   );
 }
 

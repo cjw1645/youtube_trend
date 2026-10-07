@@ -14,6 +14,8 @@ export interface Video {
   viewCount: number | null;
   likeCount: number | null;
   commentCount: number | null;
+  /** 목록 키워드 집계용 공개 태그 (관심 영상 저장에는 포함하지 않음) */
+  tags?: string[];
 }
 
 export interface VideoDetail extends Video {
