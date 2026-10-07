@@ -1,6 +1,6 @@
 import type { ChatState, ChatTarget } from '../lib/chat-session';
 import { formatCount, formatNumericRanges } from '../lib/format';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
 import { findMentionedVideos, parseAnswerSections, splitVideoIds } from '../lib/answer-sections';
 import type { AnalysisVideo } from '../types/chat';
@@ -39,16 +39,18 @@ function AnswerText({ text, titles }: { text: string; titles: ReadonlyMap<string
         typeof part === 'string' ? (
           part
         ) : (
-          <a
-            key={index}
-            className="answer-video-link"
-            href={`https://www.youtube.com/watch?v=${encodeURIComponent(part.id)}`}
-            target="_blank"
-            rel="noreferrer"
-            title={part.title}
-          >
-            「{part.label}」
-          </a>
+          <Fragment key={index}>
+            {part.labeled && '영상 제목: '}
+            <a
+              className="answer-video-link"
+              href={`https://www.youtube.com/watch?v=${encodeURIComponent(part.id)}`}
+              target="_blank"
+              rel="noreferrer"
+              title={part.title}
+            >
+              {part.labeled ? part.label : `「${part.label}」`}
+            </a>
+          </Fragment>
         ),
       )}
     </p>

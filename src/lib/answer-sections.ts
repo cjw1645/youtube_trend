@@ -48,7 +48,15 @@ export function findMentionedVideos(
     .map(({ video }) => video);
 }
 
-export type AnswerPart = string | { id: string; label: string; title: string };
+export type AnswerPart =
+  | string
+  | {
+      id: string;
+      label: string;
+      title: string;
+      /** 원문이 「영상 ID: …」 표기였으면 true. 화면에서는 「영상 제목: …」으로 바꿔 보여준다. */
+      labeled: boolean;
+    };
 
 /** 표시용 짧은 제목: 20자를 넘으면 자르고 말줄임표를 붙인다. */
 export function shortTitle(title: string, max = 20): string {
@@ -58,19 +66,23 @@ export function shortTitle(title: string, max = 20): string {
 
 /**
  * 요청 대상 영상 ID와 정확히 일치하는 토큰만 짧은 제목 조각으로 나눈다.
+ * 앞에 붙은 「영상 ID:」·「ID:」 표기는 조각에 포함해 화면에서 「영상 제목:」으로 바꿀 수 있게 한다.
  * ID 문자([A-Za-z0-9_-])에 이어진 더 긴 문자열 안의 부분 일치는 바꾸지 않는다. 원문은 변경하지 않는다.
  */
 export function splitVideoIds(text: string, titles: ReadonlyMap<string, string>): AnswerPart[] {
   const ids = [...titles.keys()].filter((id) => /^[A-Za-z0-9_-]{11}$/.test(id));
   if (!ids.length) return [text];
-  const pattern = new RegExp(`(?<![A-Za-z0-9_-])(${ids.join('|')})(?![A-Za-z0-9_-])`, 'g');
+  const pattern = new RegExp(
+    `((?:영상\\s*)?ID\\s*[:：]?\\s*)?(?<![A-Za-z0-9_-])(${ids.join('|')})(?![A-Za-z0-9_-])`,
+    'g',
+  );
   const parts: AnswerPart[] = [];
   let last = 0;
   for (const match of text.matchAll(pattern)) {
     if (match.index > last) parts.push(text.slice(last, match.index));
-    const title = titles.get(match[1])!;
-    parts.push({ id: match[1], label: shortTitle(title), title });
-    last = match.index + match[1].length;
+    const title = titles.get(match[2])!;
+    parts.push({ id: match[2], label: shortTitle(title), title, labeled: !!match[1] });
+    last = match.index + match[0].length;
   }
   if (last < text.length) parts.push(text.slice(last));
   return parts;
