@@ -183,3 +183,17 @@ export function topRanking<T extends Timed & { id: string }>(
       .map(({ video, perDay }, index) => ({ id: video.id, rank: index + 1, viewsPerDay: perDay })),
   };
 }
+
+/** score가 큰 순서로 상위 limit개. null은 제외하고 동률은 목록 순서를 따른다. */
+export function topBy<T>(
+  items: readonly T[],
+  score: (item: T) => number | null,
+  limit: number,
+): { item: T; score: number }[] {
+  return items
+    .map((item, order) => ({ item, score: score(item), order }))
+    .filter((entry): entry is { item: T; score: number; order: number } => entry.score !== null)
+    .sort((a, b) => b.score - a.score || a.order - b.order)
+    .slice(0, limit)
+    .map(({ item, score }) => ({ item, score }));
+}

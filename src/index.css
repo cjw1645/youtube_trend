@@ -1062,3 +1062,64 @@ button.bar-row:hover {
     gap: 8px;
   }
 }
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rank-row {
+  display: grid;
+  grid-template-columns: 1.5rem 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 10px;
+  text-align: left;
+}
+.rank-row:hover {
+  background: var(--color-zinc-100);
+}
+.rank-number {
+  color: var(--accent-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.rank-row img {
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--color-zinc-200);
+}
+.rank-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rank-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.rank-metric {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 599px) {
+  .rank-row {
+    grid-template-columns: 1.25rem 72px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .rank-row img {
+    width: 72px;
+  }
+}
