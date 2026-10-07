@@ -116,12 +116,17 @@ export function summarizeList(
   };
 }
 
-/** 쇼츠·롱폼 그룹별 영상 수와 조회수 중앙값. 길이를 모르는 영상은 unknown으로 센다. */
+/**
+ * 쇼츠·롱폼 그룹별 영상 수, 길이를 아는 영상 중 비율(0–1), 조회수 중앙값.
+ * 길이를 모르는 영상은 unknown으로 세고 비율에서 뺀다.
+ */
 export function formatSplit(videos: readonly (Timed & { durationSeconds: number })[]) {
+  const known = videos.filter((v) => isShorts(v) !== null).length;
   const group = (shorts: boolean) => {
     const items = videos.filter((v) => isShorts(v) === shorts);
     return {
       count: items.length,
+      share: known ? items.length / known : null,
       medianViews: median(items.flatMap((v) => (v.viewCount === null ? [] : [v.viewCount]))),
     };
   };

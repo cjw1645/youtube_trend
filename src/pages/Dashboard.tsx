@@ -147,16 +147,15 @@ function VideoRankList({
 
 /** 쇼츠·롱폼 영상 수 비율 막대와 그룹별 중앙값 조회수 */
 function FormatSplitView({ split }: { split: ReturnType<typeof formatSplit> }) {
-  const known = split.shorts.count + split.long.count;
   const groups = [
     { name: '쇼츠', range: '3분 이하', ...split.shorts },
     { name: '롱폼', range: '3분 초과', ...split.long },
   ];
   return (
     <>
-      {known > 0 && (
+      {split.shorts.share !== null && (
         <div className="split-bar" aria-hidden="true">
-          <span style={{ width: `${(split.shorts.count / known) * 100}%` }} />
+          <span style={{ width: `${split.shorts.share * 100}%` }} />
         </div>
       )}
       <dl className="split-groups">
@@ -167,7 +166,7 @@ function FormatSplitView({ split }: { split: ReturnType<typeof formatSplit> }) {
             </dt>
             <dd>
               <span className="split-count">
-                {group.count}개 · {known ? percent(group.count / known) : '정보 없음'}
+                {group.count}개 · {percent(group.share)}
               </span>
               <span className="split-median">
                 중앙값 조회수{' '}
