@@ -76,9 +76,23 @@ export function buildChatInput(question: string, context: AnalysisContext): Gemi
 /** 모델이 선택한 인용만 서버 원문으로 표시한다. 분석 내용이나 제안을 대체하지 않는다. */
 export function renderChatReferences(text: string, context: AnalysisContext): string {
   const videos = new Map(context.videos.map(video => [video.id, video]));
-  return text.replace(/\{\{(title|views|date|tags):([^{}]+)\}\}/g, (_reference, field: string, id: string) => {
+  const fields = new Set(['title', 'views', 'date', 'tags', 'tag']);
+  for (const reference of text.matchAll(/\{\{([A-Za-z][A-Za-z0-9]*):([^{}]*)(\}\})?/g)) {
+    if (!fields.has(reference[1]) || !reference[2] || !reference[3]) {
+      throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
+    }
+  }
+  return text.replace(/\{\{(title|views|date|tags|tag):([^{}]+)\}\}/g, (_reference, field: string, reference: string) => {
+    const [id, tagNumber, extra] = field === 'tag' ? reference.split(':') : [reference];
     const video = videos.get(id);
     if (!video) throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 영상 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
+    if (field === 'tag') {
+      const index = Number(tagNumber) - 1;
+      if (extra !== undefined || !/^[1-9]\d*$/.test(tagNumber ?? '') || !Number.isSafeInteger(index) || index >= video.tags.length) {
+        throw new ApiFailure('UPSTREAM_ERROR', 'AI 답변의 태그 인용을 확인하지 못했습니다. 질문을 바꿔 다시 전송해 주세요.', 502);
+      }
+      return `${video.tags[index]} (영상 ID: ${id})`;
+    }
     if (field === 'title') return video.title;
     if (field === 'views') return video.viewCount === null ? '정보 없음' : video.viewCount.toLocaleString('ko-KR');
     if (field === 'date') return video.publishedAt.slice(0, 10);
