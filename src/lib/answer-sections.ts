@@ -9,12 +9,12 @@ export interface AnswerSections {
 }
 
 /**
- * 트렌드 분석 답변의 머리말 3개가 순서대로 줄 머리에 있을 때만 섹션으로 나눈다.
+ * 답변의 머리말 3개가 순서대로 줄 머리에 있을 때만 섹션으로 나눈다(머리말 뒤 같은 줄 본문 허용).
  * 하나라도 없거나 순서가 다르면 null을 반환해 원문 그대로 표시하게 한다.
  */
 export function parseAnswerSections(answer: string): AnswerSections | null {
   const positions = SECTION_TITLES.map((title) => {
-    const match = new RegExp(`^[ \\t]*\\[${title}\\][ \\t]*$`, 'm').exec(answer);
+    const match = new RegExp(`^[ \\t]*\\[${title}\\][ \\t]*`, 'm').exec(answer);
     return match ? { index: match.index, end: match.index + match[0].length } : null;
   });
   if (positions.some((position) => !position)) return null;
@@ -59,6 +59,15 @@ export function findMentionedVideos(
     .sort((a, b) => a.index - b.index)
     .slice(0, limit)
     .map(({ video }) => video);
+}
+
+/** 서버가 정한 순위 ID 순서대로 분석 대상 영상을 고른다. 대상에 없는 ID는 무시한다. */
+export function rankedVideos(
+  ids: readonly string[],
+  videos: readonly AnalysisVideo[],
+): AnalysisVideo[] {
+  const byId = new Map(videos.map((video) => [video.id, video]));
+  return [...new Set(ids)].flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
 }
 
 export interface AnswerVideoInfo {

@@ -94,7 +94,13 @@ export default function VideoDetail({
             <button
               type="button"
               className="primary-button"
-              onClick={() => onAnalyze({ label: '선택 영상 상세', videos: [state.data] })}
+              onClick={() =>
+                onAnalyze({
+                  label: '선택 영상 상세',
+                  videos: [state.data],
+                  rankingSource: 'detail',
+                })
+              }
             >
               이 영상으로 AI 질문
             </button>

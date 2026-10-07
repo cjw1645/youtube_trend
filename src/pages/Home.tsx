@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import FilterBar from '../components/FilterBar';
 import SearchBar from '../components/SearchBar';
 import { EmptyView, ErrorView, LoadingGrid } from '../components/StatusView';
@@ -6,7 +6,7 @@ import VideoCard from '../components/VideoCard';
 import { useVideos, type VideoQuery } from '../hooks/useVideos';
 import type { FavoritesController } from '../hooks/useFavorites';
 import type { Category, Video } from '../types/video';
-import { selectChatVideos, type ChatTarget } from '../lib/chat-session';
+import { listRanking, selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
 import InfoDisclosure from '../components/InfoDisclosure';
@@ -79,6 +79,10 @@ export default function Home({
   const fetchedAt = state.status === 'success' ? state.fetchedAt : undefined;
   const selection = useAnalysisSelection(videos ?? EMPTY, JSON.stringify(query));
   const analysisVideos = selection.enabled ? selection.selected : (videos ?? EMPTY);
+  const ranking = useMemo(
+    () => listRanking(videos ?? EMPTY, !query.q && !query.categoryId, !query.order),
+    [videos, query],
+  );
   useEffect(() => {
     if (videos) resolveCategoryNames(videos.map((video) => video.categoryId));
   }, [videos, resolveCategoryNames]);
@@ -90,8 +94,9 @@ export default function Home({
         source: 'home',
         query,
         capturedAt: fetchedAt,
+        ...ranking,
       });
-  }, [videos, label, query, onResults, fetchedAt]);
+  }, [videos, label, query, onResults, fetchedAt, ranking]);
 
   return (
     <div className="home-page flex flex-col gap-6">
@@ -141,6 +146,7 @@ export default function Home({
                 source: 'home',
                 query,
                 capturedAt: fetchedAt,
+                ...(selection.enabled ? { rankingSource: 'selection' } : ranking),
               })
             }
           >

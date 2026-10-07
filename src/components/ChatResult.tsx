@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
 import {
   findMentionedVideos,
+  rankedVideos,
   parseAnswerSections,
   splitVideoIds,
   withoutTagCitations,
@@ -92,10 +93,13 @@ function AnswerBody({
   answer,
   videos,
   info,
+  ranking,
 }: {
   answer: string;
   videos: AnalysisVideo[];
   info: ReadonlyMap<string, AnswerVideoInfo>;
+  /** 서버 topRanking 순서. 없으면(이전 응답) 근거에 언급된 순서로 고른다. */
+  ranking?: readonly string[];
 }) {
   const parsed = parseAnswerSections(answer);
   if (!parsed)
@@ -109,9 +113,11 @@ function AnswerBody({
       {parsed.intro && <AnswerText text={parsed.intro} videos={info} />}
       {parsed.sections.map((section) => {
         const mentioned =
-          section.title === '근거 데이터'
-            ? findMentionedVideos(withoutTagCitations(section.body, info), videos)
-            : [];
+          section.title !== '근거 데이터'
+            ? []
+            : ranking?.length
+              ? rankedVideos(ranking, videos)
+              : findMentionedVideos(withoutTagCitations(section.body, info), videos);
         return (
           <section key={section.title} className="answer-section">
             <h3>{section.title}</h3>
@@ -232,6 +238,7 @@ export default function ChatResult({
           <AnswerBody
             answer={formatNumericRanges(state.response.answer)}
             videos={state.response.context.videos}
+            ranking={state.response.ranking?.ids}
             info={
               new Map<string, AnswerVideoInfo>([
                 ...state.snapshot.videos.map(({ id, title }) => [id, { title }] as const),

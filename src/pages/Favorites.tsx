@@ -35,6 +35,7 @@ export default function Favorites({
               label: `관심 영상 · ${selection.enabled ? '직접 선택' : '전달 시점 기준'}`,
               videos: analysisVideos,
               source: 'favorites',
+              rankingSource: selection.enabled ? 'selection' : 'favorites',
             })
           }
         >

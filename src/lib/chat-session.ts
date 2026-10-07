@@ -66,6 +66,30 @@ export function selectChatVideos(videos: ChatTarget['videos']) {
   return selected;
 }
 
+/**
+ * 영상 검색 목록의 「인기순」 기준. 인기 목록은 YouTube 인기 순위(API 제공 순서),
+ * 검색·카테고리 결과는 서버가 업로드 후 일평균 조회수로 고른다.
+ * apiOrder: 목록이 아직 API 제공 순서 그대로면 popularRank가 없을 때 화면 순서를 순위로 쓴다.
+ */
+export function listRanking(
+  videos: readonly { id: string; popularRank?: number }[],
+  popular: boolean,
+  apiOrder: boolean,
+): Pick<ChatTarget, 'rankingSource' | 'popularRank'> {
+  if (!popular) return { rankingSource: 'search' };
+  const ids = new Set(
+    selectChatVideos(videos.map(({ id }) => ({ id, title: '' }))).map((v) => v.id),
+  );
+  const ranks = new Map<string, number | undefined>();
+  videos.forEach((video, index) => {
+    if (ids.has(video.id) && !ranks.has(video.id))
+      ranks.set(video.id, video.popularRank ?? (apiOrder ? index + 1 : undefined));
+  });
+  return [...ranks.values()].every((rank) => Number.isInteger(rank))
+    ? { rankingSource: 'popular', popularRank: Object.fromEntries(ranks) as Record<string, number> }
+    : { rankingSource: 'popular' };
+}
+
 /** 요청 본문의 순위 필드. popularRanks는 videoIds와 같은 순서·길이다. */
 function rankingFields(
   target: ChatTarget,

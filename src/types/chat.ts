@@ -46,4 +46,6 @@ export interface ChatResponse {
   model: string;
   question: string;
   context: AnalysisContext;
+  /** 서버가 계산한 「인기순」 상위 영상(근거 데이터 순서). 이전에 저장된 응답에는 없다. */
+  ranking?: { basisLabel: string; ids: string[] };
 }

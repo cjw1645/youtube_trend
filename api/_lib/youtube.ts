@@ -270,7 +270,8 @@ export async function listPopularVideos(categoryId?: string): Promise<Video[]> {
       maxResults: '50',
       ...(categoryId ? { videoCategoryId: categoryId } : {}),
     });
-    return items.map(toVideo);
+    // API 제공 순서 = YouTube 인기 순위. 화면에서 다시 정렬해도 AI 분석의 인기순 기준으로 쓴다.
+    return items.map((raw, index) => ({ ...toVideo(raw), popularRank: index + 1 }));
   } catch (err) {
     // 인기 차트가 없는 카테고리는 오류 대신 빈 목록
     if (err instanceof ApiFailure && err.reason === 'videoChartNotFound') return [];

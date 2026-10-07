@@ -16,6 +16,8 @@ export interface Video {
   commentCount: number | null;
   /** 목록 키워드 집계용 공개 태그 (관심 영상 저장에는 포함하지 않음) */
   tags?: string[];
+  /** 인기 목록(chart=mostPopular)의 API 제공 순서(1부터). 검색 결과에는 없다. */
+  popularRank?: number;
 }
 
 export interface VideoDetail extends Video {
