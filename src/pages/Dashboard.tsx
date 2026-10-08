@@ -289,7 +289,7 @@ export default function Dashboard({
                 onAnalyze(popularChartTarget(videos, `대시보드 · ${scope}`, now));
               }}
             >
-              이 데이터로 AI 질문
+              상위 20개로 AI 질문
             </button>
           </header>
           {summary && videos && (

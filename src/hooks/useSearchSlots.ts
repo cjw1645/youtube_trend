@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { authedJson, toApiRequestError } from '../lib/api';
 import { useAuth } from './useAuth';
+import { notifyUsageChanged } from './useUsage';
 import type { SearchOrder, SearchWindow, SlotsResponse, SlotView } from '../types/trend';
 
 export interface AddSearchInput {
@@ -70,9 +71,11 @@ export function useSearchSlots() {
       };
       if (failed[result.state]) setMessage(failed[result.state]);
       await reload();
+      notifyUsageChanged();
       return free;
     } catch (failure) {
       setMessage(toApiRequestError(failure).message);
+      notifyUsageChanged();
       return null;
     } finally {
       setBusy(false);

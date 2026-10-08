@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiRequestError, authedJson, toApiRequestError } from '../lib/api';
 import { startRequest } from '../lib/request';
 import { useApiResource } from './useApiResource';
+import { notifyUsageChanged } from './useUsage';
 import type { Video, VideosResponse } from '../types/video';
 
 export const POPULAR_CACHE_MS = 5 * 60 * 1000;
@@ -65,12 +66,17 @@ export function useVideos(q: string, getToken: () => Promise<string | null>) {
     if (!q) return;
     return startRequest(
       () => searchOnce(key, q, getToken),
-      (data) =>
+      (data) => {
         setSearched({
           key,
           state: { status: 'success', videos: data.items, fetchedAt: Date.now() },
-        }),
-      (error) => setSearched({ key, state: { status: 'error', error: toApiRequestError(error) } }),
+        });
+        notifyUsageChanged();
+      },
+      (error) => {
+        setSearched({ key, state: { status: 'error', error: toApiRequestError(error) } });
+        notifyUsageChanged();
+      },
     );
   }, [q, key, getToken]);
 

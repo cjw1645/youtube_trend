@@ -9,6 +9,7 @@ import {
 } from '@radix-ui/react-icons';
 
 import AccountPanel from './AccountPanel';
+import UsageBadge from './UsageBadge';
 import { useAuth } from '../hooks/useAuth';
 
 export const PAGE_LABEL: Record<Page, string> = {
@@ -23,7 +24,10 @@ export function TopBar({ page }: { page: Page }) {
   return (
     <div className="topbar">
       <p className="topbar-page">{PAGE_LABEL[page]}</p>
-      <AccountPanel />
+      <div className="topbar-right">
+        <UsageBadge />
+        <AccountPanel />
+      </div>
     </div>
   );
 }

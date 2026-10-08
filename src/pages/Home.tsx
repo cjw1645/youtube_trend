@@ -203,7 +203,7 @@ export default function Home({
             >
               {selection.enabled
                 ? `선택 ${analysisVideos.length}개로 AI 질문`
-                : '이 목록으로 AI 질문'}
+                : '상위 20개로 AI 질문'}
             </button>
           </div>
         )}

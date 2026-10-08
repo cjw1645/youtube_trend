@@ -1,3 +1,5 @@
+import Reveal from './Reveal';
+
 export interface HotVideo {
   id: string;
   title: string;
@@ -35,7 +37,7 @@ export default function Spotlight({
 }) {
   if (!video && !tag && !field) return null;
   return (
-    <section className="spotlight" aria-label={title}>
+    <Reveal as="section" className="spotlight" aria-label={title}>
       <header className="spotlight-head">
         <h2>
           <span className="live-dot" aria-hidden="true" />
@@ -62,7 +64,7 @@ export default function Spotlight({
         {tag && <SpotText kind="가장 뜨는 태그" item={tag} />}
         {field && <SpotText kind="가장 뜨는 분야" item={field} />}
       </div>
-    </section>
+    </Reveal>
   );
 }
 

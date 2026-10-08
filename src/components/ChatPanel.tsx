@@ -10,6 +10,7 @@ import type { ChatController } from '../hooks/useChat';
 import { useConversations } from '../hooks/useConversations';
 import { MAX_QUESTION_CHARS, selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { isMeaninglessQuestion, MEANINGLESS_QUESTION_MESSAGE } from '../lib/chat-question';
+import { notifyUsageChanged, useUsage } from '../hooks/useUsage';
 import ChatThread from './ChatThread';
 import ConversationHistory from './ConversationHistory';
 
@@ -61,10 +62,17 @@ export default function ChatPanel({
   const videos = selectChatVideos(target.videos);
   const { state, question } = chat;
   const pending = state.status === 'pending';
+  const usage = useUsage();
+  const aiLeft = usage ? Math.max(usage.ai.limit - usage.ai.used, 0) : null;
+  // 질문을 보내면 요청 시작 때 예약되므로, 끝나면(성공·실패) 남은 횟수를 다시 센다.
+  useEffect(() => {
+    if (state.status === 'success' || state.status === 'error') notifyUsageChanged();
+  }, [state.status]);
   const length = [...question.trim()].length;
   const meaningless = length > 0 && isMeaninglessQuestion(question);
   const disabled =
     meaningless ||
+    aiLeft === 0 ||
     pending ||
     !videos.length ||
     !length ||
@@ -154,6 +162,16 @@ export default function ChatPanel({
         <span id={`${inputId}-help`} className="chat-time chat-help">
           {meaningless ? MEANINGLESS_QUESTION_MESSAGE : 'Enter로 전송 · Shift+Enter로 줄바꿈'}
         </span>
+        {usage && aiLeft !== null && (
+          <span
+            className={`chat-quota ${aiLeft === 0 ? 'is-empty' : aiLeft <= 2 ? 'is-low' : ''}`}
+            title="하루 질문 한도입니다. 한국 시간 자정에 초기화됩니다."
+          >
+            {aiLeft === 0
+              ? '오늘 질문을 모두 사용했습니다'
+              : `오늘 질문 ${aiLeft}회 남음 (${usage.ai.limit}회 중)`}
+          </span>
+        )}
         <span className={`chat-time ${length > MAX_QUESTION_CHARS ? 'text-red-700' : ''}`}>
           {length.toLocaleString('ko-KR')} / {MAX_QUESTION_CHARS}자
         </span>

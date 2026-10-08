@@ -9,6 +9,8 @@ export interface CloudWord {
   title: string;
   /** 기준 대비 늘었으면 true, 줄었으면 false */
   rising?: boolean | null;
+  /** 비교하는 다른 구름에도 있는 단어(겹침)이면 true. 같은 색 윤곽으로 표시한다. */
+  shared?: boolean;
 }
 
 /** 큰 단어가 가운데로 모이도록 양쪽 끝에서부터 번갈아 배치한다. */
@@ -43,7 +45,7 @@ export default function WordCloud({
           <li key={word.key}>
             <button
               type="button"
-              className={`cloud-word ${order < 3 ? 'is-hot' : ''}`}
+              className={`cloud-word ${order < 3 ? 'is-hot' : ''} ${word.shared ? 'is-shared' : ''}`}
               aria-pressed={selected === word.key}
               title={word.title}
               style={

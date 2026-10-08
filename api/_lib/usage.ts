@@ -17,6 +17,35 @@ const BLOCKED: Record<string, string> = {
   global_limit: '서비스 전체 무료 사용량이 소진되었습니다. 나중에 다시 시도해 주세요.',
 };
 
+/**
+ * 사용자별 하루 한도. DB 함수 reserve_ai_request·reserve_search의 p_daily_limit 기본값과 같아야 한다
+ * (tests/test-usage-summary.ts가 SQL 기본값과 같은지 확인한다). 화면의 남은 횟수 표시에만 쓰고 차단은 DB가 한다.
+ */
+export const AI_DAILY_LIMIT = 10;
+export const SEARCH_DAILY_LIMIT = 40;
+
+export interface UsageSummary {
+  ai: { used: number; limit: number };
+  search: { used: number; limit: number };
+}
+
+/** 오늘(Asia/Seoul) 이 사용자가 쓴 AI 질문·검색 횟수와 하루 한도. */
+export async function getUsageSummary(
+  userId: string,
+  now: Date = new Date(),
+): Promise<UsageSummary> {
+  const raw = (await serviceRpc('get_usage_summary', {
+    p_user: userId,
+    p_now: now.toISOString(),
+  })) as { aiUsed?: unknown; searchUsed?: unknown } | null;
+  if (!raw || typeof raw.aiUsed !== 'number' || typeof raw.searchUsed !== 'number')
+    throw new ApiFailure('UPSTREAM_ERROR', '사용량을 읽지 못했습니다.', 502);
+  return {
+    ai: { used: raw.aiUsed, limit: AI_DAILY_LIMIT },
+    search: { used: raw.searchUsed, limit: SEARCH_DAILY_LIMIT },
+  };
+}
+
 export type Reservation = { id: string; duplicate: boolean };
 
 function allowed(row: ReserveRow): Reservation | null {

@@ -81,7 +81,15 @@ export function validApiResponse(path: string, body: unknown): boolean {
       (Array.isArray(body.ids) && body.ids.every((id) => typeof id === 'string')) ||
       body.ok === true
     );
-  if (pathname === '/api/account') return body.ok === true;
+  if (pathname === '/api/account')
+    return (
+      body.ok === true ||
+      (isRecord(body.usage) &&
+        ['ai', 'search'].every((key) => {
+          const entry = (body.usage as Record<string, unknown>)[key];
+          return isRecord(entry) && Number.isInteger(entry.used) && Number.isInteger(entry.limit);
+        }))
+    );
   // 저장된 집계·스냅샷: 서버가 만든 응답이며 형태(최상위 키)만 확인한다. 내부 값은 화면이 null을 허용해 읽는다.
   if (pathname === '/api/trend' || pathname === '/api/search-trend')
     return body.trend === null || isRecord(body.trend);

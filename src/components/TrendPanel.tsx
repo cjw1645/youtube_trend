@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import DashSection from './DashSection';
 import WordCloud from './WordCloud';
 import Spotlight, { type HotItem, type HotVideo } from './Spotlight';
@@ -107,6 +107,8 @@ interface Props {
   onImport?: (videos: readonly StoredVideo[]) => 'set' | 'kept';
   /** 위쪽에 이미 하이라이트가 있는 화면에서는 false */
   showSpotlight?: boolean;
+  /** 「지금 가장 눈에 띄는 것」 바로 아래에 끼워 넣는 블록(예: 인기 차트 비교 차트) */
+  afterSpotlight?: ReactNode;
 }
 
 export default function TrendPanel({
@@ -118,6 +120,7 @@ export default function TrendPanel({
   onSearchKeyword,
   onImport,
   showSpotlight = true,
+  afterSpotlight,
 }: Props) {
   const [initial] = useState(() => pickDefaultBaseline(trend.comparisons));
   const [kind, setKind] = useState<BaselineKind>(initial.kind);
@@ -233,6 +236,7 @@ export default function TrendPanel({
           onOpenVideo={onSelectVideo}
         />
       )}
+      {afterSpotlight}
       <div className="chart-grid">
         <DashSection
           title="분야별 비중"

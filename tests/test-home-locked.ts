@@ -58,7 +58,7 @@ try {
   assert.match(html, /class="search-locked"/, '로그인 안내 영역');
   assert.match(html, /검색하려면 로그인하세요/);
   assert.doesNotMatch(html, /filter-bar/, '필터 숨김');
-  assert.doesNotMatch(html, /이 목록으로 AI 질문/, 'AI 질문 숨김');
+  assert.doesNotMatch(html, /상위 20개로 AI 질문/, 'AI 질문 숨김');
   assert.doesNotMatch(html, /분석 영상 직접 선택/, '직접 선택 숨김');
   assert.doesNotMatch(html, /keyword-row/, '키워드 칩 숨김');
   console.log(

@@ -50,7 +50,7 @@ export default function Favorites({
             })
           }
         >
-          {selection.enabled ? `선택 ${analysisVideos.length}개로 AI 질문` : '이 목록으로 AI 질문'}
+          {selection.enabled ? `선택 ${analysisVideos.length}개로 AI 질문` : '상위 20개로 AI 질문'}
         </button>
       </div>
       <AnalysisSelectionBar selection={selection} available={favorites.videos.length} />

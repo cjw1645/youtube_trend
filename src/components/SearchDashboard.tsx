@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import TrendPanel from './TrendPanel';
-import PopularCompareSection from './PopularCompareSection';
+import PopularCompareSection, { CompareEngagement } from './PopularCompareSection';
 import { toApiRequestError } from '../lib/api';
 import type { useSearchSlots } from '../hooks/useSearchSlots';
 import type { PopularCompare, SlotView, StoredVideo, TrendResult } from '../types/trend';
@@ -116,10 +116,18 @@ export default function SearchDashboard({
           onSearchKeyword={onSearchKeyword}
         />
       )}
+      {compare?.key === key && compare.value && !(detail?.key === key && detail.trend) && (
+        <CompareEngagement compare={compare.value} />
+      )}
       {detail?.key === key && detail.trend && (
         <>
           <TrendPanel
             key={detail.key}
+            afterSpotlight={
+              compare?.key === key && compare.value ? (
+                <CompareEngagement compare={compare.value} />
+              ) : undefined
+            }
             trend={detail.trend}
             videos={detail.videos}
             categoryNames={categoryNames}

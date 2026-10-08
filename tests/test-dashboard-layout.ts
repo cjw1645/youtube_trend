@@ -101,62 +101,122 @@ try {
         : null,
   });
   const names = new Map([['15', '반려동물']]);
+  const fullCompare = {
+    available: true,
+    query: '고양이 간식',
+    slot: run(1, '2026-10-08T04:00:00Z', 200),
+    popular: run(2, '2026-10-08T05:00:00Z', 100),
+    exposure: {
+      noTokens: false,
+      tokens: [{ keyword: '고양이', popularCount: 3, popularShare: 0.03, rank: 2 }],
+    },
+    keywords: {
+      commonTotal: 2,
+      common: [row('고양이', 80, 3), row('게임', 7, 22)],
+      slotOnly: [row('장난감', 30, null)],
+      popularOnly: [],
+    },
+    videos: { count: 2, share: 0.01, bestPosition: 12, positions: [] },
+    categories: [{ categoryId: '15', slotShare: 0.8, popularShare: 0.01, deltaPp: 79 }],
+    engagement: [
+      {
+        kind: 'search',
+        label: '고양이 간식',
+        videos: 200,
+        medianViews: 12000,
+        medianLikes: 300,
+      },
+      {
+        kind: 'popular',
+        label: '인기 차트 전체',
+        videos: 100,
+        medianViews: 900000,
+        medianLikes: 20000,
+      },
+      { kind: 'hot', label: '게임', videos: 21, medianViews: null, medianLikes: 5000 },
+    ],
+    slotKeywordCount: 4,
+  };
   const full = renderToStaticMarkup(
     React.createElement(Section, {
       categoryNames: names,
       onSearchKeyword: noop,
-      compare: {
-        available: true,
-        query: '고양이 간식',
-        slot: run(1, '2026-10-08T04:00:00Z', 200),
-        popular: run(2, '2026-10-08T05:00:00Z', 100),
-        exposure: {
-          noTokens: false,
-          tokens: [{ keyword: '고양이', popularCount: 3, popularShare: 0.03, rank: 2 }],
-        },
-        keywords: {
-          commonTotal: 1,
-          common: [row('고양이', 80, 3)],
-          slotOnly: [row('장난감', 30, null)],
-          popularOnly: [],
-        },
-        videos: { count: 2, share: 0.01, bestPosition: 12, positions: [] },
-        categories: [{ categoryId: '15', slotShare: 0.8, popularShare: 0.01, deltaPp: 79 }],
-        engagement: [
-          {
-            kind: 'search',
-            label: '고양이 간식',
-            videos: 200,
-            medianViews: 12000,
-            medianLikes: 300,
-          },
-          {
-            kind: 'popular',
-            label: '인기 차트 전체',
-            videos: 100,
-            medianViews: 900000,
-            medianLikes: 20000,
-          },
-          { kind: 'hot', label: '게임', videos: 21, medianViews: null, medianLikes: 5000 },
-        ],
-        slotKeywordCount: 4,
-      },
+      compare: fullCompare,
     }),
   );
   assert.match(full, /인기 차트와 비교/);
+  assert.match(full, /compare-verdict/, '맨 위 판정 문장');
+  assert.match(full, /인기 차트의 약 1% 수준입니다/, '조회수가 낮으면 퍼센트 수준으로 말함');
+  assert.match(full, /compare-value">1%</, '큰 카드는 0.0배가 아니라 퍼센트');
+  assert.doesNotMatch(full, /0\.0배/);
   assert.match(full, /3개 영상/);
   assert.match(full, /인기 키워드 2위/);
   assert.match(full, /최고 12위/);
-  assert.match(full, /반려동물 \+79\.0%p/);
-  assert.match(full, /class="cloud"/, '키워드는 표가 아니라 워드 클라우드');
+  assert.match(full, /\+79\.0%p/);
+  assert.match(full, /반려동물/);
+  assert.match(full, /지금 인기 차트의 핫 키워드/, '인기 차트 쪽 단어 구름');
+  assert.match(full, /검색 결과의 키워드/, '내 검색 쪽 단어 구름');
+  assert.equal((full.match(/class="cloud"/g) ?? []).length, 2, '워드 클라우드 두 개');
+  assert.match(full, /is-shared/, '겹치는 단어 표시');
   assert.doesNotMatch(full, /<table/, '비교 섹션에 표 없음');
   assert.match(full, /검색 결과에서 더 자주 나옴/, '▲▼ 범례');
-  assert.match(full, /영상 조회수 비교 · 중앙값/, '조회수·좋아요 막대 차트');
-  assert.match(full, /engagement-bars/);
-  assert.match(full, /인기 차트 전체/);
-  assert.match(full, /정보 없음/, '비공개 좋아요/조회수는 정보 없음');
+  assert.match(full, /겹치는 키워드 2개/);
+  assert.match(full, /▲ 37\.0%p/, '검색에서 더 자주 나온 키워드는 ▲와 크기만 표시');
+  assert.match(
+    full,
+    /▼ 18\.5%p/,
+    '인기 차트에서 더 자주 나온 키워드는 ▼와 크기만 표시(부호 중복 없음)',
+  );
+  assert.doesNotMatch(full, /▲ \+|▼ −|▼ \+/);
+  assert.doesNotMatch(
+    full,
+    /engagement-bars/,
+    '막대 차트는 이 블록이 아니라 하이라이트 아래에 둔다',
+  );
   assert.doesNotMatch(full, /집계에 실패/, '집계가 있으면 실패 안내 없음');
   assert.match(full, /장난감/);
+
+  // 조회수·좋아요 막대: 「지금 가장 눈에 띄는 것」 바로 아래에 끼워 넣는 별도 블록
+  const { CompareEngagement } = await vite.ssrLoadModule(
+    '/src/components/PopularCompareSection.tsx',
+  );
+  const bars = renderToStaticMarkup(
+    React.createElement(CompareEngagement, { compare: fullCompare }),
+  );
+  assert.match(bars, /영상 조회수 비교 · 중앙값/);
+  assert.match(bars, /engagement-bars/);
+  assert.match(bars, /인기 차트 전체/);
+  assert.match(bars, /정보 없음/, '비공개 값은 정보 없음');
+  assert.equal(
+    renderToStaticMarkup(
+      React.createElement(CompareEngagement, {
+        compare: { available: false, query: 'x', slot: run(1, '2026-10-08T04:00:00Z', 1) },
+      }),
+    ),
+    '',
+    '인기 차트 비교가 없으면 그리지 않음',
+  );
+
+  // 판정 문장: 인기 차트보다 높으면 배율, 비슷하면 비슷함
+  const { compareVerdict } = await vite.ssrLoadModule('/src/components/PopularCompareSection.tsx');
+  const withViews = (mine: number, all: number, hot: number) => ({
+    ...fullCompare,
+    engagement: [
+      { kind: 'search', label: 'q', videos: 10, medianViews: mine, medianLikes: 1 },
+      { kind: 'popular', label: '인기 차트 전체', videos: 10, medianViews: all, medianLikes: 1 },
+      { kind: 'hot', label: '게임', videos: 5, medianViews: hot, medianLikes: 1 },
+    ],
+  });
+  assert.match(
+    compareVerdict(withViews(980000, 100000, 140000)).headline,
+    /검색 결과는 인기 차트 영상보다 조회수가 약 9\.8배 높습니다/,
+  );
+  assert.match(
+    compareVerdict(withViews(980000, 100000, 140000)).detail,
+    /핫 키워드 1개 중 1개보다/,
+  );
+  assert.match(compareVerdict(withViews(100000, 100000, 140000)).headline, /비슷한 수준/);
+  assert.equal(compareVerdict(withViews(100000, 100000, 140000)).detail.includes('0개보다'), true);
   const failed = renderToStaticMarkup(
     React.createElement(Section, {
       categoryNames: names,

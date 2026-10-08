@@ -3230,9 +3230,6 @@ button.spot:hover {
 }
 
 /* 내 검색어 ↔ 인기 차트 비교 */
-.popular-compare .trend-tiles {
-  margin-bottom: 4px;
-}
 .compare-sub {
   margin: 20px 0 8px;
   color: var(--muted);
@@ -3305,6 +3302,7 @@ button.spot:hover {
   display: block;
   height: 100%;
   background: var(--bar);
+  transition: width 1000ms var(--ease);
 }
 .engagement-bars .is-search .engagement-fill {
   background: var(--accent);
@@ -3325,5 +3323,244 @@ button.spot:hover {
   .engagement-track {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+}
+
+/* 스크롤 등장: 화면에 들어오면 아래에서 떠오른다. 움직임을 줄인 환경에서는 바로 보인다. */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 700ms var(--ease) var(--reveal-delay, 0ms),
+    transform 800ms var(--ease) var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.cloud-word.is-shared {
+  border-color: #7fd3a188;
+  background: #7fd3a118;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: #a6ecc2;
+  -webkit-text-fill-color: #a6ecc2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ───────── 인기 차트와 비교(검색어 대시보드 맨 위) ───────── */
+.compare-top {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 12px;
+}
+.compare-hero {
+  padding: 8px 0 4px;
+}
+.compare-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.compare-verdict {
+  max-width: 880px;
+  margin-top: 10px;
+  font-size: clamp(26px, 3.1vw, 42px);
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.compare-detail {
+  margin-top: 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+.compare-basis {
+  margin-top: 6px;
+  color: var(--faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.compare-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+.compare-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+}
+.compare-card dt {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.compare-card dd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+.compare-value {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.compare-note {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.compare-card.is-primary {
+  border-color: #ff6a4d66;
+  background: radial-gradient(120% 140% at 0% 0%, #ff4d4d26 0%, transparent 60%), var(--panel);
+}
+.compare-card.is-primary .compare-value {
+  background: var(--signal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 44px;
+}
+.compare-clouds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.compare-cloud {
+  min-width: 0;
+  padding: 18px 16px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+}
+.compare-cloud h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.compare-caption {
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 12px;
+}
+.compare-cloud .cloud {
+  min-height: 170px;
+}
+.compare-overlap h3 {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.compare-overlap ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 1279px) {
+  .compare-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 899px) {
+  .compare-clouds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 599px) {
+  .compare-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .compare-card.is-primary .compare-value {
+    font-size: 38px;
+  }
+}
+
+/* ───────── 오늘 남은 사용 횟수 ───────── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.usage-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.usage-badge li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.usage-badge strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+.usage-badge small {
+  color: var(--faint);
+  font-size: 11px;
+}
+.usage-badge .is-low,
+.chat-quota.is-low {
+  border-color: #ffb84d88;
+  color: #ffc772;
+}
+.usage-badge .is-low strong {
+  color: #ffc772;
+}
+.usage-badge .is-empty,
+.chat-quota.is-empty {
+  border-color: #ff4d4d99;
+  color: var(--accent-text);
+}
+.usage-badge .is-empty strong {
+  color: var(--accent-text);
+}
+.chat-quota {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .usage-badge small {
+    display: none;
   }
 }
