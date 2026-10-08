@@ -38,6 +38,7 @@ export type SortOrder = 'viewCount' | 'date';
 
 export type ApiErrorCode =
   | 'QUOTA_EXCEEDED'
+  | 'UNAUTHORIZED'
   | 'CONFIG_ERROR'
   | 'BAD_REQUEST'
   | 'NOT_FOUND'

@@ -89,7 +89,7 @@ function AnswerText({
 }
 
 /** 머리말이 모두 있으면 섹션 카드로, 아니면 원문 그대로 텍스트로 표시한다. */
-function AnswerBody({
+export function AnswerBody({
   answer,
   videos,
   info,

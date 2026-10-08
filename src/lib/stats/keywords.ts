@@ -154,3 +154,41 @@ export function aggregateKeywords(
     .slice(0, limit)
     .map(({ keyword, videos }) => ({ keyword, videos }));
 }
+
+export interface StoredKeyword {
+  keyword: string;
+  videoCount: number;
+  channelCount: number;
+}
+
+/** 한 번의 수집 목록에서 저장할 키워드 집계의 최대 개수. 28일 보존 용량을 위해 상위만 둔다. */
+export const STORED_KEYWORD_LIMIT = 100;
+/** 저장·표시 대상이 되는 최소 영상 수. 이 값 미만은 우연한 반복과 구분되지 않는다. */
+export const STORED_KEYWORD_MIN_VIDEOS = 2;
+
+/**
+ * 수집 목록의 키워드를 영상 수(영상당 1회)·고유 채널 수와 함께 집계한다.
+ * 영상 수가 STORED_KEYWORD_MIN_VIDEOS 미만이면 저장하지 않으므로, 저장된 집계에 없는 키워드는
+ * 0개가 아니라 「기준 미만 또는 상위 밖」이다. 동률은 키워드 사전순으로 고정한다.
+ */
+export function storedKeywordCounts(
+  videos: readonly { title: string; tags?: readonly string[]; channelId: string }[],
+): StoredKeyword[] {
+  const counts = new Map<string, { videos: number; channels: Set<string> }>();
+  for (const video of videos)
+    for (const keyword of videoKeywords(video)) {
+      const entry = counts.get(keyword) ?? { videos: 0, channels: new Set<string>() };
+      entry.videos += 1;
+      entry.channels.add(video.channelId);
+      counts.set(keyword, entry);
+    }
+  return [...counts]
+    .filter(([, entry]) => entry.videos >= STORED_KEYWORD_MIN_VIDEOS)
+    .map(([keyword, entry]) => ({
+      keyword,
+      videoCount: entry.videos,
+      channelCount: entry.channels.size,
+    }))
+    .sort((a, b) => b.videoCount - a.videoCount || (a.keyword < b.keyword ? -1 : 1))
+    .slice(0, STORED_KEYWORD_LIMIT);
+}

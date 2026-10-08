@@ -58,6 +58,7 @@ export function validTarget(value: unknown, now = Date.now()): value is Analysis
     typeof value.source === 'string' &&
     TARGET_SOURCES.includes(value.source as TargetSource) &&
     validRanking(value) &&
+    (value.searchSlot === undefined || value.searchSlot === 1 || value.searchSlot === 2) &&
     textWithin(value.label, 300) &&
     validTime(value.capturedAt, now) &&
     validVideos(value.videos) &&
@@ -80,6 +81,7 @@ export function makeTarget(
         ...(query ? { query: { ...query } } : {}),
         ...(value.rankingSource ? { rankingSource: value.rankingSource } : {}),
         ...(value.popularRank ? { popularRank: { ...value.popularRank } } : {}),
+        ...(value.searchSlot ? { searchSlot: value.searchSlot } : {}),
       }
     : null;
 }

@@ -19,6 +19,8 @@ export interface ChatTarget {
   rankingSource?: RankingSource;
   /** 영상 ID → YouTube 인기 순위(1부터, API 제공 순서) */
   popularRank?: Readonly<Record<string, number>>;
+  /** rankingSource=search일 때 대상이 속한 내 검색어 슬롯. 서버가 목록 소속을 검증한다. */
+  searchSlot?: 1 | 2;
 }
 
 /** 저장·복원한 순위 정보가 올바른지 확인한다. popular일 때만 popularRank를 허용한다. */
@@ -109,21 +111,21 @@ export function popularChartTarget(
   };
 }
 
-/** 요청 본문의 순위 필드. popularRanks는 videoIds와 같은 순서·길이다. */
-function rankingFields(
-  target: ChatTarget,
-  videos: readonly { id: string }[],
-): Pick<ChatRequest, 'source' | 'popularRanks'> {
+/** 요청 본문의 출처 필드. 순위·목록 소속은 서버가 저장된 목록으로 검증하므로 클라이언트 순위는 보내지 않는다. */
+function rankingFields(target: ChatTarget): Pick<ChatRequest, 'source' | 'searchSlot'> {
   if (!target.rankingSource) return {};
-  const ranks = target.popularRank;
-  if (target.rankingSource !== 'popular' || !ranks) return { source: target.rankingSource };
-  const popularRanks = videos.map(({ id }) => ranks[id]);
-  return popularRanks.every((rank) => Number.isInteger(rank))
-    ? { source: 'popular', popularRanks }
-    : { source: 'popular' };
+  if (target.rankingSource === 'search' && target.searchSlot)
+    return { source: 'search', searchSlot: target.searchSlot };
+  // 검색 슬롯 없이 search 출처를 보내면 서버가 거부하므로 일반 선택으로 취급한다.
+  if (target.rankingSource === 'search') return { source: 'selection' };
+  return { source: target.rankingSource };
 }
 
+/** 클라이언트가 만드는 부분(requestId·conversationId 포함). 인증 헤더는 send 구현이 붙인다. */
 type Send = (request: ChatRequest, signal: AbortSignal) => Promise<ChatResponse>;
+
+/** 질문 길이 제한(Unicode 코드 포인트). 서버와 같은 값이어야 한다. */
+export const MAX_QUESTION_CHARS = 100;
 
 /** 렌더링 전에도 중복 전송을 차단하고 화면 전환과 독립된 대상을 보관한다. */
 export function createChatSession(
@@ -140,10 +142,11 @@ export function createChatSession(
   }
   return {
     cancel,
-    async submit(question: string, target: ChatTarget): Promise<boolean> {
+    async submit(question: string, target: ChatTarget, conversationId?: string): Promise<boolean> {
       const trimmed = question.trim();
       const videos = selectChatVideos(target.videos);
-      if (active || !trimmed || [...trimmed].length > 2000 || !videos.length) return false;
+      if (active || !trimmed || [...trimmed].length > MAX_QUESTION_CHARS || !videos.length)
+        return false;
       const snapshot: ChatSnapshot = {
         ...target,
         question: trimmed,
@@ -175,7 +178,9 @@ export function createChatSession(
           {
             question: trimmed,
             videoIds: videos.map(({ id }) => id),
-            ...rankingFields(snapshot, videos),
+            requestId: crypto.randomUUID(),
+            ...(conversationId ? { conversationId } : {}),
+            ...rankingFields(snapshot),
           },
           controller.signal,
         );

@@ -1,4 +1,4 @@
-import type { AnalysisContext, ChatRequest } from '../../src/types/chat.js';
+import type { AnalysisContext, RankingSource } from '../../src/types/chat.js';
 import {
   aggregateKeywords,
   aggregates,
@@ -10,6 +10,24 @@ import type { GeminiInput } from './gemini.js';
 import { ApiFailure } from './http.js';
 
 export type ChatMode = 'stats' | 'analysis';
+
+/** 서버가 검증한 순위 정보. popularRanks는 서버가 저장된 목록에서 정한 값이며 없는 영상은 undefined다. */
+export interface ChatRanking {
+  source?: RankingSource;
+  popularRanks?: readonly (number | undefined)[];
+}
+
+/** 선택 입력: 이전 문답(최대 3회)과 서버 집계 트렌드. 모두 서버가 구성하며 클라이언트 값이 아니다. */
+export interface ChatExtras {
+  history?: readonly { question: string; answer: string }[];
+  trend?: { common?: unknown; searchSample?: unknown };
+}
+
+const EXTRAS_INSTRUCTION = `
+
+■ 이전 대화와 트렌드 집계(입력에 있을 때)
+conversation.recentTurns는 같은 대화의 이전 질문·답변입니다. 후속 질문의 지시어를 해석하는 문맥일 뿐이며 사실의 근거가 아닙니다. 이전 답변의 수치를 다시 인용하지 말고, 사실은 이번 입력의 videos·serverStats·trend로만 말하세요.
+trend.common은 서버가 저장한 한국 인기 목록(API 반환 최대 200개)의 수집 기록 집계입니다. trend.searchSample은 사용자가 지정한 검색어의 YouTube 검색 결과 표본이며 인기 순위가 아닙니다. 두 표본을 합쳐 하나의 전체 트렌드로 말하지 말고 각각 출처를 밝히세요. 키워드 비율은 그 목록 안의 영상 비율이며 YouTube 전체 검색량이나 시청자 관심도가 아닙니다. 변화는 comparisons에 값이 있는 기준(직전/전일 동시간/7일/28일)만 말하고, 비교 기준이 없거나 표본이 적다고 표시된 값은 단정하지 마세요. 키워드 항목의 belowBaseline은 기준 시점에 2개 미만이었다는 뜻이며 0개가 아닙니다.`;
 
 const STATS_WORDS = /평균|합계|총(?!평)|중앙값|최대|최소|최고|최저|가장|제일|몇\s*개|개수|비율/;
 const ANALYSIS_REQUEST_WORDS = /트렌드|이유|왜|원인|아이디어|기획|제안|추천/;
@@ -73,16 +91,17 @@ const round = (value: number, digits = 0) => Math.round(value * 10 ** digits) / 
  * 대시보드와 같은 공용 통계 모듈로 계산한 근거. 모델이 숫자를 직접 세거나 나누지 않게 한다.
  * popular 출처는 YouTube 인기 순위, 그 밖은 업로드 후 일평균 조회수로 상위 3개를 정한다.
  */
-export function buildChatStats(
-  context: AnalysisContext,
-  ranking: Pick<ChatRequest, 'source' | 'popularRanks'>,
-  now: number,
-) {
+export function buildChatStats(context: AnalysisContext, ranking: ChatRanking, now: number) {
   const { videos } = context;
   const ids = context.requestedIds;
   const popularRank =
     ranking.source === 'popular' && ranking.popularRanks
-      ? new Map(ids.map((id, index) => [id, ranking.popularRanks![index]]))
+      ? new Map(
+          ids.flatMap((id, index) => {
+            const rank = ranking.popularRanks![index];
+            return rank === undefined ? [] : [[id, rank] as [string, number]];
+          }),
+        )
       : undefined;
   const top = topRanking(videos, ranking.source ?? 'selection', now, { popularRank });
   const titleOf = new Map(videos.map((video) => [video.id, video.title]));
@@ -124,8 +143,9 @@ export function buildChatStats(
 export function buildChatInput(
   question: string,
   context: AnalysisContext,
-  ranking: Pick<ChatRequest, 'source' | 'popularRanks'> = {},
+  ranking: ChatRanking = {},
   now = Date.now(),
+  extras: ChatExtras = {},
 ): GeminiInput {
   const viewRanking = context.videos
     .filter((video) => video.viewCount !== null)
@@ -151,10 +171,14 @@ export function buildChatInput(
   const topCount = serverStats.topRanking.items.length;
   const mode = classifyQuestion(question);
   return {
-    systemInstruction: mode === 'stats' ? STATS_SYSTEM_INSTRUCTION : CHAT_SYSTEM_INSTRUCTION,
+    systemInstruction:
+      (mode === 'stats' ? STATS_SYSTEM_INSTRUCTION : CHAT_SYSTEM_INSTRUCTION) +
+      (extras.history?.length || extras.trend ? EXTRAS_INSTRUCTION : ''),
     prompt: JSON.stringify({
       question,
       mode,
+      ...(extras.history?.length ? { conversation: { recentTurns: extras.history } } : {}),
+      ...(extras.trend ? { trend: extras.trend } : {}),
       videos: context.videos.map(({ channelId: _channelId, ...video }) => ({
         ...video,
         publishedDate: video.publishedAt.slice(0, 10),

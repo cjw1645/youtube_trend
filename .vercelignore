@@ -13,3 +13,5 @@ api/_lib/fetch-fixtures.ts
 api/_lib/runtime.ts
 .env
 .env.*
+.agent/
+tests/

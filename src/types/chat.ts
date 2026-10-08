@@ -11,10 +11,14 @@ export const RANKING_SOURCES: readonly RankingSource[] = [
 export interface ChatRequest {
   question: string;
   videoIds: string[];
-  /** 「인기순」 상위 3개 기준을 정할 출처 */
+  /** 「인기순」 상위 3개 기준을 정할 출처. 인기 순위·목록 소속은 서버가 저장된 목록으로 검증한다. */
   source?: RankingSource;
-  /** source=popular일 때 videoIds와 같은 순서의 YouTube 인기 순위(1부터) */
-  popularRanks?: number[];
+  /** 같은 질문의 재전송을 구분하는 UUID. 새 질문마다 새로 만든다. */
+  requestId: string;
+  /** 이어 갈 저장된 대화. 없으면 새 대화를 만든다. */
+  conversationId?: string;
+  /** source=search일 때 대상이 속한 내 검색어 슬롯 */
+  searchSlot?: 1 | 2;
 }
 
 /** Gemini에 전달한 서버 조회 메타데이터. null은 정보 없음이며 0과 구분한다. */
@@ -48,4 +52,9 @@ export interface ChatResponse {
   context: AnalysisContext;
   /** 서버가 계산한 「인기순」 상위 영상(근거 데이터 순서). 이전에 저장된 응답에는 없다. */
   ranking?: { basisLabel: string; ids: string[] };
+  /** 서버에 저장된 대화 ID. 저장에 실패했으면 null이며 답변은 이 화면에서만 볼 수 있다. */
+  conversationId?: string | null;
+  /** 저장 실패·한도 같은 안내 */
+  notice?: string;
+  usage?: { inputTokens: number | null; outputTokens: number | null };
 }

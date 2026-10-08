@@ -1,13 +1,18 @@
-import { type ReactNode, useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
+import DashSection from '../components/DashSection';
+import StoredTrendSection from '../components/StoredTrendSection';
+import SearchTabs from '../components/SearchTabs';
+import SearchDashboard from '../components/SearchDashboard';
+import { useSearchSlots } from '../hooks/useSearchSlots';
 import {
   aggregateKeywords,
   categoryDistribution,
   ENGAGEMENT_MIN_VIEWS,
   engagementRate,
-  formatSplit,
+  lengthDistribution,
   summarizeList,
   topBy,
   viewsPerHour,
@@ -15,6 +20,7 @@ import {
 import { formatCount, formatRelativeDate } from '../lib/format';
 import { popularChartTarget, type ChatTarget } from '../lib/chat-session';
 import type { Video, VideosResponse } from '../types/video';
+import type { StoredVideo } from '../types/trend';
 
 /** 전체 인기 차트를 pageToken으로 끝까지 수집한 목록. 카테고리 탭은 이 목록 안에서만 거른다. */
 export const CHART_PATH = '/api/videos?chart=popular&all=1';
@@ -25,6 +31,9 @@ interface Props {
   categoryNames: ReadonlyMap<string, string>;
   resolveCategoryNames: (ids: readonly string[]) => void;
   onSelect: (video: Video) => void;
+  onOpenVideo: (videoId: string) => void;
+  onImport: (videos: readonly StoredVideo[]) => 'set' | 'kept';
+  onImportSearch: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => 'set' | 'kept';
   onSearchKeyword: (keyword: string) => void;
   onAnalyze: (target: ChatTarget) => void;
 }
@@ -45,30 +54,6 @@ function StatTile({ label, value, note }: { label: string; value: string; note: 
         <span className="stat-note">{note}</span>
       </dd>
     </div>
-  );
-}
-
-/** 구역 공통 틀: 상자 없이 제목과 계산 기준을 한 줄에 둔다. */
-function DashSection({
-  title,
-  basis,
-  children,
-  className = '',
-}: {
-  title: string;
-  basis: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  const id = useId();
-  return (
-    <section className={`dash-section ${className}`} aria-labelledby={id}>
-      <header>
-        <h2 id={id}>{title}</h2>
-        <p>{basis}</p>
-      </header>
-      {children}
-    </section>
   );
 }
 
@@ -171,30 +156,27 @@ function VideoRankList({
   );
 }
 
-/** 쇼츠·롱폼 영상 수 비율 막대와 그룹별 중앙값 조회수 */
-function FormatSplitView({ split }: { split: ReturnType<typeof formatSplit> }) {
-  const groups = [
-    { name: '쇼츠', range: '3분 이하', ...split.shorts },
-    { name: '롱폼', range: '3분 초과', ...split.long },
-  ];
+/** 길이 구간별 영상 수 비율 막대와 구간별 중앙값 조회수. 쇼츠 여부는 API에 없어 단정하지 않는다. */
+function LengthView({ split }: { split: ReturnType<typeof lengthDistribution> }) {
+  const known = split.buckets.reduce((sum, bucket) => sum + bucket.count, 0);
   return (
     <>
-      {split.shorts.share !== null && (
-        <div className="split-bar" aria-hidden="true">
-          <span style={{ width: `${split.shorts.share * 100}%` }} />
+      {known > 0 && (
+        <div className="stack-bar" aria-hidden="true">
+          {split.buckets.map(({ key, count }, index) => (
+            <span key={key} className={`tone-${Math.min(index, 3)}`} style={{ flexGrow: count }} />
+          ))}
         </div>
       )}
       <dl className="split-groups">
-        {groups.map((group) => (
-          <div key={group.name}>
-            <dt>
-              {group.name} <span>{group.range}</span>
-            </dt>
+        {split.buckets.map((bucket) => (
+          <div key={bucket.key}>
+            <dt>{bucket.label}</dt>
             <dd>
-              <span className="split-count">{group.count}개</span>
+              <span className="split-count">{bucket.count}개</span>
               <span className="split-median">
-                {percent(group.share)} · 중앙값{' '}
-                {group.medianViews === null ? '정보 없음' : formatCount(group.medianViews)}
+                {percent(bucket.share)} · 중앙값{' '}
+                {bucket.medianViews === null ? '정보 없음' : formatCount(bucket.medianViews)}
               </span>
             </dd>
           </div>
@@ -265,8 +247,14 @@ export default function Dashboard({
   resolveCategoryNames,
   onSearchKeyword,
   onSelect,
+  onOpenVideo,
+  onImport,
+  onImportSearch,
   onAnalyze,
 }: Props) {
+  const search = useSearchSlots();
+  const [searchSlot, setSearchSlot] = useState<1 | 2 | null>(null);
+  const selectedSearch = search.slots.find((item) => item.slot === searchSlot);
   const chart = useApiResource<VideosResponse>(CHART_PATH, { cacheMs: POPULAR_CACHE_MS });
   const [tab, setTab] = useState('');
   const chartVideos = chart.state.status === 'success' ? chart.state.data.items : undefined;
@@ -296,6 +284,7 @@ export default function Dashboard({
   const tabName = activeTab ? (categoryNames.get(activeTab) ?? '카테고리 정보 없음') : '';
   const selectTab = (id: string) => {
     setTab(id);
+    setSearchSlot(null);
     document.getElementById(tabsId)?.scrollIntoView({ block: 'nearest' });
   };
   const summary = useMemo(() => (videos ? summarizeList(videos, now) : null), [videos, now]);
@@ -304,7 +293,7 @@ export default function Dashboard({
     () => (videos ? categoryDistribution(videos, (video) => video.categoryId) : []),
     [videos],
   );
-  const split = useMemo(() => (videos ? formatSplit(videos) : null), [videos]);
+  const split = useMemo(() => (videos ? lengthDistribution(videos) : null), [videos]);
   const engaged = useMemo(() => (videos ? topBy(videos, engagementRate, 5) : []), [videos]);
   const fastest = useMemo(
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 5) : []),
@@ -329,12 +318,17 @@ export default function Dashboard({
         <div>
           <h1>대시보드</h1>
           <p className="dash-scope">
-            {videos ? `${scope} · ${timeLabel} 조회` : 'YouTube 인기 차트 기준'}
+            {selectedSearch
+              ? `'${selectedSearch.conditions.query}' 검색 결과 기준`
+              : videos
+                ? `${scope} · ${timeLabel} 조회`
+                : 'YouTube 인기 차트 기준'}
           </p>
         </div>
         <button
           type="button"
           className="primary-button"
+          hidden={!!selectedSearch}
           disabled={!videos?.length}
           onClick={() => {
             if (!videos) return;
@@ -351,7 +345,7 @@ export default function Dashboard({
             <button
               key={id || 'all'}
               type="button"
-              aria-pressed={activeTab === id}
+              aria-pressed={searchSlot === null && activeTab === id}
               onClick={() => selectTab(id)}
             >
               {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'}
@@ -360,127 +354,164 @@ export default function Dashboard({
           ))}
         </nav>
       )}
-      {chart.state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
-      {chart.state.status === 'error' && (
-        <ErrorView
-          title="인기 목록을 불러오지 못했습니다"
-          error={chart.state.error}
-          onRetry={reload}
+      <SearchTabs
+        slots={search.slots}
+        selected={selectedSearch ? searchSlot : null}
+        busy={search.busy}
+        message={search.message ?? search.error}
+        onSelect={setSearchSlot}
+        onAdd={search.add}
+        onRemove={(slot) => {
+          if (searchSlot === slot) setSearchSlot(null);
+          void search.remove(slot);
+        }}
+      />
+      {selectedSearch ? (
+        <SearchDashboard
+          key={`${selectedSearch.slot}:${selectedSearch.conditions.query}`}
+          view={selectedSearch}
+          call={search.call}
+          categoryNames={categoryNames}
+          resolveCategoryNames={resolveCategoryNames}
+          onOpenVideo={onOpenVideo}
+          onSearchKeyword={onSearchKeyword}
+          onImport={onImportSearch}
         />
-      )}
-      {summary && videos && (
+      ) : (
         <>
-          <dl className="dash-stats" aria-label="인기 목록 요약">
-            <StatTile
-              label="인기 영상"
-              value={`${summary.count}개`}
-              note={
-                summary.count < SMALL_SAMPLE ? '표본이 적어 해석에 주의' : 'YouTube API 인기 차트'
-              }
+          {chart.state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
+          {chart.state.status === 'error' && (
+            <ErrorView
+              title="인기 목록을 불러오지 못했습니다"
+              error={chart.state.error}
+              onRetry={reload}
             />
-            <StatTile
-              label="24시간 내 업로드"
-              value={percent(summary.recentShare)}
-              note="업로드 후 24시간 미만"
-            />
-            <StatTile
-              label="조회수 중앙값"
-              value={summary.medianViews === null ? '정보 없음' : formatCount(summary.medianViews)}
-              note="조회수 비공개 제외"
-            />
-            <StatTile label="쇼츠 비율" value={percent(summary.shortsShare)} note="3분 이하 기준" />
-          </dl>
-          <div className="dash-lead">
-            <DashSection
-              title="빠르게 조회수를 모으는 영상"
-              basis="업로드 후 시간당 조회수 · 누적 ÷ 경과 시간(최소 1시간)"
-              className="dash-fastest"
-            >
-              {fastest.length ? (
-                <VideoRankList
-                  lead
-                  entries={fastest}
-                  onSelect={onSelect}
-                  value={({ score }) => formatCount(Math.round(score))}
-                  unit="시간당"
-                  meta={({ item }) => `${item.channelTitle} · ${relative(item.publishedAt)}`}
-                  describe={({ item, score }) =>
-                    `업로드 후 시간당 조회수 ${formatCount(Math.round(score))} · ${relative(item.publishedAt)} 업로드`
+          )}
+          {summary && videos && (
+            <>
+              <dl className="dash-stats" aria-label="인기 목록 요약">
+                <StatTile
+                  label="인기 영상"
+                  value={`${summary.count}개`}
+                  note={
+                    summary.count < SMALL_SAMPLE
+                      ? '표본이 적어 해석에 주의'
+                      : 'YouTube API 인기 차트'
                   }
                 />
-              ) : (
-                <p className="dash-empty">조회수가 공개된 영상이 없습니다.</p>
-              )}
-            </DashSection>
-            <DashSection
-              title="지금 뜨는 소재"
-              basis="태그·제목에 등장한 영상 수 · 누르면 검색"
-              className="dash-keywords"
-            >
-              {keywords.length ? (
-                <ol className="bar-list">
-                  {keywords.map(({ keyword, videos: count }, index) => (
-                    <BarRow
-                      key={keyword}
-                      rank={index + 1}
-                      label={keyword}
-                      value={count}
-                      max={keywords[0].videos}
-                      valueLabel={String(count)}
-                      onClick={() => onSearchKeyword(keyword)}
-                      actionLabel={`${keyword} 영상 검색 (현재 목록의 영상 ${count}개에 등장)`}
+                <StatTile
+                  label="24시간 내 업로드"
+                  value={percent(summary.recentShare)}
+                  note="업로드 후 24시간 미만"
+                />
+                <StatTile
+                  label="조회수 중앙값"
+                  value={
+                    summary.medianViews === null ? '정보 없음' : formatCount(summary.medianViews)
+                  }
+                  note="조회수 비공개 제외"
+                />
+              </dl>
+              <div className="dash-lead">
+                <DashSection
+                  title="빠르게 조회수를 모으는 영상"
+                  basis="업로드 후 시간당 조회수 · 누적 ÷ 경과 시간(최소 1시간)"
+                  className="dash-fastest"
+                >
+                  {fastest.length ? (
+                    <VideoRankList
+                      lead
+                      entries={fastest}
+                      onSelect={onSelect}
+                      value={({ score }) => formatCount(Math.round(score))}
+                      unit="시간당"
+                      meta={({ item }) => `${item.channelTitle} · ${relative(item.publishedAt)}`}
+                      describe={({ item, score }) =>
+                        `업로드 후 시간당 조회수 ${formatCount(Math.round(score))} · ${relative(item.publishedAt)} 업로드`
+                      }
                     />
-                  ))}
-                </ol>
-              ) : (
-                <p className="dash-empty">2개 이상 영상에 나온 키워드가 없습니다.</p>
-              )}
-            </DashSection>
-          </div>
-          <div className="dash-detail">
-            <DashSection
-              title="카테고리 분포"
-              basis="영상 수 · 조회수 비중 · 누르면 탭 이동"
-              className="dash-categories"
-            >
-              <CategoryView
-                categories={categories}
-                names={categoryNames}
-                activeTab={activeTab}
-                onSelectTab={selectTab}
-              />
-            </DashSection>
-            {split && (
-              <DashSection
-                title="쇼츠 / 롱폼"
-                basis="길이 3분 기준 · API에 쇼츠 구분 없음"
-                className="dash-split"
-              >
-                <FormatSplitView split={split} />
-              </DashSection>
-            )}
-            <DashSection
-              title="참여율 Top 5"
-              basis={`(좋아요+댓글) ÷ 조회수 · 조회수 ${ENGAGEMENT_MIN_VIEWS.toLocaleString('ko-KR')} 미만 제외`}
-              className="dash-engagement"
-            >
-              {engaged.length ? (
-                <VideoRankList
-                  entries={engaged}
-                  onSelect={onSelect}
-                  value={({ score }) => `${score.toFixed(1)}%`}
-                  meta={({ item }) =>
-                    `좋아요 ${formatCount(item.likeCount)} · 댓글 ${formatCount(item.commentCount)}`
-                  }
-                  describe={({ item, score }) =>
-                    `참여율 ${score.toFixed(2)}% · 좋아요 ${formatCount(item.likeCount)} · 댓글 ${formatCount(item.commentCount)} · 조회수 ${formatCount(item.viewCount)}`
-                  }
-                />
-              ) : (
-                <p className="dash-empty">기준을 만족하는 영상이 없습니다.</p>
-              )}
-            </DashSection>
-          </div>
+                  ) : (
+                    <p className="dash-empty">조회수가 공개된 영상이 없습니다.</p>
+                  )}
+                </DashSection>
+                <DashSection
+                  title="지금 뜨는 소재"
+                  basis="태그·제목에 등장한 영상 수 · 누르면 검색"
+                  className="dash-keywords"
+                >
+                  {keywords.length ? (
+                    <ol className="bar-list">
+                      {keywords.map(({ keyword, videos: count }, index) => (
+                        <BarRow
+                          key={keyword}
+                          rank={index + 1}
+                          label={keyword}
+                          value={count}
+                          max={keywords[0].videos}
+                          valueLabel={String(count)}
+                          onClick={() => onSearchKeyword(keyword)}
+                          actionLabel={`${keyword} 영상 검색 (현재 목록의 영상 ${count}개에 등장)`}
+                        />
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="dash-empty">2개 이상 영상에 나온 키워드가 없습니다.</p>
+                  )}
+                </DashSection>
+              </div>
+              <div className="dash-detail">
+                <DashSection
+                  title="카테고리 분포"
+                  basis="영상 수 · 조회수 비중 · 누르면 탭 이동"
+                  className="dash-categories"
+                >
+                  <CategoryView
+                    categories={categories}
+                    names={categoryNames}
+                    activeTab={activeTab}
+                    onSelectTab={selectTab}
+                  />
+                </DashSection>
+                {split && (
+                  <DashSection
+                    title="영상 길이 구간"
+                    basis="길이를 아는 영상 중 비율 · API에 쇼츠 구분 없음"
+                    className="dash-split"
+                  >
+                    <LengthView split={split} />
+                  </DashSection>
+                )}
+                <DashSection
+                  title="참여율 Top 5"
+                  basis={`(좋아요+댓글) ÷ 조회수 · 조회수 ${ENGAGEMENT_MIN_VIEWS.toLocaleString('ko-KR')} 미만 제외`}
+                  className="dash-engagement"
+                >
+                  {engaged.length ? (
+                    <VideoRankList
+                      entries={engaged}
+                      onSelect={onSelect}
+                      value={({ score }) => `${score.toFixed(1)}%`}
+                      meta={({ item }) =>
+                        `좋아요 ${formatCount(item.likeCount)} · 댓글 ${formatCount(item.commentCount)}`
+                      }
+                      describe={({ item, score }) =>
+                        `참여율 ${score.toFixed(2)}% · 좋아요 ${formatCount(item.likeCount)} · 댓글 ${formatCount(item.commentCount)} · 조회수 ${formatCount(item.viewCount)}`
+                      }
+                    />
+                  ) : (
+                    <p className="dash-empty">기준을 만족하는 영상이 없습니다.</p>
+                  )}
+                </DashSection>
+              </div>
+            </>
+          )}
+          <StoredTrendSection
+            categoryNames={categoryNames}
+            resolveCategoryNames={resolveCategoryNames}
+            onOpenVideo={onOpenVideo}
+            onSearchKeyword={onSearchKeyword}
+            onImport={onImport}
+          />
         </>
       )}
     </div>

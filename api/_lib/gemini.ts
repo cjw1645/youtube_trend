@@ -18,6 +18,21 @@ export interface GeminiInput {
 export interface GeminiResult {
   text: string;
   model: typeof GEMINI_MODEL;
+  /** 공급자가 보고한 토큰 수(usageMetadata). 없으면 키 자체가 없다. 내용은 저장하지 않는다. */
+  usage?: { inputTokens: number | null; outputTokens: number | null };
+}
+
+export const MAX_OUTPUT_TOKENS = 4096;
+
+function readUsage(body: unknown): GeminiResult['usage'] {
+  const meta = isObject(body) && isObject(body.usageMetadata) ? body.usageMetadata : null;
+  if (!meta) return undefined;
+  const count = (value: unknown) =>
+    typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null;
+  return {
+    inputTokens: count(meta.promptTokenCount),
+    outputTokens: count(meta.candidatesTokenCount),
+  };
 }
 
 function upstreamFailure(): ApiFailure {
@@ -105,7 +120,7 @@ export async function generateContent(input: GeminiInput): Promise<GeminiResult>
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: input.systemInstruction }] },
         contents: [{ role: 'user', parts: [{ text: input.prompt }] }],
-        generationConfig: { candidateCount: 1, maxOutputTokens: 4096 },
+        generationConfig: { candidateCount: 1, maxOutputTokens: MAX_OUTPUT_TOKENS },
       }),
     });
     if (response.status === 429) {
@@ -125,7 +140,8 @@ export async function generateContent(input: GeminiInput): Promise<GeminiResult>
     if (!response.ok) throw upstreamFailure();
     const body: unknown = await response.json();
     if (controller.signal.aborted) throw new Error('Request deadline');
-    return { text: readAnswer(body), model: GEMINI_MODEL };
+    const usage = readUsage(body);
+    return { text: readAnswer(body), model: GEMINI_MODEL, ...(usage ? { usage } : {}) };
   } catch (error) {
     if (controller.signal.aborted) {
       throw new ApiFailure(

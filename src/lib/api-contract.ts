@@ -3,6 +3,7 @@ import type { ApiErrorCode } from '../types/video';
 type RecordValue = Record<string, unknown>;
 const ERROR_CODES = new Set<ApiErrorCode>([
   'QUOTA_EXCEEDED',
+  'UNAUTHORIZED',
   'CONFIG_ERROR',
   'BAD_REQUEST',
   'NOT_FOUND',
@@ -75,6 +76,20 @@ export function validApiResponse(path: string, body: unknown): boolean {
   if (!isRecord(body)) return false;
   const pathname = path.split('?')[0];
   if (pathname === '/api/videos') return Array.isArray(body.items) && body.items.every(isVideo);
+  if (pathname === '/api/favorites')
+    return (
+      (Array.isArray(body.ids) && body.ids.every((id) => typeof id === 'string')) ||
+      body.ok === true
+    );
+  if (pathname === '/api/account') return body.ok === true;
+  // 저장된 집계·스냅샷: 서버가 만든 응답이며 형태(최상위 키)만 확인한다. 내부 값은 화면이 null을 허용해 읽는다.
+  if (pathname === '/api/trend' || pathname === '/api/search-trend')
+    return body.trend === null || isRecord(body.trend);
+  if (pathname === '/api/conversations')
+    return Array.isArray(body.conversations) || Array.isArray(body.messages) || body.ok === true;
+  if (pathname === '/api/snapshot') return body.snapshot === null || isRecord(body.snapshot);
+  if (pathname === '/api/search-snapshot' || pathname === '/api/search-slots')
+    return Array.isArray(body.slots) || typeof body.slot === 'number' || body.ok === true;
   if (pathname === '/api/categories')
     return (
       Array.isArray(body.items) &&

@@ -25,6 +25,17 @@ export default function Favorites({
   const analysisVideos = selection.enabled ? selection.selected : favorites.videos;
   return (
     <section className="flex flex-col gap-5">
+      {favorites.signedIn && (
+        <p className="text-sm text-slate-600">
+          로그인한 계정의 관심 영상입니다. 이 브라우저에 저장했던 목록은 계정으로 옮기지 않으며
+          로그아웃하면 다시 표시됩니다.
+        </p>
+      )}
+      {favorites.loading && (
+        <p role="status" className="text-sm">
+          관심 영상을 불러오는 중…
+        </p>
+      )}
       <div>
         <button
           className="primary-button"

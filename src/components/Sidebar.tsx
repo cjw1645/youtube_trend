@@ -8,6 +8,9 @@ import {
   MagnifyingGlassIcon,
 } from '@radix-ui/react-icons';
 
+import AccountPanel from './AccountPanel';
+import { useAuth } from '../hooks/useAuth';
+
 export type Page = 'dashboard' | 'search' | 'ai' | 'favorites';
 const NAV: { page: Page; label: string }[] = [
   { page: 'dashboard', label: '대시보드' },
@@ -87,13 +90,19 @@ export default function Sidebar({
       document.body.style.overflow = '';
     };
   }, []);
+  const auth = useAuth();
   const info = (
-    <p className="sidebar-info">
-      공개 메타데이터로 영상을 탐색하고 기획에 활용하세요.
-      <br />
-      <br />
-      관심 영상은 이 브라우저에 저장됩니다.
-    </p>
+    <>
+      <p className="sidebar-info">
+        공개 메타데이터로 영상을 탐색하고 기획에 활용하세요.
+        <br />
+        <br />
+        {auth.user
+          ? '관심 영상은 로그인한 계정에 저장됩니다.'
+          : '관심 영상은 로그인하지 않으면 이 브라우저에 저장됩니다.'}
+      </p>
+      <AccountPanel />
+    </>
   );
   return (
     <>

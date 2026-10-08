@@ -8,6 +8,7 @@ import { useCategories } from './hooks/useCategories';
 import { ErrorView } from './components/StatusView';
 import { useChat } from './hooks/useChat';
 import ChatPanel from './components/ChatPanel';
+import { ChatVideoList } from './components/ChatResult';
 import Sidebar, { type Page } from './components/Sidebar';
 import { popularChartTarget, selectChatVideos, type ChatTarget } from './lib/chat-session';
 import { loadShared } from './hooks/useApiResource';
@@ -17,6 +18,7 @@ import type { VideosResponse } from './types/video';
 import InfoDisclosure from './components/InfoDisclosure';
 import { useTargets } from './hooks/useTargets';
 import { makeTarget } from './lib/analysis-target';
+import type { StoredVideo } from './types/trend';
 
 function currentPage(): Page {
   const hash = location.hash;
@@ -34,7 +36,12 @@ export default function App() {
   const targets = useTargets();
   const { lastHome, setLastHome, setActive } = targets;
   const target: ChatTarget = targets.active ?? { label: '대상 미선택', videos: [] };
-  const scroll = useRef<Record<Page, number>>({ dashboard: 0, search: 0, ai: 0, favorites: 0 });
+  const scroll = useRef<Record<Page, number>>({
+    dashboard: 0,
+    search: 0,
+    ai: 0,
+    favorites: 0,
+  });
   const favorites = useFavorites();
   const [chartLoad, setChartLoad] = useState<{ loading: boolean; error?: string }>({
     loading: false,
@@ -95,6 +102,34 @@ export default function App() {
     setActive(makeTarget(value, value.source ?? 'detail', value.query));
   };
   const onSelect = (video: { id: string }) => setSelectedVideoId(video.id);
+  // 저장된 목록 상위 20개를 AI 대상으로 가져온다. 이미 선택한 대상이 있으면 덮어쓰지 않고 유지한다.
+  const importStored = (
+    stored: readonly StoredVideo[],
+    label: string,
+    popular: boolean,
+    slot?: 1 | 2,
+  ): 'set' | 'kept' => {
+    if (targets.active) return 'kept';
+    const items = stored
+      .slice(0, 20)
+      .map((video) => ({ id: video.video_id, title: video.title, popularRank: video.position }));
+    const now = Date.now();
+    setActive(
+      makeTarget(
+        popular
+          ? popularChartTarget(items, label, now)
+          : {
+              label,
+              videos: items,
+              source: 'home',
+              capturedAt: now,
+              ...(slot ? { rankingSource: 'search' as const, searchSlot: slot } : {}),
+            },
+        popular ? 'dashboard' : 'home',
+      ),
+    );
+    return 'set';
+  };
   const searchKeyword = (q: string) => {
     setSearchRequest({ q, id: Date.now() });
     navigate('search');
@@ -127,6 +162,9 @@ export default function App() {
               categoryNames={nameById}
               resolveCategoryNames={resolveNames}
               onSelect={onSelect}
+              onOpenVideo={(id) => setSelectedVideoId(id)}
+              onImport={(stored) => importStored(stored, '저장된 인기 목록 상위 20개', true)}
+              onImportSearch={(stored, label, slot) => importStored(stored, label, false, slot)}
               onSearchKeyword={searchKeyword}
               onAnalyze={analyze}
             />
@@ -179,8 +217,8 @@ export default function App() {
               </p>
             )}
             <p>
-              이 탭에 초안과 완료 대화를 최대 24시간 보관합니다. 최근 10건까지 복원하며 대화 이력은
-              AI에 보내지 않습니다. 탭을 닫아도 브라우저 세션 복원 설정에 따라 남을 수 있습니다.
+              대화는 로그인한 계정에 7일간 저장되어 다른 기기에서도 이어 볼 수 있습니다. 분석에는
+              최근 3회 문답만 사용합니다.
             </p>
           </InfoDisclosure>
           <section className="target-toolbar" aria-label="분석 대상 선택">
@@ -230,6 +268,16 @@ export default function App() {
           {targets.notice && (
             <p role="status" className="mb-4 text-sm text-amber-900">
               {targets.notice}
+            </p>
+          )}
+          {selectChatVideos(target.videos).length > 0 ? (
+            <details className="target-videos">
+              <summary>전송할 영상 확인 ({selectChatVideos(target.videos).length}개)</summary>
+              <ChatVideoList videos={selectChatVideos(target.videos)} />
+            </details>
+          ) : (
+            <p className="mb-4 text-sm text-amber-800">
+              분석할 영상이 없습니다. 영상을 조회한 뒤 질문해 주세요.
             </p>
           )}
           <ChatPanel chat={chat} target={target} />

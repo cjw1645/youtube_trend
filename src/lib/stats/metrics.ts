@@ -2,8 +2,17 @@
 
 const HOUR_MS = 3_600_000;
 const DAY_HOURS = 24;
-/** API에 쇼츠 여부 필드가 없어 3분 이하 영상을 쇼츠로 분류한다. */
-export const SHORTS_MAX_SECONDS = 180;
+/**
+ * 길이 구간 경계(초). API에는 쇼츠 여부 필드가 없어 길이로 쇼츠를 단정하지 않고 구간으로만 나눈다.
+ * 저장된 집계(DB run_profile)의 구간과 같은 경계를 쓴다.
+ */
+export const LENGTH_BUCKETS = [
+  { key: 'u60', label: '1분 이하', maxSeconds: 60 },
+  { key: 'u180', label: '1~3분', maxSeconds: 180 },
+  { key: 'u600', label: '3~10분', maxSeconds: 600 },
+  { key: 'o600', label: '10분 초과', maxSeconds: Infinity },
+] as const;
+export type LengthBucketKey = (typeof LENGTH_BUCKETS)[number]['key'];
 /** 참여율은 조회수가 너무 적으면 비율이 크게 튀므로 기준 미만을 제외한다. */
 export const ENGAGEMENT_MIN_VIEWS = 1_000;
 
@@ -37,10 +46,11 @@ export function median(values: readonly number[]): number | null {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
-/** 쇼츠(3분 이하) 여부. 길이를 알 수 없으면(0초) null. */
-export function isShorts(video: { durationSeconds: number }): boolean | null {
-  if (!(video.durationSeconds > 0)) return null;
-  return video.durationSeconds <= SHORTS_MAX_SECONDS;
+/** 길이 구간. 길이를 알 수 없으면(0초 이하·null) null. */
+export function lengthBucket(video: { durationSeconds: number | null }): LengthBucketKey | null {
+  const seconds = video.durationSeconds;
+  if (seconds === null || !(seconds > 0)) return null;
+  return LENGTH_BUCKETS.find((bucket) => seconds <= bucket.maxSeconds)!.key;
 }
 
 /** 참여율(%) = (좋아요 + 댓글) ÷ 조회수 × 100. 통계 null·조회수 기준 미만이면 null. */
@@ -98,42 +108,37 @@ export interface ListSummary {
   recentShare: number | null;
   /** 조회수 중앙값(null 제외) */
   medianViews: number | null;
-  /** 길이를 아는 영상 중 쇼츠(3분 이하) 비율(0–1) */
-  shortsShare: number | null;
 }
 
-export function summarizeList(
-  videos: readonly (Timed & { durationSeconds: number })[],
-  now: number,
-): ListSummary {
+export function summarizeList(videos: readonly Timed[], now: number): ListSummary {
   const recent = videos.filter((v) => hoursSinceUpload(v.publishedAt, now) < DAY_HOURS).length;
-  const known = videos.map(isShorts).filter((value): value is boolean => value !== null);
   return {
     count: videos.length,
     recentShare: videos.length ? recent / videos.length : null,
     medianViews: median(videos.flatMap((v) => (v.viewCount === null ? [] : [v.viewCount]))),
-    shortsShare: known.length ? known.filter(Boolean).length / known.length : null,
   };
 }
 
 /**
- * 쇼츠·롱폼 그룹별 영상 수, 길이를 아는 영상 중 비율(0–1), 조회수 중앙값.
+ * 길이 구간별 영상 수, 길이를 아는 영상 중 비율(0–1), 조회수 중앙값.
  * 길이를 모르는 영상은 unknown으로 세고 비율에서 뺀다.
  */
-export function formatSplit(videos: readonly (Timed & { durationSeconds: number })[]) {
-  const known = videos.filter((v) => isShorts(v) !== null).length;
-  const group = (shorts: boolean) => {
-    const items = videos.filter((v) => isShorts(v) === shorts);
-    return {
-      count: items.length,
-      share: known ? items.length / known : null,
-      medianViews: median(items.flatMap((v) => (v.viewCount === null ? [] : [v.viewCount]))),
-    };
-  };
+export function lengthDistribution(
+  videos: readonly (Timed & { durationSeconds: number | null })[],
+) {
+  const known = videos.filter((v) => lengthBucket(v) !== null).length;
   return {
-    shorts: group(true),
-    long: group(false),
-    unknown: videos.filter((v) => isShorts(v) === null).length,
+    buckets: LENGTH_BUCKETS.map(({ key, label }) => {
+      const items = videos.filter((v) => lengthBucket(v) === key);
+      return {
+        key,
+        label,
+        count: items.length,
+        share: known ? items.length / known : null,
+        medianViews: median(items.flatMap((v) => (v.viewCount === null ? [] : [v.viewCount]))),
+      };
+    }),
+    unknown: videos.length - known,
   };
 }
 

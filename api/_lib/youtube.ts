@@ -301,6 +301,249 @@ export async function listAllPopularVideos(): Promise<Video[]> {
   return videos;
 }
 
+export interface SnapshotVideo {
+  id: string;
+  /** 수집 목록 안의 API 반환 순서(1부터). 전체 YouTube 순위가 아니다. */
+  position: number;
+  title: string;
+  description: string;
+  tags: string[];
+  categoryId: string;
+  channelId: string;
+  publishedAt: string;
+  durationSeconds: number | null;
+  thumbnailUrl: string | null;
+  viewCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+}
+
+export interface SnapshotChannel {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  subscriberCount: number | null;
+  hidden: boolean;
+}
+
+export interface PopularSnapshot {
+  videos: SnapshotVideo[];
+  channels: SnapshotChannel[];
+  pagesFetched: number;
+  /** 모든 페이지·채널 조회가 성공했고 영상이 1개 이상일 때만 true */
+  complete: boolean;
+  /** 시도한 YouTube 호출 수(실패 포함, 호출당 1 unit으로 보수적으로 계산) */
+  units: number;
+  errorCode?: string;
+}
+
+/**
+ * 공통 수집용: KR 인기 목록 최대 4페이지와 채널 정보를 모은다. 자동 재시도는 하지 않는다.
+ * 한 번이라도 실패하면 거기서 멈추고 complete=false로 돌려준다(부분 결과는 저장하지 않는다).
+ */
+export async function collectPopularSnapshot(): Promise<PopularSnapshot> {
+  const raws: RawVideo[] = [];
+  const seen = new Set<string>();
+  let units = 0;
+  let pagesFetched = 0;
+  const fail = (error: unknown): PopularSnapshot => ({
+    videos: [],
+    channels: [],
+    pagesFetched,
+    complete: false,
+    units,
+    errorCode: error instanceof ApiFailure ? error.code : 'INTERNAL_ERROR',
+  });
+
+  let pageToken: string | undefined;
+  for (let page = 0; page < POPULAR_MAX_PAGES; page += 1) {
+    units += 1;
+    try {
+      const { items = [], nextPageToken } = await ytFetch<ListResponse<RawVideo>>('videos', {
+        part: VIDEO_PART,
+        chart: 'mostPopular',
+        regionCode: REGION,
+        hl: 'ko',
+        maxResults: '50',
+        ...(pageToken ? { pageToken } : {}),
+      });
+      pagesFetched += 1;
+      for (const raw of items) {
+        if (seen.has(raw.id)) continue;
+        seen.add(raw.id);
+        raws.push(raw);
+      }
+      if (!nextPageToken) break;
+      pageToken = nextPageToken;
+    } catch (error) {
+      return fail(error);
+    }
+  }
+  if (!raws.length) return { ...fail(null), errorCode: 'EMPTY_RESPONSE' };
+
+  const channelRaws = new Map<string, RawChannel>();
+  const channelIds = [...new Set(raws.map((raw) => raw.snippet.channelId))];
+  for (let i = 0; i < channelIds.length; i += 50) {
+    units += 1;
+    try {
+      const { items = [] } = await ytFetch<ListResponse<RawChannel>>('channels', {
+        part: 'snippet,statistics',
+        id: channelIds.slice(i, i + 50).join(','),
+      });
+      for (const item of items) channelRaws.set(item.id, item);
+    } catch (error) {
+      return fail(error);
+    }
+  }
+
+  return {
+    videos: raws.map((raw, index) => toSnapshotVideo(raw, index + 1)),
+    channels: [...channelRaws.values()].map(toSnapshotChannel),
+    pagesFetched,
+    complete: true,
+    units,
+  };
+}
+
+function toSnapshotVideo(raw: RawVideo, position: number): SnapshotVideo {
+  return {
+    id: raw.id,
+    position,
+    title: raw.snippet.title,
+    description: raw.snippet.description,
+    tags: raw.snippet.tags ?? [],
+    categoryId: raw.snippet.categoryId,
+    channelId: raw.snippet.channelId,
+    publishedAt: raw.snippet.publishedAt,
+    durationSeconds:
+      raw.contentDetails?.duration === undefined
+        ? null
+        : parseDuration(raw.contentDetails.duration),
+    thumbnailUrl: pickThumbnail(raw.snippet.thumbnails) || null,
+    viewCount: toNumber(raw.statistics?.viewCount),
+    likeCount: toNumber(raw.statistics?.likeCount),
+    commentCount: toNumber(raw.statistics?.commentCount),
+  };
+}
+
+function toSnapshotChannel(raw: RawChannel): SnapshotChannel {
+  const hidden = raw.statistics?.hiddenSubscriberCount === true;
+  return {
+    id: raw.id,
+    title: raw.snippet?.title ?? '',
+    thumbnailUrl: raw.snippet ? pickThumbnail(raw.snippet.thumbnails) || null : null,
+    subscriberCount: hidden ? null : toNumber(raw.statistics?.subscriberCount),
+    hidden,
+  };
+}
+
+export interface SearchConditions {
+  query: string;
+  order: 'relevance' | 'date' | 'viewCount';
+  /** '' 이면 기간 제한 없음 */
+  window: '' | '1d' | '7d' | '30d';
+}
+
+const WINDOW_MS = { '1d': 86_400_000, '7d': 7 * 86_400_000, '30d': 30 * 86_400_000 } as const;
+/** 검색 결과 상한: 페이지당 50개 × 4페이지 */
+const SEARCH_MAX_PAGES = 4;
+
+/**
+ * 개인 검색 수집용: 검색어별 최대 4페이지(200개) 검색 → 50개 단위 영상 보완 → 채널 보완.
+ * 검색 순서는 인기 차트 순위가 아니다. 영상 보완에서 사라진(삭제·비공개) ID는 제외한다.
+ * searchCalls는 search.list 호출 수(검색 전용 예산), units는 그 밖의 호출 수다. 자동 재시도는 없다.
+ */
+export async function collectSearchSnapshot(
+  conditions: SearchConditions,
+  now: Date,
+): Promise<PopularSnapshot & { searchCalls: number }> {
+  let units = 0;
+  let searchCalls = 0;
+  let pagesFetched = 0;
+  const fail = (error: unknown) => ({
+    videos: [],
+    channels: [],
+    pagesFetched,
+    complete: false,
+    units,
+    searchCalls,
+    errorCode: error instanceof ApiFailure ? error.code : 'INTERNAL_ERROR',
+  });
+
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  let pageToken: string | undefined;
+  for (let page = 0; page < SEARCH_MAX_PAGES; page += 1) {
+    searchCalls += 1;
+    try {
+      const { items = [], nextPageToken } = await ytFetch<ListResponse<RawSearchItem>>('search', {
+        part: 'id',
+        q: conditions.query,
+        type: 'video',
+        regionCode: REGION,
+        relevanceLanguage: 'ko',
+        maxResults: '50',
+        ...(conditions.order !== 'relevance' ? { order: conditions.order } : {}),
+        ...(conditions.window
+          ? {
+              publishedAfter: new Date(now.getTime() - WINDOW_MS[conditions.window]).toISOString(),
+            }
+          : {}),
+        ...(pageToken ? { pageToken } : {}),
+      });
+      pagesFetched += 1;
+      for (const item of items) {
+        const id = item.id.videoId;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          ids.push(id);
+        }
+      }
+      if (!nextPageToken) break;
+      pageToken = nextPageToken;
+    } catch (error) {
+      return fail(error);
+    }
+  }
+  if (!ids.length)
+    return { videos: [], channels: [], pagesFetched, complete: true, units, searchCalls };
+
+  const byId = new Map<string, RawVideo>();
+  for (let i = 0; i < ids.length; i += 50) {
+    units += 1;
+    try {
+      for (const raw of await getRawVideos(ids.slice(i, i + 50))) byId.set(raw.id, raw);
+    } catch (error) {
+      return fail(error);
+    }
+  }
+  const raws = ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+
+  const channelRaws = new Map<string, RawChannel>();
+  const channelIds = [...new Set(raws.map((raw) => raw.snippet.channelId))];
+  for (let i = 0; i < channelIds.length; i += 50) {
+    units += 1;
+    try {
+      const { items = [] } = await ytFetch<ListResponse<RawChannel>>('channels', {
+        part: 'snippet,statistics',
+        id: channelIds.slice(i, i + 50).join(','),
+      });
+      for (const item of items) channelRaws.set(item.id, item);
+    } catch (error) {
+      return fail(error);
+    }
+  }
+
+  return {
+    videos: raws.map((raw, index) => toSnapshotVideo(raw, index + 1)),
+    channels: [...channelRaws.values()].map(toSnapshotChannel),
+    pagesFetched,
+    complete: true,
+    units,
+    searchCalls,
+  };
+}
+
 /** 검색의 별도 할당량과 통계 보완 호출을 사용한다. 비용은 공식 문서/프로젝트 설정으로 확인한다. */
 export async function searchVideos(
   q: string,
@@ -331,6 +574,16 @@ async function getRawVideos(ids: string[]): Promise<RawVideo[]> {
     hl: 'ko',
   });
   return items;
+}
+
+/** 관심 영상처럼 ID를 아는 영상을 일괄 조회한다(요청 순서 유지, 없는 영상은 제외). */
+export async function getVideosByIds(ids: string[]): Promise<Video[]> {
+  const raws = await getRawVideos(ids);
+  const byId = new Map(raws.map((raw) => [raw.id, raw]));
+  return ids.flatMap((id) => {
+    const raw = byId.get(id);
+    return raw ? [toVideo(raw)] : [];
+  });
 }
 
 export async function listCategories(): Promise<Category[]> {

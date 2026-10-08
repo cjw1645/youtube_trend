@@ -22,10 +22,18 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
   return requestJson<T>(path, { signal });
 }
 
-export async function postJson<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
+export async function postJson<T>(
+  path: string,
+  body: unknown,
+  signal: AbortSignal,
+  token?: string,
+): Promise<T> {
   const response = await requestJson<T>(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
     signal,
     cache: 'no-store',
@@ -38,6 +46,24 @@ export async function postJson<T>(path: string, body: unknown, signal: AbortSign
     );
   }
   return response;
+}
+
+/** 로그인 사용자 전용 호출. 액세스 토큰만 보내며 사용자 id는 서버가 토큰에서 정한다. */
+export async function authedJson<T>(
+  path: string,
+  token: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  body?: unknown,
+): Promise<T> {
+  return requestJson<T>(path, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    cache: 'no-store',
+  });
 }
 
 async function requestJson<T>(path: string, options: RequestInit): Promise<T> {

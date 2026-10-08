@@ -2,6 +2,9 @@ import type { ChatRequest } from '../../src/types/chat.js';
 import { ApiFailure } from './http.js';
 
 export const MAX_CHAT_BYTES = 16 * 1024;
+/** 질문 길이(Unicode 코드 포인트). 사용자 결정(2026-10-08): 1~100자. 답변 길이는 제한하지 않는다. */
+export const MAX_QUESTION_CHARS = 100;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const badRequest = (message: string) => new ApiFailure('BAD_REQUEST', message, 400);
 const tooLarge = () => new ApiFailure('BAD_REQUEST', '요청 본문은 16KB 이하로 보내 주세요.', 413);
 
@@ -54,12 +57,14 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
     throw badRequest('질문과 영상 ID 목록을 보내 주세요.');
   const fields = body as Record<string, unknown>;
   if (Object.keys(fields).some((key) => !ALLOWED_FIELDS.has(key))) {
-    throw badRequest('question, videoIds, source, popularRanks만 보낼 수 있습니다.');
+    throw badRequest(
+      'question, videoIds, source, requestId, conversationId, searchSlot만 보낼 수 있습니다.',
+    );
   }
   if (typeof fields.question !== 'string') throw badRequest('질문을 입력해 주세요.');
   const question = fields.question.trim();
-  if (!question || Array.from(question).length > 2000)
-    throw badRequest('질문은 1–2,000자로 입력해 주세요.');
+  if (!question || Array.from(question).length > MAX_QUESTION_CHARS)
+    throw badRequest(`질문은 1–${MAX_QUESTION_CHARS}자로 입력해 주세요.`);
   if (
     !Array.isArray(fields.videoIds) ||
     fields.videoIds.some((id) => typeof id !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(id))
@@ -69,38 +74,41 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
   const videoIds = [...new Set(fields.videoIds as string[])];
   if (!videoIds.length || videoIds.length > 20)
     throw badRequest('분석할 영상은 1–20개 선택해 주세요.');
-  return { question, videoIds, ...readRanking(fields, fields.videoIds as string[]) };
+  if (typeof fields.requestId !== 'string' || !UUID.test(fields.requestId))
+    throw badRequest('요청 ID(requestId)가 올바르지 않습니다.');
+  if (
+    fields.conversationId !== undefined &&
+    (typeof fields.conversationId !== 'string' || !UUID.test(fields.conversationId))
+  )
+    throw badRequest('대화 ID가 올바르지 않습니다.');
+  if (fields.searchSlot !== undefined && fields.searchSlot !== 1 && fields.searchSlot !== 2)
+    throw badRequest('searchSlot은 1 또는 2여야 합니다.');
+  const source = readSource(fields.source);
+  if ((source === 'search') !== (fields.searchSlot !== undefined))
+    throw badRequest('searchSlot은 source=search일 때만, 그리고 함께 보내 주세요.');
+  return {
+    question,
+    videoIds,
+    requestId: fields.requestId.toLowerCase(),
+    ...(source ? { source } : {}),
+    ...(fields.conversationId ? { conversationId: fields.conversationId.toLowerCase() } : {}),
+    ...(fields.searchSlot ? { searchSlot: fields.searchSlot as 1 | 2 } : {}),
+  };
 }
 
-const ALLOWED_FIELDS = new Set(['question', 'videoIds', 'source', 'popularRanks']);
+const ALLOWED_FIELDS = new Set([
+  'question',
+  'videoIds',
+  'source',
+  'requestId',
+  'conversationId',
+  'searchSlot',
+]);
 const SOURCES = new Set<string>(['popular', 'search', 'favorites', 'selection', 'detail']);
 
-/** 출처와 YouTube 인기 순위. popularRanks는 원래 videoIds와 같은 길이이며 중복 ID는 첫 순위를 쓴다. */
-function readRanking(
-  fields: Record<string, unknown>,
-  rawIds: string[],
-): Pick<ChatRequest, 'source' | 'popularRanks'> {
-  const { source, popularRanks } = fields;
-  if (source === undefined) {
-    if (popularRanks !== undefined)
-      throw badRequest('popularRanks는 source=popular와 함께 보내 주세요.');
-    return {};
-  }
+function readSource(source: unknown): ChatRequest['source'] {
+  if (source === undefined) return undefined;
   if (typeof source !== 'string' || !SOURCES.has(source))
     throw badRequest('source 값이 올바르지 않습니다.');
-  if (popularRanks === undefined) return { source: source as ChatRequest['source'] };
-  if (
-    source !== 'popular' ||
-    !Array.isArray(popularRanks) ||
-    popularRanks.length !== rawIds.length ||
-    popularRanks.some((rank) => !Number.isInteger(rank) || rank < 1 || rank > 200)
-  )
-    throw badRequest('popularRanks는 source=popular일 때 영상마다 1–200 정수로 보내 주세요.');
-  const seen = new Set<string>();
-  const ranks = rawIds.flatMap((id, index) => {
-    if (seen.has(id)) return [];
-    seen.add(id);
-    return [popularRanks[index] as number];
-  });
-  return { source: 'popular', popularRanks: ranks };
+  return source as ChatRequest['source'];
 }
