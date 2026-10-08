@@ -37,6 +37,7 @@ docs/*.pdf
 /MILESTONE.md
 /.claude/
 /.agents/
+/.agent/
 /.codex/
 /api/_fixtures/
 /api/_lib/fixtures.ts
