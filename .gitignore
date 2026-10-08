@@ -43,3 +43,4 @@ docs/*.pdf
 /api/_lib/fixtures.ts
 /api/_lib/fetch-fixtures.ts
 /api/_lib/runtime.ts
+/outputs/
