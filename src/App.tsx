@@ -184,7 +184,7 @@ export default function App() {
             </p>
           </InfoDisclosure>
           <section className="target-toolbar" aria-label="분석 대상 선택">
-            <span className="text-sm font-semibold">대상 가져오기</span>
+            <span className="text-sm font-semibold">분석 대상 바꾸기</span>
             <div className="flex flex-wrap gap-2">
               <button
                 className="secondary-button"

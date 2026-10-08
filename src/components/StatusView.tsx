@@ -39,7 +39,7 @@ function Panel({
   return (
     <div
       role={error ? 'alert' : 'status'}
-      className={`flex flex-col items-center rounded-2xl border border-dashed border-zinc-300 px-6 ${compact ? 'py-5' : 'py-16'} text-center`}
+      className={`flex flex-col items-center border-y border-zinc-200 px-6 ${compact ? 'py-5' : 'py-16'} text-center`}
     >
       <span aria-hidden className="status-icon">
         {icon}

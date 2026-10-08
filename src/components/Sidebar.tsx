@@ -19,7 +19,7 @@ export function Logo({ onClick }: { onClick: () => void }) {
   return (
     <button className="brand" type="button" onClick={onClick} aria-label="유튜브 트렌드 대시보드">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <rect width="32" height="32" rx="9" fill="currentColor" />
+        <rect width="32" height="32" rx="4" fill="currentColor" />
         <path d="M8 22V16M15 22V10M22 22V7" stroke="white" strokeWidth="3" strokeLinecap="round" />
       </svg>
       <span>

@@ -67,7 +67,7 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
                 type="button"
                 disabled={pending}
                 onClick={() => chat.setQuestion(example)}
-                className="rounded-full border border-zinc-200 bg-panel px-3 py-2 text-xs text-zinc-700 hover:border-red-300 disabled:opacity-50"
+                className="rounded border border-zinc-200 px-3 py-2 text-xs text-zinc-700 hover:border-zinc-300 hover:text-zinc-900 disabled:opacity-50"
               >
                 {example}
               </button>
@@ -92,7 +92,7 @@ export default function ChatPanel({ chat, target }: { chat: ChatController; targ
               onKeyDown={submitChatOnEnter}
               rows={3}
               placeholder="현재 영상에서 어떤 콘텐츠 흐름이 보이나요?"
-              className="mt-2 block w-full resize-y rounded-xl border border-zinc-300 bg-panel p-3 text-sm outline-none focus:border-red-500 disabled:bg-zinc-100"
+              className="mt-2 block w-full resize-y rounded border border-zinc-200 p-3 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
             />
             <p id={`${inputId}-help`} className="mt-1 text-xs text-zinc-500">
               Enter로 전송 · Shift+Enter로 줄바꿈
