@@ -28,7 +28,7 @@ try {
       ),
       400,
     );
-  const base = { question: 'q', videoIds: [a], requestId: rid };
+  const base = { question: '트렌드 분석', videoIds: [a], requestId: rid };
   assert.deepEqual(await readChatRequest(req(base)), base);
   // 요청 ID는 대문자도 소문자로 맞춘다. 중복 ID는 하나로 합친다.
   assert.deepEqual(
@@ -50,11 +50,11 @@ try {
   });
   // 질문 길이: 100자(코드 포인트) 허용, 101자 거부. 이모지는 1자로 센다.
   await readChatRequest(req({ ...base, question: '가'.repeat(100) }));
-  await readChatRequest(req({ ...base, question: '😀'.repeat(100) }));
-  await readChatRequest(req({ ...base, question: 'é'.repeat(50) })); // 조합 문자는 코드 포인트 2개
+  await readChatRequest(req({ ...base, question: `가나${'😀'.repeat(98)}` }));
+  await readChatRequest(req({ ...base, question: `가나${'é'.repeat(49)}` })); // 조합 문자는 코드 포인트 2개
   await bad({ ...base, question: '가'.repeat(101) });
-  await bad({ ...base, question: '😀'.repeat(101) });
-  await bad({ ...base, question: 'é'.repeat(51) });
+  await bad({ ...base, question: `가나${'😀'.repeat(99)}` });
+  await bad({ ...base, question: `가나${'é'.repeat(50)}` });
   await bad({ ...base, question: '   ' });
   // 클라이언트가 순위·통계를 보내는 경로는 없다
   await bad({ ...base, popularRanks: [1] });

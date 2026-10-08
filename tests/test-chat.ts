@@ -232,6 +232,9 @@ try {
     { question: '질문', videoIds: [id(1)], requestId: uuid(), popularRanks: [1] },
     { question: '질문', videoIds: [id(1)], requestId: uuid(), userId: USER_B },
     { question: '질문', videoIds: [id(1)] },
+    // 자모·기호만 있는 질문은 예약·Gemini 호출 전에 거부한다.
+    { question: 'ㅁㄴㅇ', videoIds: [id(1)], requestId: uuid() },
+    { question: '???', videoIds: [id(1)], requestId: uuid() },
   ]) {
     const res = await post(USER_A, body);
     assert.equal(res.status, 400);

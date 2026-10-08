@@ -9,6 +9,7 @@ import {
 import type { ChatController } from '../hooks/useChat';
 import { useConversations } from '../hooks/useConversations';
 import { MAX_QUESTION_CHARS, selectChatVideos, type ChatTarget } from '../lib/chat-session';
+import { isMeaninglessQuestion, MEANINGLESS_QUESTION_MESSAGE } from '../lib/chat-question';
 import ChatThread from './ChatThread';
 import ConversationHistory from './ConversationHistory';
 
@@ -61,8 +62,14 @@ export default function ChatPanel({
   const { state, question } = chat;
   const pending = state.status === 'pending';
   const length = [...question.trim()].length;
+  const meaningless = length > 0 && isMeaninglessQuestion(question);
   const disabled =
-    pending || !videos.length || !length || length > MAX_QUESTION_CHARS || !chat.signedIn;
+    meaningless ||
+    pending ||
+    !videos.length ||
+    !length ||
+    length > MAX_QUESTION_CHARS ||
+    !chat.signedIn;
   const history = useConversations(
     chat.userId ?? null,
     chat.getToken ?? noToken,
@@ -145,7 +152,7 @@ export default function ChatPanel({
           <span className="tool-count">{videos.length}</span>
         </button>
         <span id={`${inputId}-help`} className="chat-time chat-help">
-          Enter로 전송 · Shift+Enter로 줄바꿈
+          {meaningless ? MEANINGLESS_QUESTION_MESSAGE : 'Enter로 전송 · Shift+Enter로 줄바꿈'}
         </span>
         <span className={`chat-time ${length > MAX_QUESTION_CHARS ? 'text-red-700' : ''}`}>
           {length.toLocaleString('ko-KR')} / {MAX_QUESTION_CHARS}자

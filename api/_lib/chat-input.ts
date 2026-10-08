@@ -1,5 +1,9 @@
 import type { ChatRequest } from '../../src/types/chat.js';
 import { ApiFailure } from './http.js';
+import {
+  isMeaninglessQuestion,
+  MEANINGLESS_QUESTION_MESSAGE,
+} from '../../src/lib/chat-question.js';
 
 export const MAX_CHAT_BYTES = 16 * 1024;
 /** 질문 길이(Unicode 코드 포인트). 사용자 결정(2026-10-08): 1~100자. 답변 길이는 제한하지 않는다. */
@@ -65,6 +69,7 @@ export async function readChatRequest(request: Request): Promise<ChatRequest> {
   const question = fields.question.trim();
   if (!question || Array.from(question).length > MAX_QUESTION_CHARS)
     throw badRequest(`질문은 1–${MAX_QUESTION_CHARS}자로 입력해 주세요.`);
+  if (isMeaninglessQuestion(question)) throw badRequest(MEANINGLESS_QUESTION_MESSAGE);
   if (
     !Array.isArray(fields.videoIds) ||
     fields.videoIds.some((id) => typeof id !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(id))
