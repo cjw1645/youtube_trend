@@ -164,7 +164,7 @@ export default function Home({
   }, [signedIn, videos, label, q, activeCategory, order, onResults, fetchedAt, ranking]);
 
   const locked = !signedIn;
-  const listTitle = q ? `‘${q}’ 검색 결과` : '인기 영상 200개';
+  const listTitle = q ? `‘${q}’ 검색 결과` : '인기 영상';
 
   return (
     <div className="home-page flex flex-col gap-6">

@@ -148,7 +148,9 @@ try {
   assert.match(full, /인기 키워드 2위/);
   assert.match(full, /최고 12위/);
   assert.match(full, /반려동물 \+79\.0%p/);
-  assert.match(full, /compare-table/);
+  assert.match(full, /class="cloud"/, '키워드는 표가 아니라 워드 클라우드');
+  assert.doesNotMatch(full, /<table/, '비교 섹션에 표 없음');
+  assert.match(full, /검색 결과에서 더 자주 나옴/, '▲▼ 범례');
   assert.match(full, /영상 조회수 비교 · 중앙값/, '조회수·좋아요 막대 차트');
   assert.match(full, /engagement-bars/);
   assert.match(full, /인기 차트 전체/);
@@ -183,7 +185,7 @@ try {
     }),
   );
   assert.match(unavailable, /비교할 인기 차트 수집이 없습니다/);
-  assert.doesNotMatch(unavailable, /compare-table/);
+  assert.doesNotMatch(unavailable, /class="cloud"/);
   console.log('PASS: 대시보드 메인(검색어 타이틀·옵션 패널 기본값·열림 상태 기억·중복 섹션 제거)');
 } finally {
   await vite.close();

@@ -23,14 +23,17 @@ export type VideosState =
   | { status: 'error'; error: ApiRequestError };
 
 // 같은 검색 요청(키)은 한 번만 보낸다. StrictMode의 effect 재실행이나 재마운트가 검색 한도를 두 번 쓰지 않게 한다.
-let lastSearch: { key: string; promise: Promise<VideosResponse> } | undefined;
+let lastSearch: { key: string; at: number; promise: Promise<VideosResponse> } | undefined;
+/** 같은 키의 요청을 재사용하는 시간. 개발 모드 effect 재실행·재마운트 같은 즉시 중복만 막고, 사용자가 다시 검색하면 새로 조회한다. */
+const SEARCH_REUSE_MS = 5000;
 
 function searchOnce(
   key: string,
   q: string,
   getToken: () => Promise<string | null>,
 ): Promise<VideosResponse> {
-  if (lastSearch?.key === key) return lastSearch.promise;
+  if (lastSearch?.key === key && Date.now() - lastSearch.at < SEARCH_REUSE_MS)
+    return lastSearch.promise;
   const promise = (async () => {
     const token = await getToken();
     if (!token) throw new ApiRequestError('UNAUTHORIZED', '검색하려면 로그인이 필요합니다.', 401);
@@ -40,7 +43,7 @@ function searchOnce(
       'GET',
     );
   })();
-  lastSearch = { key, promise };
+  lastSearch = { key, at: Date.now(), promise };
   promise.catch(() => {
     if (lastSearch?.promise === promise) lastSearch = undefined;
   });

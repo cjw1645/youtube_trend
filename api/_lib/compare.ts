@@ -205,8 +205,8 @@ export async function loadSlotCompare(userId: string, slot: 1 | 2): Promise<Popu
   return buildCompare(data as RawCompare, tokenizeQuery(data.query));
 }
 
-const round = (value: number | null, digits = 3) =>
-  value === null ? null : Math.round(value * 10 ** digits) / 10 ** digits;
+/** 0–1 비율을 퍼센트(소수 1자리)로. 1% 미만도 0으로 보이지 않게 한다. */
+const percent = (value: number | null) => (value === null ? null : Math.round(value * 1000) / 10);
 
 /** AI 입력용 요약. 표본 크기가 다르므로 비율 위주로 담고, 카테고리 이름은 호출한 쪽이 붙인다. */
 export function summarizeCompare(
@@ -226,7 +226,7 @@ export function summarizeCompare(
       : compare.exposure.tokens.map((t) => ({
           keyword: t.keyword,
           popularVideos: t.popularCount,
-          popularShare: round(t.popularShare),
+          popularSharePercent: percent(t.popularShare),
           popularKeywordRank: t.rank,
           ...(t.popularCount === null
             ? { note: '인기 차트 키워드 집계에 없음(2개 미만이거나 상위 100개 밖)' }
@@ -235,12 +235,12 @@ export function summarizeCompare(
     sharedKeywordCount: compare.keywords.commonTotal,
     sharedKeywordsTop5: compare.keywords.common.slice(0, 5).map((r) => ({
       keyword: r.keyword,
-      searchShare: round(r.slotShare),
-      popularShare: round(r.popularShare),
+      searchSharePercent: percent(r.slotShare),
+      popularSharePercent: percent(r.popularShare),
     })),
     videosInBoth: {
       count: compare.videos.count,
-      shareOfSearchResults: round(compare.videos.share),
+      shareOfSearchResultsPercent: percent(compare.videos.share),
       bestPopularPosition: compare.videos.bestPosition,
     },
     medianViewsAndLikes: compare.engagement.map((row) => ({
@@ -256,8 +256,8 @@ export function summarizeCompare(
     })),
     categoryDifferencesTop3: compare.categories.slice(0, 3).map((c) => ({
       category: nameOf(c.categoryId),
-      searchShare: round(c.slotShare),
-      popularShare: round(c.popularShare),
+      searchSharePercent: percent(c.slotShare),
+      popularSharePercent: percent(c.popularShare),
     })),
   };
 }

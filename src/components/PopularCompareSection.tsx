@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DashSection from './DashSection';
+import WordCloud from './WordCloud';
 import { formatCount } from '../lib/format';
 import type {
   CompareCategoryRow,
@@ -26,36 +27,60 @@ interface Props {
   onSearchKeyword: (keyword: string) => void;
 }
 
-function KeywordTable({ rows }: { rows: readonly CompareKeywordRow[] }) {
+/**
+ * 검색 결과와 인기 차트가 함께 쓰는 키워드 구름. 글자 크기는 검색 결과 안의 영상 수이고,
+ * ▲는 검색 결과에서 인기 차트보다 더 자주 나온 키워드, ▼는 인기 차트에서 더 자주 나온 키워드다.
+ * 단어를 누르면 양쪽 비율을 아래에 보여준다.
+ */
+function CommonKeywordCloud({
+  rows,
+  onSearchKeyword,
+}: {
+  rows: readonly CompareKeywordRow[];
+  onSearchKeyword: (keyword: string) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const picked = rows.find((row) => row.keyword === open) ?? null;
   return (
-    <table className="compare-table">
-      <thead>
-        <tr>
-          <th scope="col">키워드</th>
-          <th scope="col">검색 결과</th>
-          <th scope="col">인기 차트</th>
-          <th scope="col">차이</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.keyword}>
-            <th scope="row">{row.keyword}</th>
-            <td>
-              {pct(row.slotShare)} <small>영상 {row.slotCount}개</small>
-            </td>
-            <td>
-              {pct(row.popularShare)} <small>영상 {row.popularCount}개</small>
-            </td>
-            <td
-              className={`trend-delta${row.deltaPp !== null ? (row.deltaPp > 0 ? ' is-up' : row.deltaPp < 0 ? ' is-down' : '') : ''}`}
+    <>
+      <WordCloud
+        words={rows.map((row) => ({
+          key: row.keyword,
+          label: row.keyword,
+          weight: row.slotCount ?? 0,
+          title: `${row.keyword} · 검색 결과 ${pct(row.slotShare)}(영상 ${row.slotCount}개) · 인기 차트 ${pct(row.popularShare)}(영상 ${row.popularCount}개) · 차이 ${pp(row.deltaPp)}`,
+          rising: row.deltaPp === null || row.deltaPp === 0 ? null : row.deltaPp > 0,
+        }))}
+        selected={open}
+        onSelect={(key) => setOpen(open === key ? null : key)}
+      />
+      <p className="trend-note">▲ 검색 결과에서 더 자주 나옴 · ▼ 인기 차트에서 더 자주 나옴</p>
+      {picked && (
+        <div className="cloud-detail" role="region" aria-label={`${picked.keyword} 비교`}>
+          <p className="cloud-detail-head">
+            <strong>{picked.keyword}</strong>
+            <span>
+              검색 결과 {pct(picked.slotShare)} · 영상 {picked.slotCount}개
+            </span>
+            <span>
+              인기 차트 {pct(picked.popularShare)} · 영상 {picked.popularCount}개
+            </span>
+            <span
+              className={`trend-delta${picked.deltaPp !== null && picked.deltaPp !== 0 ? (picked.deltaPp > 0 ? ' is-up' : ' is-down') : ''}`}
             >
-              {pp(row.deltaPp)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+              {pp(picked.deltaPp)}
+            </span>
+            <button
+              type="button"
+              className="trend-link"
+              onClick={() => onSearchKeyword(picked.keyword)}
+            >
+              이 키워드로 검색
+            </button>
+          </p>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -209,7 +234,7 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
 
       <h3 className="compare-sub">검색 결과와 인기 차트가 함께 쓰는 키워드</h3>
       {keywords.common.length ? (
-        <KeywordTable rows={keywords.common} />
+        <CommonKeywordCloud rows={keywords.common} onSearchKeyword={onSearchKeyword} />
       ) : compare.slotKeywordCount === 0 ? (
         <p className="dash-empty">
           키워드 집계에 실패해 비교할 수 없습니다. 다른 키워드로 변경해 주세요.
@@ -221,20 +246,16 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
       {keywords.slotOnly.length > 0 && (
         <>
           <h3 className="compare-sub">검색 결과에만 있는 키워드 · 누르면 검색</h3>
-          <ul className="compare-chips">
-            {keywords.slotOnly.map((row) => (
-              <li key={row.keyword}>
-                <button
-                  type="button"
-                  className="keyword-chip"
-                  aria-label={`${row.keyword} 검색 (검색 결과 영상 ${row.slotCount}개에 등장)`}
-                  onClick={() => onSearchKeyword(row.keyword)}
-                >
-                  {row.keyword} <span aria-hidden="true">· 영상 {row.slotCount}개</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <WordCloud
+            words={keywords.slotOnly.map((row) => ({
+              key: row.keyword,
+              label: row.keyword,
+              weight: row.slotCount ?? 0,
+              title: `${row.keyword} · 검색 결과 영상 ${row.slotCount}개 · 인기 차트 집계에 없음 · 누르면 검색`,
+            }))}
+            selected={null}
+            onSelect={onSearchKeyword}
+          />
         </>
       )}
     </DashSection>

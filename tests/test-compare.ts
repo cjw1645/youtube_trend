@@ -196,6 +196,30 @@ try {
   };
   assert.equal(summary.available, true);
   assert.equal(summary.categoryDifferencesTop3[0].category, '분야15');
+  // 1% 미만도 0이 아니라 소수 1자리 퍼센트로 전달한다(분야15의 인기 차트 비중은 1%)
+  assert.deepEqual(summary.categoryDifferencesTop3[0], {
+    category: '분야15',
+    searchSharePercent: 80,
+    popularSharePercent: 1,
+  });
+  const tiny = summarizeCompare(
+    buildCompare(
+      {
+        ...raw,
+        popularCategories: [
+          { categoryId: '15', videoCount: 0 },
+          { categoryId: '24', videoCount: 1 },
+        ],
+        popularItemCount: 1000,
+      },
+      ['고양이'],
+    ),
+    (id: string) => id,
+  ) as { categoryDifferencesTop3: { category: string; popularSharePercent: number }[] };
+  assert.equal(
+    tiny.categoryDifferencesTop3.find((c) => c.category === '24')?.popularSharePercent,
+    0.1,
+  );
   assert.equal(summary.videosInBoth.count, 2);
   assert.equal(
     (summarizeCompare(missing, (id: string) => id) as { available: boolean }).available,
