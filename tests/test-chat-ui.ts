@@ -272,7 +272,7 @@ try {
   assert.match(idle, /7일간 저장/);
   assert.match(render({ status: 'idle' }), /type="submit" disabled=""/);
   assert.match(render({ status: 'pending', snapshot }, target), /분석 중…/);
-  assert.match(render({ status: 'pending', snapshot }, target), /영상 정보를 분석하고 있습니다/);
+  assert.match(render({ status: 'pending', snapshot }, target), /답변을 생성하고 있습니다/);
   for (const code of [
     'TIMEOUT',
     'QUOTA_EXCEEDED',

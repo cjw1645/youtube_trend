@@ -88,13 +88,13 @@ function PendingSteps() {
         <span className="step-mark" aria-hidden="true">
           {step === 1 ? <span className="spinner" /> : '✓'}
         </span>
-        분석 대상 영상을 확인하고 있습니다
+        질문을 파악하고 있습니다
       </div>
       <div className={`chat-step ${step === 2 ? 'is-active' : 'is-wait'}`}>
         <span className="step-mark" aria-hidden="true">
           {step === 2 ? <span className="spinner" /> : '2'}
         </span>
-        영상 정보를 분석하고 있습니다…
+        답변을 생성하고 있습니다…
       </div>
     </div>
   );

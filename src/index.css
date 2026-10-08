@@ -3040,3 +3040,98 @@ button.spot:hover {
     align-items: flex-start;
   }
 }
+
+/* ───────── 키워드 구름 ───────── */
+.cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 6px;
+  margin: 0;
+  padding: 14px 8px;
+  list-style: none;
+}
+.cloud-word {
+  min-height: 0;
+  padding: 3px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: var(--size);
+  font-weight: 750;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  opacity: var(--tone);
+  animation: pop-word 520ms var(--ease) var(--delay) both;
+  transition:
+    transform 220ms var(--ease),
+    background 200ms ease,
+    border-color 200ms ease,
+    opacity 200ms ease;
+}
+.cloud-word.is-hot {
+  background: var(--signal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cloud-word:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  border-color: #ff4d4d88;
+}
+.cloud-word[aria-pressed='true'] {
+  opacity: 1;
+  border-color: #ff6a4d;
+  background: #ff4d4d1f;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+.cloud-up,
+.cloud-down {
+  margin-left: 3px;
+  font-size: 10px;
+  -webkit-text-fill-color: currentColor;
+}
+.cloud-up {
+  color: #ff7a5c;
+}
+.cloud-down {
+  color: #6aa8ff;
+}
+@keyframes pop-word {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+.cloud-hint {
+  margin: 4px 0 0;
+  color: var(--faint);
+  font-size: 12px;
+  text-align: center;
+}
+.cloud-detail {
+  margin-top: 8px;
+  padding: 14px 18px;
+  border: 1px solid var(--bar);
+  border-radius: 14px;
+  background: #151413;
+  animation: pop-in 240ms var(--ease);
+}
+.cloud-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cloud-detail-head strong {
+  color: var(--ink);
+  font-size: 17px;
+}
+.cloud-detail .trend-evidence {
+  margin-top: 10px;
+}

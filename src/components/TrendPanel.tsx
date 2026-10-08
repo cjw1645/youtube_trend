@@ -1,5 +1,6 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import DashSection from './DashSection';
+import WordCloud from './WordCloud';
 import Spotlight, { type HotItem, type HotVideo } from './Spotlight';
 import { CHART_COLORS, ColumnChart, DonutChart, LineChart, StackBar } from './charts';
 import { formatCount } from '../lib/format';
@@ -133,6 +134,7 @@ export default function TrendPanel({
     if (!open || !videos) return [];
     return videos.filter((v) => videoKeywords({ title: v.title, tags: v.tags }).has(open));
   }, [open, videos]);
+  const picked = keywordRows.find((row) => row.keyword === open) ?? null;
   const categories = (comparison.available ? comparison.categories : current.categories) ?? [];
 
   const spot = useMemo(() => {
@@ -383,70 +385,67 @@ export default function TrendPanel({
         {current.keywords === null ? (
           <p className="dash-empty">이 수집에는 키워드 집계가 없습니다.</p>
         ) : keywordRows.length ? (
-          <ol className="trend-list">
-            {keywordRows.map((row) => {
-              const expanded = open === row.keyword;
-              return (
-                <li
-                  key={row.keyword}
-                  className="has-meter"
-                  style={{ '--fill': row.share / (keywordRows[0]?.share || 1) } as CSSProperties}
-                >
-                  <div className="trend-row">
+          <>
+            <WordCloud
+              words={keywordRows.map((row) => ({
+                key: row.keyword,
+                label: row.keyword,
+                weight: row.count,
+                title: `${row.keyword} · 영상 ${row.count}개 · ${pct(row.share)}`,
+                rising:
+                  comparison.available && keywords && !row.belowBaseline && row.deltaPp
+                    ? row.deltaPp > 0
+                    : null,
+              }))}
+              selected={open}
+              onSelect={(key) => setOpen(open === key ? null : key)}
+            />
+            {picked ? (
+              <div className="cloud-detail" role="region" aria-label={`${picked.keyword} 상세`}>
+                <p className="cloud-detail-head">
+                  <strong>{picked.keyword}</strong>
+                  <span>
+                    영상 {picked.count}개 · {pct(picked.share)} · 채널 {picked.channels}곳
+                  </span>
+                  {comparison.available && keywords ? (
+                    picked.belowBaseline ? (
+                      <span className="trend-delta is-up">기준 시점엔 2개 미만</span>
+                    ) : (
+                      <Delta change={picked} />
+                    )
+                  ) : null}
+                  {onSearchKeyword && (
                     <button
                       type="button"
-                      className="trend-name"
-                      aria-expanded={expanded}
-                      disabled={!videos}
-                      onClick={() => setOpen(expanded ? null : row.keyword)}
+                      className="trend-link"
+                      onClick={() => onSearchKeyword(picked.keyword)}
                     >
-                      {row.keyword}
+                      이 키워드로 검색
                     </button>
-                    <span className="trend-count">
-                      {row.count}개 · {pct(row.share)}
-                      <small> · 채널 {row.channels}곳</small>
-                    </span>
-                    {comparison.available && keywords ? (
-                      row.belowBaseline ? (
-                        <span className="trend-delta is-up">기준 시점엔 2개 미만</span>
-                      ) : (
-                        <Delta change={row} />
-                      )
-                    ) : (
-                      <span />
-                    )}
-                    {onSearchKeyword && (
-                      <button
-                        type="button"
-                        className="trend-link"
-                        onClick={() => onSearchKeyword(row.keyword)}
-                        aria-label={`${row.keyword} 영상 검색`}
-                      >
-                        검색
-                      </button>
-                    )}
-                  </div>
-                  {expanded && (
-                    <ul className="trend-evidence" aria-label={`${row.keyword} 근거 영상`}>
-                      {evidence.slice(0, EVIDENCE_LIMIT).map((video) => (
-                        <li key={video.video_id}>
-                          <button type="button" onClick={() => onSelectVideo(video.video_id)}>
-                            <span className="trend-pos">{video.position}</span>
-                            <span>{video.title}</span>
-                          </button>
-                        </li>
-                      ))}
-                      {evidence.length > EVIDENCE_LIMIT && (
-                        <li className="trend-more">
-                          외 {evidence.length - EVIDENCE_LIMIT}개 · 목록 순서는 API 반환 순서입니다
-                        </li>
-                      )}
-                    </ul>
                   )}
-                </li>
-              );
-            })}
-          </ol>
+                </p>
+                {videos ? (
+                  <ul className="trend-evidence" aria-label={`${picked.keyword} 근거 영상`}>
+                    {evidence.slice(0, EVIDENCE_LIMIT).map((video) => (
+                      <li key={video.video_id}>
+                        <button type="button" onClick={() => onSelectVideo(video.video_id)}>
+                          <span className="trend-pos">{video.position}</span>
+                          <span>{video.title}</span>
+                        </button>
+                      </li>
+                    ))}
+                    {evidence.length > EVIDENCE_LIMIT && (
+                      <li className="trend-more">
+                        외 {evidence.length - EVIDENCE_LIMIT}개 · 목록 순서는 API 반환 순서입니다
+                      </li>
+                    )}
+                  </ul>
+                ) : null}
+              </div>
+            ) : (
+              <p className="cloud-hint">단어를 누르면 근거 영상과 변화를 볼 수 있어요.</p>
+            )}
+          </>
         ) : (
           <p className="dash-empty">{keywordEmptyText(current.itemCount)}</p>
         )}

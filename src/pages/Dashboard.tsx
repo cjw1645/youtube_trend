@@ -4,6 +4,7 @@ import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
 import DashSection from '../components/DashSection';
 import Spotlight from '../components/Spotlight';
+import WordCloud from '../components/WordCloud';
 import StoredTrendSection from '../components/StoredTrendSection';
 import SearchTabs from '../components/SearchTabs';
 import SearchDashboard from '../components/SearchDashboard';
@@ -55,50 +56,6 @@ function StatTile({ label, value, note }: { label: string; value: string; note: 
         <span className="stat-note">{note}</span>
       </dd>
     </div>
-  );
-}
-
-/** 막대 길이는 같은 구역 안 최댓값 대비 비율이다. 첫 행만 강조색을 쓴다. */
-function BarRow({
-  rank,
-  label,
-  value,
-  max,
-  valueLabel,
-  onClick,
-  actionLabel,
-}: {
-  rank: number;
-  label: string;
-  value: number;
-  max: number;
-  valueLabel: string;
-  onClick?: () => void;
-  actionLabel?: string;
-}) {
-  const width = max > 0 ? Math.max((value / max) * 100, 2) : 0;
-  const content = (
-    <>
-      <span className="bar-rank" aria-hidden="true">
-        {rank}
-      </span>
-      <span className="bar-label">{label}</span>
-      <span className="bar-track" aria-hidden="true">
-        <span className="bar-fill" style={{ width: `${width}%` }} />
-      </span>
-      <span className="bar-value">{valueLabel}</span>
-    </>
-  );
-  return (
-    <li>
-      {onClick ? (
-        <button type="button" className="bar-row" onClick={onClick} aria-label={actionLabel}>
-          {content}
-        </button>
-      ) : (
-        <div className="bar-row">{content}</div>
-      )}
-    </li>
   );
 }
 
@@ -479,20 +436,16 @@ export default function Dashboard({
                   className="dash-keywords"
                 >
                   {keywords.length ? (
-                    <ol className="bar-list">
-                      {keywords.map(({ keyword, videos: count }, index) => (
-                        <BarRow
-                          key={keyword}
-                          rank={index + 1}
-                          label={keyword}
-                          value={count}
-                          max={keywords[0].videos}
-                          valueLabel={String(count)}
-                          onClick={() => onSearchKeyword(keyword)}
-                          actionLabel={`${keyword} 영상 검색 (현재 목록의 영상 ${count}개에 등장)`}
-                        />
-                      ))}
-                    </ol>
+                    <WordCloud
+                      words={keywords.map(({ keyword, videos: count }) => ({
+                        key: keyword,
+                        label: keyword,
+                        weight: count,
+                        title: `${keyword} · 현재 목록의 영상 ${count}개에 등장 · 누르면 검색`,
+                      }))}
+                      selected={null}
+                      onSelect={onSearchKeyword}
+                    />
                   ) : (
                     <p className="dash-empty">2개 이상 영상에 나온 키워드가 없습니다.</p>
                   )}
