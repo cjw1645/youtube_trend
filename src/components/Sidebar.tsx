@@ -11,6 +11,23 @@ import {
 import AccountPanel from './AccountPanel';
 import { useAuth } from '../hooks/useAuth';
 
+export const PAGE_LABEL: Record<Page, string> = {
+  dashboard: '대시보드',
+  search: '영상 검색',
+  ai: 'AI 대화',
+  favorites: '관심 영상',
+};
+
+/** 본문 위쪽 줄: 현재 위치(왼쪽)와 계정(오른쪽). 로그인·로그아웃은 항상 여기 있다. */
+export function TopBar({ page }: { page: Page }) {
+  return (
+    <div className="topbar">
+      <p className="topbar-page">{PAGE_LABEL[page]}</p>
+      <AccountPanel />
+    </div>
+  );
+}
+
 export type Page = 'dashboard' | 'search' | 'ai' | 'favorites';
 const NAV: { page: Page; label: string }[] = [
   { page: 'dashboard', label: '대시보드' },
@@ -101,7 +118,6 @@ export default function Sidebar({
           ? '관심 영상은 로그인한 계정에 저장됩니다.'
           : '관심 영상은 로그인하지 않으면 이 브라우저에 저장됩니다.'}
       </p>
-      <AccountPanel />
     </>
   );
   return (
@@ -113,19 +129,22 @@ export default function Sidebar({
       </aside>
       <header className="mobile-header">
         <Logo onClick={() => navigate('dashboard')} />
-        <button
-          ref={menu}
-          className="icon-button"
-          type="button"
-          aria-label="메뉴 열기"
-          aria-haspopup="dialog"
-          onClick={() => {
-            drawer.current?.showModal();
-            document.body.style.overflow = 'hidden';
-          }}
-        >
-          <HamburgerMenuIcon aria-hidden="true" />
-        </button>
+        <div className="mobile-header-actions">
+          <AccountPanel />
+          <button
+            ref={menu}
+            className="icon-button"
+            type="button"
+            aria-label="메뉴 열기"
+            aria-haspopup="dialog"
+            onClick={() => {
+              drawer.current?.showModal();
+              document.body.style.overflow = 'hidden';
+            }}
+          >
+            <HamburgerMenuIcon aria-hidden="true" />
+          </button>
+        </div>
       </header>
       <dialog
         ref={drawer}

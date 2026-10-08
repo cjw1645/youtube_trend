@@ -82,6 +82,7 @@ export default function StoredTrendSection({
             onSelectVideo={onOpenVideo}
             onSearchKeyword={onSearchKeyword}
             onImport={onImport}
+            showSpotlight={false}
           />
         </>
       )}

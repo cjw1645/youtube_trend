@@ -74,6 +74,32 @@ const when = (iso: string) =>
     minute: '2-digit',
   });
 
+/** 답변을 기다리는 동안 보이는 단계 표시. 실제 서버 진행률이 아니라 대기 중임을 알리는 표시다. */
+function PendingSteps() {
+  const [step, setStep] = useState(1);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setStep(2), 1800);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return (
+    <div role="status" className="chat-steps">
+      <p className="chat-steps-count">{step}단계 / 2단계 진행 중</p>
+      <div className={`chat-step ${step === 1 ? 'is-active' : 'is-done'}`}>
+        <span className="step-mark" aria-hidden="true">
+          {step === 1 ? <span className="spinner" /> : '✓'}
+        </span>
+        분석 대상 영상을 확인하고 있습니다
+      </div>
+      <div className={`chat-step ${step === 2 ? 'is-active' : 'is-wait'}`}>
+        <span className="step-mark" aria-hidden="true">
+          {step === 2 ? <span className="spinner" /> : '2'}
+        </span>
+        영상 정보를 분석하고 있습니다…
+      </div>
+    </div>
+  );
+}
+
 const ERROR_TITLE: Record<string, string> = {
   INTERRUPTED: '이전 요청의 결과 수신이 중단되었습니다',
   QUOTA_EXCEEDED: '호출이 제한되었습니다',
@@ -94,12 +120,7 @@ export default function ChatThread({
   useEffect(() => {
     end.current?.scrollIntoView?.({ block: 'end' });
   }, [items.length, state.status]);
-  if (!items.length && !live)
-    return (
-      <p className="chat-empty">
-        아직 대화가 없습니다. 아래 입력창에 질문하면 이곳에 대화가 이어집니다.
-      </p>
-    );
+  if (!items.length && !live) return null;
   return (
     <ol className="chat-thread" aria-label="대화 내용" aria-live="polite">
       {items.map((item) => (
@@ -112,9 +133,7 @@ export default function ChatThread({
           </li>
           {state.status === 'pending' ? (
             <li className="chat-turn is-assistant">
-              <p role="status" className="chat-bubble is-pending">
-                영상 정보를 분석하고 있습니다…
-              </p>
+              <PendingSteps />
             </li>
           ) : (
             state.status === 'error' && (

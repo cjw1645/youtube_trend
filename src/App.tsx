@@ -9,7 +9,7 @@ import { ErrorView } from './components/StatusView';
 import { useChat } from './hooks/useChat';
 import ChatPanel from './components/ChatPanel';
 import { ChatVideoList } from './components/ChatResult';
-import Sidebar, { type Page } from './components/Sidebar';
+import Sidebar, { TopBar, type Page } from './components/Sidebar';
 import { popularChartTarget, selectChatVideos, type ChatTarget } from './lib/chat-session';
 import { loadShared } from './hooks/useApiResource';
 import { POPULAR_CACHE_MS } from './hooks/useVideos';
@@ -147,7 +147,8 @@ export default function App() {
         본문으로 이동
       </a>
       <Sidebar page={page} count={favorites.videos.length} navigate={navigate} />
-      <main id="workspace" tabIndex={-1} className="workspace">
+      <main id="workspace" tabIndex={-1} className={`workspace page-${page}`}>
+        <TopBar page={page} />
         {favorites.error && (
           <div role="alert" className="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
             <p>{favorites.error}</p>
@@ -194,93 +195,90 @@ export default function App() {
           )}
         </div>
         <div hidden={page !== 'ai'} className="ai-workspace">
-          <header className="page-heading">
-            <h1>AI 대화</h1>
-            <p className="target-line">
-              분석 대상 {selectChatVideos(target.videos).length}개 · {target.label}
-            </p>
-          </header>
-          <InfoDisclosure summary="분석 대상과 대화 보관 기준">
-            <p>분석할 영상을 확인하고 공개 정보를 바탕으로 질문하세요.</p>
-            <p>
-              기본은 목록 앞쪽 최대 20개, 직접 선택은 화면 안의 1~20개, 상세는 선택한 1개입니다.
-              영상·음성 자체는 분석하지 않습니다.
-            </p>
-            <p>
-              목록을 바꿔도 전달한 대상은 유지됩니다. 전송 시 서버가 최신 공개 정보를 다시
-              조회합니다.
-            </p>
-            {target.capturedAt && (
-              <p>
-                대상 목록 시점: {new Date(target.capturedAt).toLocaleString('ko-KR')} · 저장된 영상
-                구성입니다. 답변의 통계는 전송 시점에 다시 조회합니다.
-              </p>
-            )}
-            <p>
-              대화는 로그인한 계정에 7일간 저장되어 다른 기기에서도 이어 볼 수 있습니다. 분석에는
-              최근 3회 문답만 사용합니다.
-            </p>
-          </InfoDisclosure>
-          <section className="target-toolbar" aria-label="분석 대상 선택">
-            <span className="text-sm font-semibold">분석 대상 바꾸기</span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={!lastHome?.videos.length}
-                onClick={() => setActive(lastHome)}
-              >
-                현재 검색 결과 사용 ({lastHome?.videos.length ?? 0})
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={chartLoad.loading}
-                onClick={applyChartTop}
-              >
-                {chartLoad.loading ? '인기 차트 불러오는 중…' : '인기 차트 상위 20개 사용'}
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={!favorites.videos.length}
-                onClick={() =>
-                  setActive(
-                    makeTarget(
-                      { label: '관심 영상 · 전달 시점 기준', videos: favorites.videos },
-                      'favorites',
-                    ),
-                  )
-                }
-              >
-                현재 관심 영상 사용 ({Math.min(favorites.videos.length, 20)})
-              </button>
-              <button className="secondary-button" type="button" onClick={targets.clear}>
-                대상 기록 지우기
-              </button>
-            </div>
-          </section>
-          {chartLoad.error && (
-            <p role="alert" className="mb-4 text-sm text-red-700">
-              인기 차트를 불러오지 못했습니다: {chartLoad.error}
-            </p>
-          )}
-          {targets.notice && (
-            <p role="status" className="mb-4 text-sm text-amber-900">
-              {targets.notice}
-            </p>
-          )}
-          {selectChatVideos(target.videos).length > 0 ? (
-            <details className="target-videos">
-              <summary>전송할 영상 확인 ({selectChatVideos(target.videos).length}개)</summary>
-              <ChatVideoList videos={selectChatVideos(target.videos)} />
-            </details>
-          ) : (
-            <p className="mb-4 text-sm text-amber-800">
-              분석할 영상이 없습니다. 영상을 조회한 뒤 질문해 주세요.
-            </p>
-          )}
-          <ChatPanel chat={chat} target={target} />
+          <ChatPanel
+            chat={chat}
+            target={target}
+            tools={
+              <>
+                <div className="popover-actions">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={!lastHome?.videos.length}
+                    onClick={() => setActive(lastHome)}
+                  >
+                    현재 검색 결과 사용 ({lastHome?.videos.length ?? 0})
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={chartLoad.loading}
+                    onClick={applyChartTop}
+                  >
+                    {chartLoad.loading ? '인기 차트 불러오는 중…' : '인기 차트 상위 20개 사용'}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={!favorites.videos.length}
+                    onClick={() =>
+                      setActive(
+                        makeTarget(
+                          { label: '관심 영상 · 전달 시점 기준', videos: favorites.videos },
+                          'favorites',
+                        ),
+                      )
+                    }
+                  >
+                    현재 관심 영상 사용 ({Math.min(favorites.videos.length, 20)})
+                  </button>
+                  <button className="secondary-button" type="button" onClick={targets.clear}>
+                    대상 기록 지우기
+                  </button>
+                </div>
+                {chartLoad.error && (
+                  <p role="alert" className="mb-2 text-sm text-red-700">
+                    인기 차트를 불러오지 못했습니다: {chartLoad.error}
+                  </p>
+                )}
+                {targets.notice && (
+                  <p role="status" className="mb-2 text-sm text-amber-900">
+                    {targets.notice}
+                  </p>
+                )}
+                {selectChatVideos(target.videos).length > 0 ? (
+                  <details className="target-videos">
+                    <summary>전송할 영상 확인 ({selectChatVideos(target.videos).length}개)</summary>
+                    <ChatVideoList videos={selectChatVideos(target.videos)} />
+                  </details>
+                ) : (
+                  <p className="mb-2 text-sm text-amber-800">
+                    분석할 영상이 없습니다. 영상을 조회한 뒤 질문해 주세요.
+                  </p>
+                )}
+                <InfoDisclosure summary="분석 대상과 대화 보관 기준">
+                  <p>
+                    기본은 목록 앞쪽 최대 20개, 직접 선택은 화면 안의 1~20개, 상세는 선택한
+                    1개입니다. 영상·음성 자체는 분석하지 않습니다.
+                  </p>
+                  <p>
+                    목록을 바꿔도 전달한 대상은 유지됩니다. 전송 시 서버가 최신 공개 정보를 다시
+                    조회합니다.
+                  </p>
+                  {target.capturedAt && (
+                    <p>
+                      대상 목록 시점: {new Date(target.capturedAt).toLocaleString('ko-KR')} · 저장된
+                      영상 구성입니다. 답변의 통계는 전송 시점에 다시 조회합니다.
+                    </p>
+                  )}
+                  <p>
+                    대화는 로그인한 계정에 7일간 저장되어 다른 기기에서도 이어 볼 수 있습니다.
+                    분석에는 최근 3회 문답만 사용합니다.
+                  </p>
+                </InfoDisclosure>
+              </>
+            }
+          />
         </div>
         <div hidden={page !== 'favorites'}>
           <header className="page-heading">

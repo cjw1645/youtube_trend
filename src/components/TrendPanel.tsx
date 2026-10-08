@@ -1,10 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import DashSection from './DashSection';
+import Spotlight, { type HotItem, type HotVideo } from './Spotlight';
+import { CHART_COLORS, ColumnChart, DonutChart, LineChart, StackBar } from './charts';
+import { formatCount } from '../lib/format';
 import { videoKeywords, LENGTH_BUCKETS } from '../lib/stats';
 import {
   BASELINE_KINDS,
   type BaselineKind,
   type Comparison,
+  type KeywordChange,
   type ShareChange,
   type StoredVideo,
   type TrendResult,
@@ -16,6 +20,8 @@ const KIND_LABEL: Record<BaselineKind, string> = {
   week: '7일 전',
   month: '28일 전',
 };
+const SPOT_ORDER: BaselineKind[] = ['week', 'day', 'previous', 'month'];
+const DAY_MS = 86_400_000;
 const EVIDENCE_LIMIT = 8;
 const CATEGORY_LIMIT = 6;
 
@@ -98,6 +104,8 @@ interface Props {
   onSearchKeyword?: (keyword: string) => void;
   /** AI 대상으로 상위 20개를 가져온다. 이미 선택한 대상이 있으면 'kept'를 돌려준다. */
   onImport?: (videos: readonly StoredVideo[]) => 'set' | 'kept';
+  /** 위쪽에 이미 하이라이트가 있는 화면에서는 false */
+  showSpotlight?: boolean;
 }
 
 export default function TrendPanel({
@@ -108,6 +116,7 @@ export default function TrendPanel({
   onSelectVideo,
   onSearchKeyword,
   onImport,
+  showSpotlight = true,
 }: Props) {
   const firstAvailable = trend.comparisons.find((c) => c.available)?.kind ?? 'previous';
   const [kind, setKind] = useState<BaselineKind>(firstAvailable);
@@ -126,8 +135,176 @@ export default function TrendPanel({
   }, [open, videos]);
   const categories = (comparison.available ? comparison.categories : current.categories) ?? [];
 
+  const spot = useMemo(() => {
+    const base = SPOT_ORDER.map((k) => trend.comparisons.find((c) => c.kind === k)).find(
+      (c) => c?.available,
+    );
+    const baseName = base ? KIND_LABEL[base.kind] : null;
+    const end = Date.parse(current.scheduledFor);
+    const list = videos ?? [];
+    const recent = list.filter(
+      (v) => v.view_count !== null && Date.parse(v.published_at) >= end - 7 * DAY_MS,
+    );
+    const pool = recent.length ? recent : list.filter((v) => v.view_count !== null);
+    const best = pool.reduce<StoredVideo | null>(
+      (top, v) => (!top || (v.view_count ?? 0) > (top.view_count ?? 0) ? v : top),
+      null,
+    );
+    const video: HotVideo | null = best
+      ? {
+          id: best.video_id,
+          title: best.title,
+          thumbnail: best.thumbnail_url,
+          channel: best.channel_title,
+          metric: `조회수 ${formatCount(best.view_count ?? 0)}`,
+          note: recent.length
+            ? '최근 7일 안에 올라온 영상 중 1위'
+            : '목록 전체 1위 · 최근 7일 업로드 없음',
+        }
+      : null;
+    const pick = <T extends ShareChange & { belowBaseline?: boolean }>(
+      rows: readonly T[],
+      name: (row: T) => string,
+    ): HotItem | null => {
+      if (!rows.length) return null;
+      const rising = rows
+        .filter((r) => r.deltaPp !== null && r.deltaPp > 0 && !r.belowBaseline)
+        .sort((a, b) => (b.deltaPp ?? 0) - (a.deltaPp ?? 0))[0];
+      if (rising && baseName)
+        return {
+          label: name(rising),
+          metric: `▲ ${(Math.round((rising.deltaPp ?? 0) * 10) / 10).toFixed(1)}%p`,
+          note: `${baseName}보다 비중이 가장 크게 늘었어요 · 현재 ${rising.count}개(${pct(rising.share)})`,
+          rising: true,
+        };
+      const top = rows[0];
+      return {
+        label: name(top),
+        metric: pct(top.share),
+        note: `이 목록의 영상 ${top.count}개에 등장${baseName ? '' : ' · 비교할 이전 수집 없음'}`,
+      };
+    };
+    const kwRows: KeywordChange[] = base?.keywords ?? current.keywords ?? [];
+    const catRows = base?.categories ?? current.categories ?? [];
+    return {
+      video,
+      tag: pick(kwRows, (r) => `#${r.keyword}`),
+      field: pick(catRows, (r) => nameOf(r.categoryId)),
+      daily: Array.from({ length: 7 }, (_, i) => {
+        const day = new Date(end - (6 - i) * DAY_MS);
+        const key = day.toDateString();
+        return {
+          label: `${day.getMonth() + 1}/${day.getDate()}`,
+          value: list.filter((v) => new Date(v.published_at).toDateString() === key).length,
+        };
+      }),
+    };
+    // nameOf는 categoryNames가 바뀔 때만 달라진다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trend, videos, categoryNames]);
+  const donut = categories.slice(0, 5).map((row) => ({
+    label: nameOf(row.categoryId),
+    value: row.count,
+  }));
+  const rest = categories.slice(5).reduce((acc, row) => acc + row.count, 0);
+  if (rest > 0) donut.push({ label: '기타', value: rest });
+  const lineSeries = trend.series.slice(0, 5);
+  const lineLabels = (lineSeries[0]?.points ?? []).map((point) => {
+    const d = new Date(point.scheduledFor);
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}시`;
+  });
+  const hotTag = spot.tag;
+
   return (
     <div className="trend-panel">
+      {showSpotlight && (
+        <Spotlight
+          title="지금 가장 눈에 띄는 것"
+          basis={`${scope} ${current.itemCount}개 · 수집 시점 데이터`}
+          video={spot.video}
+          tag={
+            hotTag && onSearchKeyword
+              ? { ...hotTag, onClick: () => onSearchKeyword(hotTag.label.replace(/^#/, '')) }
+              : hotTag
+          }
+          field={spot.field}
+          onOpenVideo={onSelectVideo}
+        />
+      )}
+      <div className="chart-grid">
+        <DashSection
+          title="분야별 비중"
+          basis="영상 수 기준 · API 제공 카테고리"
+          className="chart-card"
+        >
+          {donut.length ? (
+            <DonutChart
+              slices={donut}
+              centerLabel={`${current.itemCount}개`}
+              centerNote="분석한 영상"
+            />
+          ) : (
+            <p className="dash-empty">카테고리 정보가 있는 영상이 없습니다.</p>
+          )}
+        </DashSection>
+        <DashSection
+          title="최근 7일 업로드 수"
+          basis="이 목록 영상의 게시일 기준 · 날짜별 영상 수"
+          className="chart-card"
+        >
+          {videos?.length ? (
+            <ColumnChart items={spot.daily} unit="개" />
+          ) : (
+            <p className="dash-empty">영상 목록이 없어 그릴 수 없습니다.</p>
+          )}
+        </DashSection>
+        <DashSection title="영상 길이 구성" basis="길이를 아는 영상 중 비율" className="chart-card">
+          <StackBar
+            parts={LENGTH_BUCKETS.map((bucket) => ({
+              label: bucket.label,
+              value: current.lengths.counts[bucket.key],
+            }))}
+          />
+          <ul className="legend">
+            {LENGTH_BUCKETS.map((bucket, index) => (
+              <li key={bucket.key}>
+                <span
+                  className="legend-dot"
+                  style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                  aria-hidden="true"
+                />
+                <span className="legend-name">{bucket.label}</span>
+                <span className="legend-value">
+                  {current.lengths.known
+                    ? Math.round((current.lengths.counts[bucket.key] / current.lengths.known) * 100)
+                    : 0}
+                  %
+                </span>
+              </li>
+            ))}
+          </ul>
+        </DashSection>
+      </div>
+      <DashSection
+        title="키워드 추이"
+        basis="수집 시점별로 그 키워드가 나온 영상 수 · 선이 끊기면 기준 미만이거나 수집 없음"
+        className="chart-wide"
+      >
+        {lineSeries.length > 0 && lineLabels.length > 1 ? (
+          <LineChart
+            series={lineSeries.map((item) => ({
+              label: item.keyword,
+              values: item.points.map((point) => point.videoCount),
+            }))}
+            labels={lineLabels}
+            unit="개"
+          />
+        ) : (
+          <p className="dash-empty" role="status">
+            수집이 2회 이상 쌓이면 키워드별 추이 그래프가 이곳에 나타납니다.
+          </p>
+        )}
+      </DashSection>
       <p className="trend-scope">
         {scope} {current.itemCount}개 · {when(current.scheduledFor)} 수집 ·{' '}
         {new Date(current.expiresAt).toLocaleDateString('ko-KR')}까지 보관
@@ -210,7 +387,11 @@ export default function TrendPanel({
             {keywordRows.map((row) => {
               const expanded = open === row.keyword;
               return (
-                <li key={row.keyword}>
+                <li
+                  key={row.keyword}
+                  className="has-meter"
+                  style={{ '--fill': row.share / (keywordRows[0]?.share || 1) } as CSSProperties}
+                >
                   <div className="trend-row">
                     <button
                       type="button"

@@ -3,6 +3,7 @@ import { POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
 import DashSection from '../components/DashSection';
+import Spotlight from '../components/Spotlight';
 import StoredTrendSection from '../components/StoredTrendSection';
 import SearchTabs from '../components/SearchTabs';
 import SearchDashboard from '../components/SearchDashboard';
@@ -339,6 +340,44 @@ export default function Dashboard({
           이 데이터로 AI 질문
         </button>
       </header>
+      {!selectedSearch && summary && videos && (
+        <Spotlight
+          title="지금 가장 눈에 띄는 것"
+          basis={`${scope} · 현재 인기 차트 기준`}
+          video={
+            fastest[0]
+              ? {
+                  id: fastest[0].item.id,
+                  title: fastest[0].item.title,
+                  thumbnail: fastest[0].item.thumbnailUrl,
+                  channel: fastest[0].item.channelTitle,
+                  metric: `시간당 조회 ${formatCount(Math.round(fastest[0].score))}`,
+                  note: `${relative(fastest[0].item.publishedAt)} 업로드 · 조회수 증가 속도 1위`,
+                }
+              : null
+          }
+          tag={
+            keywords[0]
+              ? {
+                  label: `#${keywords[0].keyword}`,
+                  metric: `${keywords[0].videos}개 영상`,
+                  note: `현재 인기 목록 ${videos.length}개 중 이 태그·제목이 가장 많이 나왔어요`,
+                  onClick: () => onSearchKeyword(keywords[0].keyword),
+                }
+              : null
+          }
+          field={
+            categories[0]
+              ? {
+                  label: categoryNames.get(categories[0].key) ?? '카테고리 정보 없음',
+                  metric: percent(categories[0].share),
+                  note: `인기 목록 ${videos.length}개 중 ${categories[0].count}개가 이 분야예요`,
+                }
+              : null
+          }
+          onOpenVideo={onOpenVideo}
+        />
+      )}
       {tabs.length > 0 && (
         <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 차트">
           {[{ id: '', count: chartVideos?.length ?? 0 }, ...tabs].map(({ id, count }) => (
