@@ -332,6 +332,23 @@ try {
   assert.deepEqual([r7.state, r7.items], ['complete', 0]);
   assert.equal((await view(B, 2)).slots[0].snapshot!.item_count, 0);
 
+  // 7-2. 빈 결과 수집은 재사용·같은 시각 멱등의 대상이 아니다: 다른 사용자가 같은 조건을 추가하면 다시 조회한다.
+  reset();
+  youtube([[1, 2, 3]]);
+  const retryUser = await user();
+  const r72 = await registerSearchSlot(retryUser, parseSlotInput(input(1, '결과없음검색어')), NOW);
+  assert.deepEqual([r72.state, r72.items], ['complete', 3]);
+  assert.equal(searchCalls(), 1);
+  assert.equal((await view(retryUser, 1)).slots[0].snapshot!.item_count, 3);
+  // 결과가 있는 수집은 계속 재사용한다
+  reset();
+  const reuseUser = await user();
+  assert.equal(
+    (await registerSearchSlot(reuseUser, parseSlotInput(input(1, '결과없음검색어')), NOW)).state,
+    'shared_fresh',
+  );
+  assert.equal(youtubeCalls.length, 0);
+
   // 8. 이미 진행 중인 같은 집합: 호출 없이 반환, 예약은 되돌림
   const C = await user();
   const busySet = Number(

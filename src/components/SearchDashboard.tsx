@@ -75,6 +75,13 @@ export default function SearchDashboard({
           못했습니다.
         </p>
       )}
+      {view.snapshot && view.snapshot.item_count === 0 && (
+        <p role="status" className="trend-warning">
+          YouTube가 이 검색어에 결과를 돌려주지 않았습니다(0개). 일시적일 수 있어 내일 04:00(KST)
+          갱신에서 다시 조회합니다. 지금 바로 보려면 이 검색어를 해제하고 비슷한 표현(예: 한 단어를
+          더 붙인 검색어)으로 다시 추가해 보세요.
+        </p>
+      )}
       {!view.snapshot && (
         <p className="dash-empty" role="status">
           아직 완료된 수집이 없어 보여줄 집계가 없습니다. 조회가 끝나면 이곳에 표시됩니다.
