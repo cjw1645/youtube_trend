@@ -1,7 +1,7 @@
 // 로그인 사용자 본인 슬롯의 최신 검색 결과 스냅샷(영상 목록 포함). 개인 데이터이므로 캐시하지 않는다.
-import { requireUser } from './_lib/auth.js';
-import { ApiFailure, errorResponse, json } from './_lib/http.js';
-import { serviceRpc } from './_lib/supabase.js';
+import { requireUser } from '../auth.js';
+import { ApiFailure, errorResponse, json } from '../http.js';
+import { serviceRpc } from '../supabase.js';
 
 export async function GET(request: Request): Promise<Response> {
   try {

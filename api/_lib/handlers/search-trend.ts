@@ -1,8 +1,8 @@
 // 로그인 사용자 본인 슬롯의 트렌드 집계. 개인 데이터이므로 캐시하지 않고, 소유 슬롯만 DB 함수가 읽는다.
-import { requireUser } from './_lib/auth.js';
-import { ApiFailure, errorResponse, json } from './_lib/http.js';
-import { serviceRpc } from './_lib/supabase.js';
-import { buildTrend, type TrendInputs } from './_lib/trend.js';
+import { requireUser } from '../auth.js';
+import { ApiFailure, errorResponse, json } from '../http.js';
+import { serviceRpc } from '../supabase.js';
+import { buildTrend, type TrendInputs } from '../trend.js';
 
 export async function GET(request: Request): Promise<Response> {
   try {

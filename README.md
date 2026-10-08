@@ -101,14 +101,18 @@ YouTube 한국 인기 차트(`chart=mostPopular`, `regionCode=KR`)를 끝까지(
 
 ## 구조
 
+Vercel Hobby는 배포당 함수 12개까지라 관련 엔드포인트를 한 함수로 묶고 `vercel.json`의 `rewrites`로 기존 주소를 유지합니다. `tests/test-deploy-limits.ts`가 함수 개수가 12개를 넘으면 실패해 배포 전에 막습니다.
+
 ```
 api/                 Vercel Functions (API Key·service role 키를 읽는 유일한 위치)
   videos.ts categories.ts video/[id].ts   영상 목록·검색·카테고리·상세
   chat.ts conversations.ts                AI 질문(로그인) · 저장된 대화 조회·삭제
   favorites.ts account.ts                 관심 영상 · 계정 삭제
-  search-slots.ts search-snapshot.ts search-trend.ts   내 검색어 (로그인)
-  snapshot.ts trend.ts                    저장된 공통 인기 목록·집계(공개)
-  collect.ts collect-search.ts            수집(예약 인증 전용)
+  search-slots.ts                         내 검색어 등록·변경·해제 (로그인)
+  stored.ts                               저장된 공통 인기 목록·집계(공개): /api/snapshot, /api/trend
+  search-data.ts                          내 검색어의 저장 결과·집계(로그인): /api/search-snapshot, /api/search-trend
+  collect.ts                              수집(예약 인증 전용): /api/collect, /api/collect-search
+  _lib/handlers/     위 묶음 함수가 호출하는 개별 핸들러
   _lib/              youtube, gemini, auth, usage(한도 예약), chat-service, trend 등
 src/                 화면(pages, components, hooks)과 공용 통계(lib/stats)
 supabase/migrations/ 데이터 모델·RLS·한도·수집·대화 SQL (순서대로 적용)

@@ -1,6 +1,6 @@
 // 저장된 최신 공통 인기 목록 스냅샷(완료된 수집만). 마지막 성공 시각·지연·마지막 시도 상태를 함께 반환한다.
-import { ApiFailure, errorResponse, json } from './_lib/http.js';
-import { serviceRpc } from './_lib/supabase.js';
+import { ApiFailure, errorResponse, json } from '../http.js';
+import { serviceRpc } from '../supabase.js';
 
 const CACHE = 'public, s-maxage=300, stale-while-revalidate=600';
 

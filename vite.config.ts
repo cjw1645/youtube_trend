@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -10,6 +10,9 @@ import tailwindcss from '@tailwindcss/vite';
  * .env.local 값은 서버 프로세스(process.env)에만 넣고, 클라이언트 번들(import.meta.env)에는 넣지 않는다.
  */
 function devApi(): Plugin {
+  const rewrites: { source: string; destination: string }[] = JSON.parse(
+    readFileSync(path.join(process.cwd(), 'vercel.json'), 'utf8'),
+  ).rewrites;
   return {
     name: 'dev-api',
     apply: 'serve',
@@ -17,6 +20,14 @@ function devApi(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (!url.pathname.startsWith('/api/')) return next();
+
+        // 배포(vercel.json rewrites)와 같은 주소 연결: 함수 개수 제한 때문에 묶은 진입점으로 보낸다.
+        const rewrite = rewrites.find((item) => item.source === url.pathname);
+        if (rewrite) {
+          const target = new URL(rewrite.destination, 'http://localhost');
+          url.pathname = target.pathname;
+          target.searchParams.forEach((value, key) => url.searchParams.set(key, value));
+        }
 
         // 동적 상세 경로를 Vercel과 같은 핸들러로 연결한다. 내부 _lib 경로는 공개하지 않는다.
         const route = /^\/api\/video\/[^/]+\/?$/.test(url.pathname)

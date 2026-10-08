@@ -141,7 +141,7 @@ try {
   const { runPopularCollection, scheduledHour, kstDay } =
     await vite.ssrLoadModule('/api/_lib/collect.ts');
   const collectApi = await vite.ssrLoadModule('/api/collect.ts');
-  const snapshotApi = await vite.ssrLoadModule('/api/snapshot.ts');
+  const snapshotApi = await vite.ssrLoadModule('/api/_lib/handlers/snapshot.ts');
 
   // 시각 계산
   assert.equal(

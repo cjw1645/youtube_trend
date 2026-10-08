@@ -154,9 +154,9 @@ try {
   const search = await vite.ssrLoadModule('/api/_lib/search.ts');
   const { registerSearchSlot, runSearchBatch, parseSlotInput, normalizeQuery, BATCH_LIMIT } =
     search;
-  const batchApi = await vite.ssrLoadModule('/api/collect-search.ts');
+  const batchApi = await vite.ssrLoadModule('/api/_lib/handlers/collect-search.ts');
   const slotsApi = await vite.ssrLoadModule('/api/search-slots.ts');
-  const snapApi = await vite.ssrLoadModule('/api/search-snapshot.ts');
+  const snapApi = await vite.ssrLoadModule('/api/_lib/handlers/search-snapshot.ts');
   const view = async (userId: string, slot: number | null = null, videos = false, now = NOW) =>
     (
       await q(
