@@ -28,6 +28,10 @@
       "destination": "/api/search-data?kind=trend"
     },
     {
+      "source": "/api/search-compare",
+      "destination": "/api/search-data?kind=compare"
+    },
+    {
       "source": "/api/collect-search",
       "destination": "/api/collect?job=search"
     }

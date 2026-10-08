@@ -274,7 +274,8 @@ export async function listPopularVideos(): Promise<Video[]> {
 }
 
 /** 인기 차트 상한: 페이지당 50개 × 4페이지 */
-const POPULAR_MAX_PAGES = 4;
+/** 인기 차트 한 번에 읽는 최대 페이지 수(= 최대 호출 수) */
+export const POPULAR_MAX_PAGES = 4;
 
 /** 전체 인기 차트를 pageToken으로 끝까지 수집한다(페이지당 1 unit). 한 페이지라도 실패하면 전체를 실패로 처리한다. */
 export async function listAllPopularVideos(): Promise<Video[]> {
@@ -545,19 +546,14 @@ export async function collectSearchSnapshot(
 }
 
 /** 검색의 별도 할당량과 통계 보완 호출을 사용한다. 비용은 공식 문서/프로젝트 설정으로 확인한다. */
-export async function searchVideos(
-  q: string,
-  opts: { categoryId?: string; order?: SortOrder } = {},
-): Promise<Video[]> {
+export async function searchVideos(q: string): Promise<Video[]> {
   const search = await ytFetch<ListResponse<RawSearchItem>>('search', {
     part: 'id',
     ...(q ? { q } : {}),
     type: 'video',
     regionCode: REGION,
     relevanceLanguage: 'ko',
-    maxResults: '25',
-    ...(opts.order ? { order: opts.order } : {}),
-    ...(opts.categoryId ? { videoCategoryId: opts.categoryId } : {}),
+    maxResults: '50',
   });
   const ids = (search.items ?? []).map((i) => i.id.videoId).filter((id): id is string => !!id);
   if (ids.length === 0) return [];

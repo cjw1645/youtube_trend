@@ -1007,7 +1007,7 @@ button:active:not(:disabled) {
 }
 .dash-detail {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 .dash-section {
   min-width: 0;
@@ -1648,11 +1648,6 @@ button.legend-row:hover,
   align-items: center;
   column-gap: 18px;
 }
-.tab-group-label {
-  color: var(--faint);
-  font-size: 12px;
-  font-weight: 600;
-}
 .search-tab {
   display: inline-flex;
   align-items: center;
@@ -1671,33 +1666,55 @@ button.legend-row:hover,
 .search-tab .tab-remove:hover {
   color: var(--accent-text);
 }
-.tab-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 36px;
-  color: var(--muted);
-}
-.tab-limit {
+.search-tabs-empty {
+  padding: 14px 0;
   color: var(--faint);
-  font-size: 13px;
+  font-size: 14px;
 }
-.search-add {
+.search-tab-row {
+  margin-top: 8px;
+}
+.search-tab-row button[aria-pressed] {
+  min-height: 40px;
+  font-size: 15px;
+}
+.dash-hero {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
 }
-.search-add label {
+.dash-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.add-search {
+  position: relative;
+}
+.add-search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.add-search-popover {
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  transform-origin: top right;
+}
+.add-search-popover label {
   display: grid;
   gap: 4px;
   color: var(--muted);
   font-size: 12px;
 }
-.search-add input,
-.search-add select {
+.add-search-popover input,
+.add-search-popover select {
   min-height: 40px;
   padding: 0 10px;
   border: 1px solid var(--line);
@@ -1705,12 +1722,39 @@ button.legend-row:hover,
   color: var(--ink);
   font-size: 14px;
 }
-.search-add input {
-  min-width: min(100%, 260px);
+.add-search-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
-.search-add .trend-note {
-  flex-basis: 100%;
+.add-search-popover .trend-note {
   margin: 0;
+}
+.popular-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.popular-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.popular-dash-head h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.popular-dash-head .dash-scope {
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 .search-dashboard {
   padding-top: 16px;
@@ -3134,4 +3178,186 @@ button.spot:hover {
 }
 .cloud-detail .trend-evidence {
   margin-top: 10px;
+}
+
+/* 로그인 전 영상 검색: 인기 영상 미리보기를 아래로 갈수록 투명하게 하고 로그인 안내를 겹친다. */
+.search-locked {
+  position: relative;
+  min-height: 460px;
+}
+.search-locked-preview {
+  height: 460px;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+.search-locked-cta {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(480px, calc(100% - 32px));
+  padding: 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 24px 60px -20px #000c;
+  text-align: center;
+  transform: translateX(-50%);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.search-locked-cta h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.search-locked-cta p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.list-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+/* 내 검색어 ↔ 인기 차트 비교 */
+.popular-compare .trend-tiles {
+  margin-bottom: 4px;
+}
+.compare-sub {
+  margin: 20px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.compare-table th,
+.compare-table td {
+  padding: 9px 12px 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  text-align: left;
+}
+.compare-table thead th {
+  border-top: 0;
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+.compare-table tbody th {
+  font-weight: 700;
+}
+.compare-table small {
+  margin-left: 4px;
+  color: var(--faint);
+  font-size: 12px;
+}
+.compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 조회수·좋아요 중앙값 비교 막대 */
+.engagement {
+  margin-top: 20px;
+}
+.engagement-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.engagement-head .compare-sub {
+  margin: 0 0 8px;
+}
+.engagement-toggle {
+  display: inline-flex;
+  gap: 16px;
+}
+.engagement-toggle button {
+  padding: 0 0 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.engagement-toggle button[aria-pressed='true'] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+}
+.engagement-bars {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.engagement-bars li {
+  display: grid;
+  grid-template-columns: minmax(110px, 200px) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 12px;
+}
+.engagement-label {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.engagement-label small {
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+.engagement-track {
+  display: block;
+  height: 14px;
+  background: var(--panel);
+}
+.engagement-fill {
+  display: block;
+  height: 100%;
+  background: var(--bar);
+}
+.engagement-bars .is-search .engagement-fill {
+  background: var(--accent);
+}
+.engagement-bars .is-popular .engagement-fill {
+  background: var(--muted);
+}
+.engagement-value {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+@media (max-width: 599px) {
+  .engagement-bars li {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+  .engagement-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }

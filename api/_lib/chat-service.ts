@@ -16,6 +16,7 @@ import { buildTrend, summarizeTrend, type TrendInputs } from './trend.js';
 import { reserveAi, settleUsage } from './usage.js';
 import { getAnalysisContext, listCategories } from './youtube.js';
 import { kstDay } from './collect.js';
+import { loadSlotCompare, summarizeCompare } from './compare.js';
 
 /** 이전 문답을 문맥으로 쓰는 최대 횟수(사용자 선택 정책, 최적값 근거 없음). */
 export const HISTORY_TURNS = 3;
@@ -98,6 +99,11 @@ async function loadTrend(
         })) as TrendInputs | null)
       : null;
   if (!common && !sample) return undefined;
+  // 검색 결과 표본이면 같은 시각의 인기 차트와 비교한 값도 함께 준다. 비교 조회가 실패해도 답변은 막지 않는다.
+  const vsPopular =
+    sample && request.searchSlot
+      ? await loadSlotCompare(userId, request.searchSlot).catch(() => null)
+      : null;
   return {
     ...(common ? { common: summarizeTrend(buildTrend(common), nameOf) } : {}),
     ...(sample
@@ -106,6 +112,7 @@ async function loadTrend(
             query: slotQuery,
             note: '사용자가 지정한 검색어의 YouTube 검색 결과 표본(인기 순위 아님)',
             ...summarizeTrend(buildTrend(sample), nameOf),
+            ...(vsPopular ? { vsPopular: summarizeCompare(vsPopular, nameOf) } : {}),
           },
         }
       : {}),

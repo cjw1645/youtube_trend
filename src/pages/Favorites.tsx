@@ -59,7 +59,10 @@ export default function Favorites({
           관심 영상 <span className="text-zinc-500">{favorites.videos.length}개</span>
         </h2>
         <p className="mt-1 text-sm text-zinc-500">
-          이 브라우저에 저장한 영상입니다. 목록은 저장 당시 정보이며, 상세 보기에서 다시 조회합니다.
+          {favorites.signedIn
+            ? '로그인한 계정에 저장된 영상입니다.'
+            : '이 브라우저에 저장한 영상입니다.'}{' '}
+          목록은 저장 당시 정보이며, 상세 보기에서 다시 조회합니다.
         </p>
       </div>
       {favorites.videos.length === 0 ? (

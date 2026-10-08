@@ -115,3 +115,75 @@ export interface SlotView {
 export interface SlotsResponse {
   slots: SlotView[];
 }
+
+/** 비교에 쓴 수집 실행 한 개 */
+export interface CompareRun {
+  runId: number;
+  scheduledFor: string;
+  itemCount: number;
+}
+
+/** 키워드 한 개의 양쪽 값. 저장된 집계에 없는 쪽은 null(2개 미만이거나 상위 100개 밖이라 0개와 다르다). */
+export interface CompareKeywordRow {
+  keyword: string;
+  slotCount: number | null;
+  slotShare: number | null;
+  popularCount: number | null;
+  popularShare: number | null;
+  /** (검색 비율 − 인기 비율) × 100. 한쪽이 null이면 null */
+  deltaPp: number | null;
+}
+
+/** 검색어 토큰 한 개가 인기 차트에 나온 정도 */
+export interface CompareToken {
+  keyword: string;
+  popularCount: number | null;
+  popularShare: number | null;
+  /** 인기 차트 키워드 집계 안의 순위(1부터). 집계에 없으면 null */
+  rank: number | null;
+}
+
+/** 조회수·좋아요 중앙값 비교의 막대 한 개. 공개되지 않은 값은 제외한 중앙값이며 모두 비공개면 null */
+export interface CompareEngagementRow {
+  kind: 'search' | 'popular' | 'hot';
+  /** search는 검색어, popular는 「인기 차트 전체」, hot은 인기 차트의 핫 키워드 */
+  label: string;
+  videos: number;
+  medianViews: number | null;
+  medianLikes: number | null;
+}
+
+export interface CompareCategoryRow {
+  categoryId: string;
+  slotShare: number;
+  popularShare: number;
+  deltaPp: number;
+}
+
+/** 슬롯 최신 검색 수집과 가장 가까운 인기 차트 수집의 비교(A 노출·B 키워드·C 영상·D 카테고리) */
+export type PopularCompare =
+  | { available: false; query: string; slot: CompareRun }
+  | {
+      available: true;
+      query: string;
+      slot: CompareRun;
+      popular: CompareRun;
+      exposure: { tokens: CompareToken[]; noTokens: boolean };
+      keywords: {
+        commonTotal: number;
+        common: CompareKeywordRow[];
+        slotOnly: CompareKeywordRow[];
+        popularOnly: CompareKeywordRow[];
+      };
+      videos: {
+        count: number;
+        share: number | null;
+        bestPosition: number | null;
+        positions: { videoId: string; slotPosition: number; popularPosition: number }[];
+      };
+      categories: CompareCategoryRow[];
+      /** 내 검색 결과 · 인기 차트 전체 · 핫 키워드별 조회수·좋아요 중앙값 */
+      engagement: CompareEngagementRow[];
+      /** 이 검색 수집에 저장된 키워드 집계 수. 0이면 집계에 실패한 것으로 보고 다른 검색어를 안내한다. */
+      slotKeywordCount: number;
+    };

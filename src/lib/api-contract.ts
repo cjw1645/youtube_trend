@@ -85,6 +85,7 @@ export function validApiResponse(path: string, body: unknown): boolean {
   // 저장된 집계·스냅샷: 서버가 만든 응답이며 형태(최상위 키)만 확인한다. 내부 값은 화면이 null을 허용해 읽는다.
   if (pathname === '/api/trend' || pathname === '/api/search-trend')
     return body.trend === null || isRecord(body.trend);
+  if (pathname === '/api/search-compare') return body.compare === null || isRecord(body.compare);
   if (pathname === '/api/conversations')
     return Array.isArray(body.conversations) || Array.isArray(body.messages) || body.ok === true;
   if (pathname === '/api/snapshot') return body.snapshot === null || isRecord(body.snapshot);

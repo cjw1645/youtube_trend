@@ -56,9 +56,31 @@ export function EmptyView({ query, onReset }: { query: string; onReset: () => vo
       icon={<MagnifyingGlassIcon />}
       title={query ? `'${query}' 검색 결과가 없습니다` : '조회한 영상이 없습니다'}
     >
-      <p>다른 키워드나 카테고리를 선택해 보세요.</p>
+      <p>다른 키워드를 입력해 보세요.</p>
       <button type="button" onClick={onReset} className="mt-4 primary-button">
-        기본 인기 목록 보기
+        인기 영상 보기
+      </button>
+    </Panel>
+  );
+}
+
+/** 받은 목록에는 영상이 있지만 화면 필터에 맞는 영상이 없을 때 */
+export function FilteredEmptyView({
+  total,
+  categoryName,
+  onReset,
+}: {
+  total: number;
+  categoryName: string;
+  onReset: () => void;
+}) {
+  return (
+    <Panel icon={<MagnifyingGlassIcon />} title="조건에 맞는 영상이 없습니다">
+      <p>
+        이 목록 {total}개 중 {categoryName} 영상이 없습니다.
+      </p>
+      <button type="button" onClick={onReset} className="mt-4 primary-button">
+        카테고리 해제
       </button>
     </Panel>
   );

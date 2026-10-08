@@ -75,7 +75,7 @@ function rows<T>(body: unknown): T[] {
   return body as T[];
 }
 
-async function ensureBudgets(now: Date): Promise<void> {
+export async function ensureBudgets(now: Date): Promise<void> {
   const day = kstDay(now);
   await serviceRpc('ensure_quota_row', {
     p_kind: 'search',

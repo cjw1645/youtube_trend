@@ -148,6 +148,14 @@ try {
     renderChatReferences('{{tag:abcdefghijk:1}}', taggedContext),
     '{{title:xxxxxxxxxxx}} (영상 ID: abcdefghijk)',
   );
+  // 검색 표본이 인기 차트와 비교된 값(vsPopular)이 있으면 비율로만 말하라는 지시가 붙고, 입력 JSON에 그대로 실린다.
+  const withCompare = buildChatInput('분석', dailyContext, {}, dailyNow, {
+    trend: { searchSample: { vsPopular: { available: true, sharedKeywordCount: 3 } } },
+  });
+  assert.match(withCompare.systemInstruction, /vsPopular는 같은 시각의 한국 인기 차트/);
+  assert.match(withCompare.systemInstruction, /비율로만 말하세요/);
+  assert.match(withCompare.prompt, /"vsPopular":\{"available":true,"sharedKeywordCount":3\}/);
+  assert.doesNotMatch(buildChatInput('분석', dailyContext).systemInstruction, /vsPopular/);
   console.log(
     'PASS: 자유 질문·대상 순서·날짜·null/0·동률 순위/비율·제외 대상 보존, 서버 원문 및 단일 태그 인용·잘못된 참조 차단, 트렌드 전용 형식, 메타데이터 명령 격리',
   );

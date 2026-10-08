@@ -310,6 +310,9 @@ try {
   }
   reset();
   respond = (call) => {
+    // 공개 조회 예산(ensure_quota_row·try_consume_quota)은 통과시키고 YouTube 호출만 확인한다.
+    if (call.url.includes('/rest/v1/rpc/try_consume_quota')) return Response.json(true);
+    if (call.url.includes('/rest/v1/rpc/ensure_quota_row')) return Response.json(null);
     assert.match(call.url, /googleapis\.com\/youtube\/v3\/videos\?/);
     assert.match(call.url, /id=dQw4w9WgXcQ%2Cabcdefghijk/);
     return new Response(

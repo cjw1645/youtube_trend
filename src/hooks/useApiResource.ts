@@ -22,15 +22,17 @@ export function loadShared<T>(path: string, cacheMs: number, force = false): Pro
   return promise;
 }
 
-export function useApiResource<T>(path: string, { cacheMs = 0 }: { cacheMs?: number } = {}) {
+/** path가 null이면 요청하지 않고 loading 상태로 둔다. */
+export function useApiResource<T>(path: string | null, { cacheMs = 0 }: { cacheMs?: number } = {}) {
   const [retry, setRetry] = useState(0);
-  const key = `${retry}:${path}`;
+  const key = `${retry}:${path ?? ''}`;
   const appliedRetry = useRef(0);
   const [result, setResult] = useState<{ key: string; state: ResourceState<T> }>({
     key,
     state: { status: 'loading' },
   });
   useEffect(() => {
+    if (path === null) return;
     setResult({ key, state: { status: 'loading' } });
     // 다시 시도 버튼으로 바뀐 경우에만 공유 응답을 건너뛴다.
     const force = retry !== appliedRetry.current;

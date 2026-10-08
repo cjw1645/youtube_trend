@@ -1,5 +1,6 @@
-import { useEffect, useId, useMemo, useState } from 'react';
-import { POPULAR_CACHE_MS } from '../hooks/useVideos';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { DashboardIcon } from '@radix-ui/react-icons';
+import { CHART_PATH, POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
 import DashSection from '../components/DashSection';
@@ -7,14 +8,15 @@ import Spotlight from '../components/Spotlight';
 import WordCloud from '../components/WordCloud';
 import StoredTrendSection from '../components/StoredTrendSection';
 import SearchTabs from '../components/SearchTabs';
+import AddSearchPopover, { MAX_SLOTS } from '../components/AddSearchPopover';
 import SearchDashboard from '../components/SearchDashboard';
 import { useSearchSlots } from '../hooks/useSearchSlots';
+import { useAuth } from '../hooks/useAuth';
 import {
   aggregateKeywords,
   categoryDistribution,
   ENGAGEMENT_MIN_VIEWS,
   engagementRate,
-  lengthDistribution,
   summarizeList,
   topBy,
   viewsPerHour,
@@ -24,10 +26,9 @@ import { popularChartTarget, type ChatTarget } from '../lib/chat-session';
 import type { Video, VideosResponse } from '../types/video';
 import type { StoredVideo } from '../types/trend';
 
-/** 전체 인기 차트를 pageToken으로 끝까지 수집한 목록. 카테고리 탭은 이 목록 안에서만 거른다. */
-export const CHART_PATH = '/api/videos?chart=popular&all=1';
 /** 이 개수 미만이면 비율·순위 해석에 주의 문구를 붙인다. */
 const SMALL_SAMPLE = 10;
+const POPULAR_OPEN_KEY = 'youtube-trend:popular-dash-open';
 
 interface Props {
   categoryNames: ReadonlyMap<string, string>;
@@ -114,91 +115,6 @@ function VideoRankList({
   );
 }
 
-/** 길이 구간별 영상 수 비율 막대와 구간별 중앙값 조회수. 쇼츠 여부는 API에 없어 단정하지 않는다. */
-function LengthView({ split }: { split: ReturnType<typeof lengthDistribution> }) {
-  const known = split.buckets.reduce((sum, bucket) => sum + bucket.count, 0);
-  return (
-    <>
-      {known > 0 && (
-        <div className="stack-bar" aria-hidden="true">
-          {split.buckets.map(({ key, count }, index) => (
-            <span key={key} className={`tone-${Math.min(index, 3)}`} style={{ flexGrow: count }} />
-          ))}
-        </div>
-      )}
-      <dl className="split-groups">
-        {split.buckets.map((bucket) => (
-          <div key={bucket.key}>
-            <dt>{bucket.label}</dt>
-            <dd>
-              <span className="split-count">{bucket.count}개</span>
-              <span className="split-median">
-                {percent(bucket.share)} · 중앙값{' '}
-                {bucket.medianViews === null ? '정보 없음' : formatCount(bucket.medianViews)}
-              </span>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      {split.unknown > 0 && (
-        <p className="dash-empty">길이를 알 수 없는 영상 {split.unknown}개는 제외했습니다.</p>
-      )}
-    </>
-  );
-}
-
-/** 카테고리 분포: 영상 수 누적 막대와 범례 목록. 4번째 이후는 같은 회색으로 묶는다. */
-function CategoryView({
-  categories,
-  names,
-  activeTab,
-  onSelectTab,
-}: {
-  categories: ReturnType<typeof categoryDistribution>;
-  names: ReadonlyMap<string, string>;
-  activeTab: string;
-  onSelectTab: (id: string) => void;
-}) {
-  const nameOf = (key: string) => names.get(key) ?? '카테고리 정보 없음';
-  return (
-    <>
-      <div className="stack-bar" aria-hidden="true">
-        {categories.map(({ key, count }, index) => (
-          <span key={key} className={`tone-${Math.min(index, 3)}`} style={{ flexGrow: count }} />
-        ))}
-      </div>
-      <ol className="legend-list">
-        {categories.map(({ key, count, viewShare }, index) => {
-          const content = (
-            <>
-              <span className={`legend-swatch tone-${Math.min(index, 3)}`} aria-hidden="true" />
-              <span className="legend-name">{nameOf(key)}</span>
-              <span className="legend-count">{count}개</span>
-              <span className="legend-share">조회수 {percent(viewShare)}</span>
-            </>
-          );
-          return (
-            <li key={key}>
-              {activeTab === key ? (
-                <div className="legend-row">{content}</div>
-              ) : (
-                <button
-                  type="button"
-                  className="legend-row"
-                  onClick={() => onSelectTab(key)}
-                  aria-label={`${nameOf(key)} 인기 목록 탭으로 보기 (영상 ${count}개, 조회수 비중 ${percent(viewShare)})`}
-                >
-                  {content}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </>
-  );
-}
-
 /** 현재 YouTube 인기 목록을 공용 통계로 요약한다. 모든 수치는 lib/stats 결과만 사용한다. */
 export default function Dashboard({
   categoryNames,
@@ -210,9 +126,37 @@ export default function Dashboard({
   onImportSearch,
   onAnalyze,
 }: Props) {
+  const auth = useAuth();
   const search = useSearchSlots();
   const [searchSlot, setSearchSlot] = useState<1 | 2 | null>(null);
   const selectedSearch = search.slots.find((item) => item.slot === searchSlot);
+  // 등록한 검색어가 있으면 첫 번째를 한 번 자동으로 열어 둔다(사용자가 고른 뒤에는 건드리지 않는다).
+  const autoSelected = useRef(false);
+  useEffect(() => {
+    if (autoSelected.current || !search.slots.length) return;
+    autoSelected.current = true;
+    setSearchSlot(search.slots[0].slot);
+  }, [search.slots]);
+  // 공통 인기 대시보드는 옵션 패널이다. 사용자가 고른 상태를 기억하고, 고른 적이 없으면 로그아웃 상태에서만 열어 둔다.
+  const [popularChoice, setPopularChoice] = useState<boolean | null>(() => {
+    try {
+      const saved = localStorage.getItem(POPULAR_OPEN_KEY);
+      return saved === null ? null : saved === '1';
+    } catch {
+      return null;
+    }
+  });
+  const popularOpen = popularChoice ?? (!auth.loading && !auth.user);
+  const togglePopular = () => {
+    const next = !popularOpen;
+    setPopularChoice(next);
+    try {
+      localStorage.setItem(POPULAR_OPEN_KEY, next ? '1' : '0');
+    } catch {
+      /* 저장하지 못해도 이번 화면에서는 동작한다 */
+    }
+  };
+  const popularId = useId();
   const chart = useApiResource<VideosResponse>(CHART_PATH, { cacheMs: POPULAR_CACHE_MS });
   const [tab, setTab] = useState('');
   const chartVideos = chart.state.status === 'success' ? chart.state.data.items : undefined;
@@ -242,7 +186,6 @@ export default function Dashboard({
   const tabName = activeTab ? (categoryNames.get(activeTab) ?? '카테고리 정보 없음') : '';
   const selectTab = (id: string) => {
     setTab(id);
-    setSearchSlot(null);
     document.getElementById(tabsId)?.scrollIntoView({ block: 'nearest' });
   };
   const summary = useMemo(() => (videos ? summarizeList(videos, now) : null), [videos, now]);
@@ -251,7 +194,6 @@ export default function Dashboard({
     () => (videos ? categoryDistribution(videos, (video) => video.categoryId) : []),
     [videos],
   );
-  const split = useMemo(() => (videos ? lengthDistribution(videos) : null), [videos]);
   const engaged = useMemo(() => (videos ? topBy(videos, engagementRate, 5) : []), [videos]);
   const fastest = useMemo(
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 5) : []),
@@ -270,99 +212,53 @@ export default function Dashboard({
   });
   const relative = (iso: string) => formatRelativeDate(iso, new Date(now));
 
+  const emptyText = auth.user
+    ? '아직 추가한 검색어가 없습니다. 위의 「검색어 추가」로 시작해 보세요.'
+    : auth.enabled
+      ? '로그인하고 검색어를 추가하면 이 자리에 검색어별 대시보드가 생깁니다.'
+      : '로그인 기능이 설정되지 않아 검색어를 추가할 수 없습니다.';
+
   return (
     <div className="dashboard">
-      <header className="page-heading dash-heading">
+      <header className="page-heading dash-hero">
         <div>
-          <h1>대시보드</h1>
-          <p className="dash-scope">
-            {selectedSearch
-              ? `'${selectedSearch.conditions.query}' 검색 결과 기준`
-              : videos
-                ? `${scope} · ${timeLabel} 조회`
-                : 'YouTube 인기 차트 기준'}
+          <h1>내 검색어로 트렌드 추적</h1>
+          <p>
+            검색어를 추가하면 매일 YouTube 검색 결과 200개를 저장해 변화를 보여줍니다. 최대{' '}
+            {MAX_SLOTS}개.
           </p>
         </div>
-        <button
-          type="button"
-          className="primary-button"
-          hidden={!!selectedSearch}
-          disabled={!videos?.length}
-          onClick={() => {
-            if (!videos) return;
-            // 현재 탭 목록의 앞 20개를 전체 차트 순위(popularRank)와 함께 전달한다.
-            onAnalyze(popularChartTarget(videos, `대시보드 · ${scope}`, now));
-          }}
-        >
-          이 데이터로 AI 질문
-        </button>
+        <div className="dash-hero-actions">
+          <AddSearchPopover
+            full={search.slots.length >= MAX_SLOTS}
+            busy={search.busy}
+            onAdd={search.add}
+            onAdded={setSearchSlot}
+          />
+          <button
+            type="button"
+            className={`ghost-button${popularOpen ? ' is-open' : ''}`}
+            aria-expanded={popularOpen}
+            aria-controls={popularId}
+            onClick={togglePopular}
+          >
+            <DashboardIcon aria-hidden="true" /> 인기 차트 대시보드
+          </button>
+        </div>
       </header>
-      {!selectedSearch && summary && videos && (
-        <Spotlight
-          title="지금 가장 눈에 띄는 것"
-          basis={`${scope} · 현재 인기 차트 기준`}
-          video={
-            fastest[0]
-              ? {
-                  id: fastest[0].item.id,
-                  title: fastest[0].item.title,
-                  thumbnail: fastest[0].item.thumbnailUrl,
-                  channel: fastest[0].item.channelTitle,
-                  metric: `시간당 조회 ${formatCount(Math.round(fastest[0].score))}`,
-                  note: `${relative(fastest[0].item.publishedAt)} 업로드 · 조회수 증가 속도 1위`,
-                }
-              : null
-          }
-          tag={
-            keywords[0]
-              ? {
-                  label: `#${keywords[0].keyword}`,
-                  metric: `${keywords[0].videos}개 영상`,
-                  note: `현재 인기 목록 ${videos.length}개 중 이 태그·제목이 가장 많이 나왔어요`,
-                  onClick: () => onSearchKeyword(keywords[0].keyword),
-                }
-              : null
-          }
-          field={
-            categories[0]
-              ? {
-                  label: categoryNames.get(categories[0].key) ?? '카테고리 정보 없음',
-                  metric: percent(categories[0].share),
-                  note: `인기 목록 ${videos.length}개 중 ${categories[0].count}개가 이 분야예요`,
-                }
-              : null
-          }
-          onOpenVideo={onOpenVideo}
-        />
-      )}
-      {tabs.length > 0 && (
-        <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 차트">
-          {[{ id: '', count: chartVideos?.length ?? 0 }, ...tabs].map(({ id, count }) => (
-            <button
-              key={id || 'all'}
-              type="button"
-              aria-pressed={searchSlot === null && activeTab === id}
-              onClick={() => selectTab(id)}
-            >
-              {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'}
-              <span>{count}</span>
-            </button>
-          ))}
-        </nav>
-      )}
       <SearchTabs
         slots={search.slots}
         selected={selectedSearch ? searchSlot : null}
         busy={search.busy}
         message={search.message ?? search.error}
+        emptyText={emptyText}
         onSelect={setSearchSlot}
-        onAdd={search.add}
         onRemove={(slot) => {
           if (searchSlot === slot) setSearchSlot(null);
           void search.remove(slot);
         }}
       />
-      {selectedSearch ? (
+      {selectedSearch && (
         <SearchDashboard
           key={`${selectedSearch.slot}:${selectedSearch.conditions.query}`}
           view={selectedSearch}
@@ -373,8 +269,82 @@ export default function Dashboard({
           onSearchKeyword={onSearchKeyword}
           onImport={onImportSearch}
         />
-      ) : (
-        <>
+      )}
+      {popularOpen && (
+        <div id={popularId} className="popular-dash">
+          <header className="popular-dash-head">
+            <div>
+              <h2>인기 차트 대시보드</h2>
+              <p className="dash-scope">
+                {videos ? `${scope} · ${timeLabel} 조회` : 'YouTube 인기 차트 기준'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={!videos?.length}
+              onClick={() => {
+                if (!videos) return;
+                // 현재 탭 목록의 앞 20개를 전체 차트 순위(popularRank)와 함께 전달한다.
+                onAnalyze(popularChartTarget(videos, `대시보드 · ${scope}`, now));
+              }}
+            >
+              이 데이터로 AI 질문
+            </button>
+          </header>
+          {summary && videos && (
+            <Spotlight
+              title="지금 가장 눈에 띄는 것"
+              basis={`${scope} · 현재 인기 차트 기준`}
+              video={
+                fastest[0]
+                  ? {
+                      id: fastest[0].item.id,
+                      title: fastest[0].item.title,
+                      thumbnail: fastest[0].item.thumbnailUrl,
+                      channel: fastest[0].item.channelTitle,
+                      metric: `시간당 조회 ${formatCount(Math.round(fastest[0].score))}`,
+                      note: `${relative(fastest[0].item.publishedAt)} 업로드 · 조회수 증가 속도 1위`,
+                    }
+                  : null
+              }
+              tag={
+                keywords[0]
+                  ? {
+                      label: `#${keywords[0].keyword}`,
+                      metric: `${keywords[0].videos}개 영상`,
+                      note: `현재 인기 목록 ${videos.length}개 중 이 태그·제목이 가장 많이 나왔어요`,
+                      onClick: () => onSearchKeyword(keywords[0].keyword),
+                    }
+                  : null
+              }
+              field={
+                categories[0]
+                  ? {
+                      label: categoryNames.get(categories[0].key) ?? '카테고리 정보 없음',
+                      metric: percent(categories[0].share),
+                      note: `인기 목록 ${videos.length}개 중 ${categories[0].count}개가 이 분야예요`,
+                    }
+                  : null
+              }
+              onOpenVideo={onOpenVideo}
+            />
+          )}
+          {tabs.length > 0 && (
+            <nav id={tabsId} className="dash-tabs" aria-label="카테고리별 인기 차트">
+              {[{ id: '', count: chartVideos?.length ?? 0 }, ...tabs].map(({ id, count }) => (
+                <button
+                  key={id || 'all'}
+                  type="button"
+                  aria-pressed={activeTab === id}
+                  onClick={() => selectTab(id)}
+                >
+                  {id ? (categoryNames.get(id) ?? '카테고리 정보 없음') : '전체'}
+                  <span>{count}</span>
+                </button>
+              ))}
+            </nav>
+          )}
           {chart.state.status === 'loading' && <LoadingPanel label="대시보드를 불러오는 중" />}
           {chart.state.status === 'error' && (
             <ErrorView
@@ -453,27 +423,6 @@ export default function Dashboard({
               </div>
               <div className="dash-detail">
                 <DashSection
-                  title="카테고리 분포"
-                  basis="영상 수 · 조회수 비중 · 누르면 탭 이동"
-                  className="dash-categories"
-                >
-                  <CategoryView
-                    categories={categories}
-                    names={categoryNames}
-                    activeTab={activeTab}
-                    onSelectTab={selectTab}
-                  />
-                </DashSection>
-                {split && (
-                  <DashSection
-                    title="영상 길이 구간"
-                    basis="길이를 아는 영상 중 비율 · API에 쇼츠 구분 없음"
-                    className="dash-split"
-                  >
-                    <LengthView split={split} />
-                  </DashSection>
-                )}
-                <DashSection
                   title="참여율 Top 5"
                   basis={`(좋아요+댓글) ÷ 조회수 · 조회수 ${ENGAGEMENT_MIN_VIEWS.toLocaleString('ko-KR')} 미만 제외`}
                   className="dash-engagement"
@@ -504,7 +453,7 @@ export default function Dashboard({
             onSearchKeyword={onSearchKeyword}
             onImport={onImport}
           />
-        </>
+        </div>
       )}
     </div>
   );

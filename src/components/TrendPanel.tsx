@@ -5,6 +5,7 @@ import Spotlight, { type HotItem, type HotVideo } from './Spotlight';
 import { CHART_COLORS, ColumnChart, DonutChart, LineChart, StackBar } from './charts';
 import { formatCount } from '../lib/format';
 import { videoKeywords, LENGTH_BUCKETS } from '../lib/stats';
+import { BASELINE_PREFERENCE, pickDefaultBaseline } from '../lib/trend-baseline';
 import {
   BASELINE_KINDS,
   type BaselineKind,
@@ -21,7 +22,6 @@ const KIND_LABEL: Record<BaselineKind, string> = {
   week: '7일 전',
   month: '28일 전',
 };
-const SPOT_ORDER: BaselineKind[] = ['week', 'day', 'previous', 'month'];
 const DAY_MS = 86_400_000;
 const EVIDENCE_LIMIT = 8;
 const CATEGORY_LIMIT = 6;
@@ -119,8 +119,8 @@ export default function TrendPanel({
   onImport,
   showSpotlight = true,
 }: Props) {
-  const firstAvailable = trend.comparisons.find((c) => c.available)?.kind ?? 'previous';
-  const [kind, setKind] = useState<BaselineKind>(firstAvailable);
+  const [initial] = useState(() => pickDefaultBaseline(trend.comparisons));
+  const [kind, setKind] = useState<BaselineKind>(initial.kind);
   const [open, setOpen] = useState<string | null>(null);
   const [imported, setImported] = useState<'set' | 'kept' | null>(null);
   const comparison: Comparison =
@@ -138,7 +138,7 @@ export default function TrendPanel({
   const categories = (comparison.available ? comparison.categories : current.categories) ?? [];
 
   const spot = useMemo(() => {
-    const base = SPOT_ORDER.map((k) => trend.comparisons.find((c) => c.kind === k)).find(
+    const base = BASELINE_PREFERENCE.map((k) => trend.comparisons.find((c) => c.kind === k)).find(
       (c) => c?.available,
     );
     const baseName = base ? KIND_LABEL[base.kind] : null;
@@ -250,8 +250,8 @@ export default function TrendPanel({
           )}
         </DashSection>
         <DashSection
-          title="최근 7일 업로드 수"
-          basis="이 목록 영상의 게시일 기준 · 날짜별 영상 수"
+          title="이 목록의 게시일 분포"
+          basis="최근 7일 · 이 목록 영상의 게시일 기준 날짜별 영상 수(시간에 따른 변화가 아님)"
           className="chart-card"
         >
           {videos?.length ? (
@@ -333,6 +333,11 @@ export default function TrendPanel({
           );
         })}
       </nav>
+      {initial.fallback && kind === initial.kind && (
+        <p className="trend-note" role="status">
+          전일 동시간 수집이 아직 없어 {KIND_LABEL[initial.kind]}으로 비교합니다.
+        </p>
+      )}
       {comparison.available && comparison.baseline ? (
         <p className="trend-note">
           기준: {when(comparison.baseline.scheduledFor)} 수집 · 영상 {comparison.baseline.itemCount}
@@ -393,7 +398,12 @@ export default function TrendPanel({
                 weight: row.count,
                 title: `${row.keyword} · 영상 ${row.count}개 · ${pct(row.share)}`,
                 rising:
-                  comparison.available && keywords && !row.belowBaseline && row.deltaPp
+                  // 직전 수집(보통 1시간 간격)은 변화가 작아 노이즈이므로 ▲▼를 표시하지 않는다.
+                  kind !== 'previous' &&
+                  comparison.available &&
+                  keywords &&
+                  !row.belowBaseline &&
+                  row.deltaPp
                     ? row.deltaPp > 0
                     : null,
               }))}

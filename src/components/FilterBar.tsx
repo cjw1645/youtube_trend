@@ -1,22 +1,24 @@
-import type { Category, SortOrder } from '../types/video';
-import { ResetIcon } from '@radix-ui/react-icons';
+import type { SortOrder } from '../types/video';
+
 interface Props {
-  categories: Category[];
+  /** 현재 목록에 실제로 있는 카테고리와 영상 수 */
+  categories: readonly { id: string; label: string; count: number }[];
   categoryId: string;
   onCategoryChange: (id: string) => void;
   order: SortOrder | '';
   onOrderChange: (order: SortOrder | '') => void;
-  onApply: () => void;
-  onReset: () => void;
+  /** 정렬 기본 옵션 이름. 인기 차트는 「인기순」, 검색 결과는 「관련도순」 */
+  defaultOrderLabel: string;
 }
+
+/** 선택하는 즉시 현재 목록 안에서 적용한다(서버 호출 없음). */
 export default function FilterBar({
   categories,
   categoryId,
   onCategoryChange,
   order,
   onOrderChange,
-  onApply,
-  onReset,
+  defaultOrderLabel,
 }: Props) {
   return (
     <div className="filter-bar">
@@ -26,7 +28,7 @@ export default function FilterBar({
           <option value="">전체 카테고리</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
-              {category.title}
+              {category.label} ({category.count})
             </option>
           ))}
         </select>
@@ -37,18 +39,11 @@ export default function FilterBar({
           value={order}
           onChange={(event) => onOrderChange(event.target.value as SortOrder | '')}
         >
-          <option value="">인기순</option>
+          <option value="">{defaultOrderLabel}</option>
           <option value="viewCount">조회수순</option>
           <option value="date">최신순</option>
         </select>
       </label>
-      <button type="button" className="secondary-button" onClick={onApply}>
-        적용
-      </button>
-      <button type="button" className="secondary-button" onClick={onReset}>
-        <ResetIcon aria-hidden="true" />
-        초기화
-      </button>
     </div>
   );
 }

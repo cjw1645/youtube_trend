@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Home, { type SearchRequest } from './pages/Home';
-import Dashboard, { CHART_PATH } from './pages/Dashboard';
+import Home, { SEARCH_AFTER_LOGIN_KEY, type SearchRequest } from './pages/Home';
+import { useAuth } from './hooks/useAuth';
+import Dashboard from './pages/Dashboard';
 import Favorites from './pages/Favorites';
 import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
@@ -12,7 +13,7 @@ import { ChatVideoList } from './components/ChatResult';
 import Sidebar, { TopBar, type Page } from './components/Sidebar';
 import { popularChartTarget, selectChatVideos, type ChatTarget } from './lib/chat-session';
 import { loadShared } from './hooks/useApiResource';
-import { POPULAR_CACHE_MS } from './hooks/useVideos';
+import { CHART_PATH, POPULAR_CACHE_MS } from './hooks/useVideos';
 import { toApiRequestError } from './lib/api';
 import type { VideosResponse } from './types/video';
 import InfoDisclosure from './components/InfoDisclosure';
@@ -64,8 +65,18 @@ export default function App() {
     }
   };
   const chat = useChat();
+  const authUser = useAuth().user;
+  // 로그아웃 상태에서 검색하려다 로그인한 경우 복귀 후 영상 검색 화면으로 보내 저장해 둔 검색어를 실행한다.
+  useEffect(() => {
+    if (!authUser) return;
+    try {
+      if (sessionStorage.getItem(SEARCH_AFTER_LOGIN_KEY)) navigate('search');
+    } catch {
+      /* 저장소를 못 쓰면 이동하지 않는다 */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
   const {
-    categories,
     nameById,
     resolveNames,
     state: categoryState,
@@ -185,7 +196,6 @@ export default function App() {
               searchRequest={searchRequest}
               initialQuery={lastHome?.query}
               favorites={favorites}
-              categories={categories}
               nameById={nameById}
               resolveCategoryNames={resolveNames}
               onSelect={onSelect}

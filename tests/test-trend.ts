@@ -299,6 +299,26 @@ try {
   const latest = (await svc(`select get_latest_popular() r`)).rows[0].r;
   assert.ok(Array.isArray(latest.snapshot.videos[0].tags));
   console.log('  ok 스냅샷 영상 태그 포함');
+
+  // 8. 비교 기준 기본값: 전일 동시간 우선, 없으면 7일 전 → 직전 수집 → 28일 전
+  const { pickDefaultBaseline } = await vite.ssrLoadModule('/src/lib/trend-baseline.ts');
+  const cmp = (...available: string[]) =>
+    ['previous', 'day', 'week', 'month'].map((kind) => ({
+      kind,
+      available: available.includes(kind),
+    }));
+  assert.deepEqual(pickDefaultBaseline(cmp('previous', 'day', 'week')), {
+    kind: 'day',
+    fallback: false,
+  });
+  assert.deepEqual(pickDefaultBaseline(cmp('previous', 'week')), { kind: 'week', fallback: true });
+  assert.deepEqual(pickDefaultBaseline(cmp('previous', 'month')), {
+    kind: 'previous',
+    fallback: true,
+  });
+  assert.deepEqual(pickDefaultBaseline(cmp('month')), { kind: 'month', fallback: true });
+  assert.deepEqual(pickDefaultBaseline(cmp()), { kind: 'day', fallback: false });
+  console.log('  ok 비교 기준 기본값(day 우선·폴백)');
   console.log('test-trend: all passed');
 } finally {
   await vite.close();

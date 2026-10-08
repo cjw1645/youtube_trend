@@ -92,27 +92,3 @@ export async function tryReserveSearch(
   );
   return { status: row.status, id: row.reservation_id };
 }
-
-const DEFAULT_GENERAL_SEARCH_CAP = 20;
-
-/**
- * 로그인 없는 일반 검색(search.list)의 서비스 전체 하루 예산을 1회 소비한다. CDN에 캐시된 응답은 서버를 거치지 않으므로
- * 같은 검색은 소비하지 않는다. 예산 저장소 장애·미설정이면 운영(production)에서는 외부 호출을 막고 개발에서는 건너뛴다.
- */
-export async function consumeGeneralSearch(now: Date = new Date()): Promise<void> {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.VERCEL_ENV !== 'production') return;
-  const day = new Date(now.getTime() + 9 * 3_600_000).toISOString().slice(0, 10); // Asia/Seoul 날짜
-  const cap = Number(process.env.GENERAL_SEARCH_DAILY_CAP) || DEFAULT_GENERAL_SEARCH_CAP;
-  await serviceRpc('ensure_quota_row', { p_kind: 'general_search', p_day: day, p_cap: cap });
-  const granted = await serviceRpc('try_consume_quota', {
-    p_kind: 'general_search',
-    p_day: day,
-    p_units: 1,
-  });
-  if (granted !== true)
-    throw new ApiFailure(
-      'QUOTA_EXCEEDED',
-      '오늘 영상 검색 가능 횟수를 모두 사용했습니다. 내일 다시 시도하거나 인기 목록을 이용해 주세요.',
-      429,
-    );
-}

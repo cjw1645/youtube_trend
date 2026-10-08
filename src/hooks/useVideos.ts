@@ -1,17 +1,20 @@
-import type { ApiRequestError } from '../lib/api';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ApiRequestError, authedJson, toApiRequestError } from '../lib/api';
+import { startRequest } from '../lib/request';
 import { useApiResource } from './useApiResource';
-import type { SortOrder, Video, VideosResponse } from '../types/video';
+import type { Video, VideosResponse } from '../types/video';
 
 export const POPULAR_CACHE_MS = 5 * 60 * 1000;
+/** 전체 인기 차트(200개)를 pageToken으로 끝까지 수집한 목록. 대시보드와 영상 검색이 같은 응답을 공유한다. */
+export const CHART_PATH = '/api/videos?chart=popular&all=1';
 
 export interface VideoQuery {
-  /** 검색어와 카테고리가 둘 다 비어 있으면 API 인기 목록 */
+  /** 서버로 보내는 조건은 검색어뿐이다. 비어 있으면 인기 차트 */
   q: string;
-  /** 비어 있으면 전체 카테고리 */
+  /** 받은 목록 안에서만 거르는 화면 필터. 비어 있으면 전체 카테고리 */
   categoryId: string;
-  /** 비어 있으면 인기순 표시로 API 제공 순서 유지(검색은 기본 관련도) */
-  order: SortOrder | '';
+  /** 화면 정렬. 비어 있으면 인기순(검색은 관련도순)으로 API 제공 순서 유지 */
+  order: '' | 'viewCount' | 'date';
 }
 
 export type VideosState =
@@ -19,29 +22,66 @@ export type VideosState =
   | { status: 'success'; videos: Video[]; fetchedAt: number }
   | { status: 'error'; error: ApiRequestError };
 
-/** 검색은 적용 조건으로 조회하고, 기본 인기 목록의 재정렬은 클라이언트에서 처리한다. */
-export function useVideos({ q, categoryId, order }: VideoQuery) {
-  const params = new URLSearchParams();
-  if (q) params.set('q', q);
-  if (categoryId) params.set('categoryId', categoryId);
-  if (order && (q || categoryId)) params.set('order', order);
+// 같은 검색 요청(키)은 한 번만 보낸다. StrictMode의 effect 재실행이나 재마운트가 검색 한도를 두 번 쓰지 않게 한다.
+let lastSearch: { key: string; promise: Promise<VideosResponse> } | undefined;
 
-  // 기본 인기 목록은 대시보드와 같은 응답을 5분간 공유한다.
-  const resource = useApiResource<VideosResponse>(`/api/videos?${params}`, {
-    cacheMs: q || categoryId ? 0 : POPULAR_CACHE_MS,
+function searchOnce(
+  key: string,
+  q: string,
+  getToken: () => Promise<string | null>,
+): Promise<VideosResponse> {
+  if (lastSearch?.key === key) return lastSearch.promise;
+  const promise = (async () => {
+    const token = await getToken();
+    if (!token) throw new ApiRequestError('UNAUTHORIZED', '검색하려면 로그인이 필요합니다.', 401);
+    return authedJson<VideosResponse>(
+      `/api/videos?q=${encodeURIComponent(q)}&requestId=${crypto.randomUUID()}`,
+      token,
+      'GET',
+    );
+  })();
+  lastSearch = { key, promise };
+  promise.catch(() => {
+    if (lastSearch?.promise === promise) lastSearch = undefined;
   });
+  return promise;
+}
+
+/** 검색어가 없으면 인기 차트 200개(공유 캐시), 있으면 로그인 사용자의 키워드 검색 결과 50개. */
+export function useVideos(q: string, getToken: () => Promise<string | null>) {
+  const chart = useApiResource<VideosResponse>(q ? null : CHART_PATH, {
+    cacheMs: POPULAR_CACHE_MS,
+  });
+  const [retry, setRetry] = useState(0);
+  const key = `${retry}:${q}`;
+  const [searched, setSearched] = useState<{ key: string; state: VideosState }>({
+    key: '',
+    state: { status: 'loading' },
+  });
+  useEffect(() => {
+    if (!q) return;
+    return startRequest(
+      () => searchOnce(key, q, getToken),
+      (data) =>
+        setSearched({
+          key,
+          state: { status: 'success', videos: data.items, fetchedAt: Date.now() },
+        }),
+      (error) => setSearched({ key, state: { status: 'error', error: toApiRequestError(error) } }),
+    );
+  }, [q, key, getToken]);
+
   const state = useMemo<VideosState>(() => {
-    if (resource.state.status !== 'success') return resource.state;
-    const videos = resource.state.data.items;
-    const sorted =
-      q || categoryId || !order
-        ? videos
-        : [...videos].sort(
-            order === 'viewCount'
-              ? (a, b) => (b.viewCount ?? -1) - (a.viewCount ?? -1)
-              : (a, b) => b.publishedAt.localeCompare(a.publishedAt),
-          );
-    return { status: 'success', videos: sorted, fetchedAt: resource.state.receivedAt };
-  }, [resource.state, q, categoryId, order]);
-  return { state, reload: resource.reload };
+    if (q) return searched.key === key ? searched.state : { status: 'loading' };
+    if (chart.state.status !== 'success') return chart.state;
+    return {
+      status: 'success',
+      videos: chart.state.data.items,
+      fetchedAt: chart.state.receivedAt,
+    };
+  }, [q, key, searched, chart.state]);
+  return {
+    state,
+    reload: q ? () => setRetry((value) => value + 1) : chart.reload,
+  };
 }

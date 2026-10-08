@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import TrendPanel from './TrendPanel';
+import PopularCompareSection from './PopularCompareSection';
 import { toApiRequestError } from '../lib/api';
 import type { useSearchSlots } from '../hooks/useSearchSlots';
-import type { SlotView, StoredVideo, TrendResult } from '../types/trend';
+import type { PopularCompare, SlotView, StoredVideo, TrendResult } from '../types/trend';
 
 interface Props {
   view: SlotView;
@@ -32,6 +33,22 @@ export default function SearchDashboard({
     videos: StoredVideo[] | null;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compare, setCompare] = useState<{ key: string; value: PopularCompare | null } | null>(
+    null,
+  );
+
+  // 인기 차트와의 비교는 부가 정보라 실패해도 나머지 대시보드를 막지 않는다.
+  useEffect(() => {
+    setCompare(null);
+    if (!key) return;
+    let active = true;
+    call<{ compare: PopularCompare | null }>(`/api/search-compare?slot=${slot}`, 'GET')
+      .then((result) => active && setCompare({ key, value: result.compare }))
+      .catch(() => active && setCompare({ key, value: null }));
+    return () => {
+      active = false;
+    };
+  }, [key, slot, call]);
 
   useEffect(() => {
     setError(null);
@@ -91,6 +108,13 @@ export default function SearchDashboard({
         <p role="alert" className="text-sm text-red-700">
           {error}
         </p>
+      )}
+      {compare?.key === key && compare.value && (
+        <PopularCompareSection
+          compare={compare.value}
+          categoryNames={categoryNames}
+          onSearchKeyword={onSearchKeyword}
+        />
       )}
       {detail?.key === key && detail.trend && (
         <>
