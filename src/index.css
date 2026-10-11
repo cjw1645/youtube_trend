@@ -3823,37 +3823,57 @@ button.spot:hover {
   animation-delay: 140ms;
 }
 .main-live h2,
+.main-topics h2,
 .main-flow h2 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: clamp(26px, 2.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
-.main-live-grid {
+/* 1위는 왼쪽에 크게, 2~4위는 오른쪽에 세로로. 오른쪽 세 줄이 1위 높이를 나눠 갖는다. */
+.main-live-board {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  column-gap: 36px;
   margin: 16px 0 0;
   padding: 0;
   list-style: none;
 }
-.main-live-grid > li,
+.main-live-board > li.is-lead {
+  grid-row: 1 / span 3;
+}
+.main-live-board > li:not(.is-lead) {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--line);
+}
+.main-live-board > li:nth-child(2) {
+  border-top: 0;
+}
+.main-live-board > li,
 .main-flow li {
   animation: rise-in 520ms var(--ease) both;
   animation-delay: calc(var(--i, 0) * 60ms + 180ms);
 }
 .main-video {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: minmax(150px, 46%) minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
   width: 100%;
   min-height: 0;
+  padding: 14px 0;
   text-align: left;
 }
+.is-lead .main-video {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  padding: 0;
+}
 .main-video-thumb {
-  position: relative;
   display: block;
   aspect-ratio: 16 / 9;
-  margin-bottom: 8px;
   overflow: hidden;
   border-radius: 8px;
   background: #1a1918;
@@ -3864,21 +3884,21 @@ button.spot:hover {
   object-fit: cover;
   transition: transform 420ms var(--ease);
 }
+.main-video-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
 .main-video-rank {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  display: grid;
-  place-items: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 7px;
-  border-radius: 6px;
-  background: #000000b3;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
+  color: var(--faint);
+  font-size: 12.5px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.is-lead .main-video-rank {
+  color: var(--accent-text);
+  font-size: 13px;
 }
 .main-video-title {
   display: -webkit-box;
@@ -3891,6 +3911,12 @@ button.spot:hover {
   -webkit-box-orient: vertical;
   transition: color 160ms ease;
 }
+.is-lead .main-video-title {
+  font-size: clamp(19px, 1.6vw, 24px);
+  font-weight: 750;
+  line-height: 1.38;
+  letter-spacing: -0.02em;
+}
 .main-video-meta {
   overflow: hidden;
   color: var(--faint);
@@ -3898,21 +3924,117 @@ button.spot:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.is-lead .main-video-meta {
+  font-size: 13.5px;
+}
 .main-video-metric {
   color: var(--muted);
   font-size: 13px;
 }
+.is-lead .main-video-metric {
+  margin-top: 4px;
+  font-size: 14px;
+}
 .main-video-metric strong {
-  color: var(--accent-text);
+  color: var(--ink);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+.is-lead .main-video-metric strong {
+  color: var(--accent-text);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
 .main-video-skeleton {
-  aspect-ratio: 16 / 9;
+  min-height: 112px;
+  margin: 10px 0;
   border-radius: 8px;
   background: linear-gradient(90deg, #1a1918 0%, #24221f 50%, #1a1918 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
+}
+.main-video-skeleton.is-lead {
+  aspect-ratio: 16 / 9;
+  margin: 0;
+}
+
+/* 지금 뜨는 소재: 단어 위치는 TopicCloud가 계산해 절대 위치로 놓는다. */
+.topic-cloud {
+  margin-top: 16px;
+}
+.topic-cloud.is-loading {
+  height: 320px;
+  border-radius: 28px;
+  background: #1a1614;
+}
+/* 따뜻한 어두운 판 + 가운데(큰 단어 자리)에만 붉은 빛이 은은하게 번진다. */
+.topic-cloud ul {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #ff8a5c26;
+  border-radius: 28px;
+  background:
+    radial-gradient(48% 70% at 50% 50%, #ff5a3c2e 0%, #ff5a3c0d 55%, #ff5a3c00 100%),
+    radial-gradient(40% 60% at 85% 100%, #ffb34714 0%, #ffb34700 100%),
+    linear-gradient(160deg, #201916 0%, #151211 60%, #120f0e 100%);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+  list-style: none;
+}
+.topic-cloud li {
+  position: absolute;
+  display: flex;
+  animation: cloud-in 520ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 22ms + 120ms);
+}
+.topic-cloud button {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+.topic-cloud .is-top button {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.topic-cloud .is-1 button {
+  color: #ff6a55;
+}
+.topic-cloud .is-2 button {
+  color: #ff9c4a;
+}
+.topic-cloud .is-3 button {
+  color: #ffcf6e;
+}
+.topic-cloud .is-high button {
+  color: #f6f1e8;
+  font-weight: 750;
+}
+.topic-cloud .is-mid button {
+  color: #d2c2b0;
+}
+.topic-cloud .is-low button {
+  color: #94867a;
+}
+@keyframes cloud-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes shimmer {
   from {
@@ -3921,42 +4043,6 @@ button.spot:hover {
   to {
     background-position: -100% 0;
   }
-}
-.main-keywords {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
-  margin-top: 24px;
-}
-.main-keywords-label {
-  color: var(--faint);
-  font-size: 13px;
-  font-weight: 600;
-}
-.main-keywords ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.main-keywords li {
-  animation: rise-in 420ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 40ms + 420ms);
-}
-.main-keywords button {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease;
 }
 .main-flow ol {
   display: grid;
@@ -4012,9 +4098,9 @@ button.spot:hover {
   .main-video:hover .main-video-title {
     color: #fff;
   }
-  .main-keywords button:hover {
-    border-color: #ff4d4d66;
-    background: #ff4d4d0f;
+  .topic-cloud button:hover {
+    background: #ffffff0d;
+    color: #fff;
   }
   .main-flow button:hover {
     background: #ffffff06;
@@ -4024,9 +4110,16 @@ button.spot:hover {
   }
 }
 @media (max-width: 1023px) {
-  .main-live-grid,
   .main-flow ol {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .main-live-board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .main-live-board > li.is-lead {
+    grid-row: auto;
+    margin-bottom: 12px;
   }
   .main-flow li:nth-child(3) {
     border-left: 0;
@@ -4037,9 +4130,9 @@ button.spot:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .main-hero > *,
-  .main-live-grid > li,
+  .main-live-board > li,
   .main-flow li,
-  .main-keywords li,
+  .topic-cloud li,
   .main-video-skeleton {
     animation: none;
   }

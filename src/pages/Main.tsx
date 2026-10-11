@@ -10,6 +10,7 @@ import { CHART_PATH, POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView } from '../components/StatusView';
 import HelpTip from '../components/HelpTip';
+import TopicCloud from '../components/TopicCloud';
 import { aggregateKeywords, topBy, viewsPerHour } from '../lib/stats';
 import { formatCount, formatRelativeDate } from '../lib/format';
 import type { Page } from '../components/Sidebar';
@@ -62,7 +63,10 @@ export default function Main({
     () => (videos ? topBy(videos, (video) => viewsPerHour(video, now), 4) : []),
     [videos, now],
   );
-  const keywords = useMemo(() => (videos ? aggregateKeywords(videos, { limit: 8 }) : []), [videos]);
+  const keywords = useMemo(
+    () => (videos ? aggregateKeywords(videos, { limit: 60 }) : []),
+    [videos],
+  );
 
   return (
     <div className="main-page">
@@ -102,47 +106,63 @@ export default function Main({
             onRetry={chart.reload}
           />
         ) : (
-          <ol className="main-live-grid" aria-busy={!videos}>
+          <ol className="main-live-board" aria-busy={!videos}>
             {videos
               ? fastest.map(({ item, score }, index) => (
-                  <li key={item.id} style={order(index)}>
+                  <li
+                    key={item.id}
+                    className={index === 0 ? 'is-lead' : undefined}
+                    style={order(index)}
+                  >
                     <button type="button" className="main-video" onClick={() => onSelect(item)}>
                       <span className="main-video-thumb">
-                        <img src={item.thumbnailUrl} alt="" loading="lazy" />
-                        <span className="main-video-rank" aria-hidden="true">
-                          {index + 1}
+                        <img
+                          src={item.thumbnailUrl}
+                          alt=""
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                        />
+                      </span>
+                      <span className="main-video-body">
+                        <span className="main-video-rank">{index + 1}위</span>
+                        <span className="main-video-title">{item.title}</span>
+                        <span className="main-video-meta">
+                          {item.channelTitle} ·{' '}
+                          {formatRelativeDate(item.publishedAt, new Date(now))}
                         </span>
-                      </span>
-                      <span className="main-video-title">{item.title}</span>
-                      <span className="main-video-meta">
-                        {item.channelTitle} · {formatRelativeDate(item.publishedAt, new Date(now))}
-                      </span>
-                      <span className="main-video-metric">
-                        시간당 <strong>{formatCount(Math.round(score))}</strong>
+                        <span className="main-video-metric">
+                          시간당 <strong>{formatCount(Math.round(score))}</strong>회
+                        </span>
                       </span>
                     </button>
                   </li>
                 ))
               : Array.from({ length: 4 }, (_, index) => (
-                  <li key={index} className="main-video-skeleton" aria-hidden="true" />
+                  <li
+                    key={index}
+                    className={index === 0 ? 'is-lead main-video-skeleton' : 'main-video-skeleton'}
+                    aria-hidden="true"
+                  />
                 ))}
           </ol>
         )}
-        {keywords.length > 0 && (
-          <div className="main-keywords">
-            <span className="main-keywords-label">지금 뜨는 소재</span>
-            <ul>
-              {keywords.map(({ keyword }, index) => (
-                <li key={keyword} style={order(index)}>
-                  <button type="button" onClick={() => onSearchKeyword(keyword)}>
-                    #{keyword}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
+
+      {chart.state.status !== 'error' && (
+        <section className="main-topics" aria-labelledby="main-topics-title">
+          <div className="title-row">
+            <h2 id="main-topics-title">지금 뜨고 있는 키워드를 바로 확인하세요</h2>
+            <HelpTip label="집계 기준 보기">
+              YouTube 인기 차트 영상 {videos?.length ?? 0}개의 제목·태그에서 2개 이상 영상에 나온
+              단어입니다. 많은 영상에 나올수록 크게 보입니다. 단어를 누르면 그 키워드로 검색합니다.
+            </HelpTip>
+          </div>
+          {videos ? (
+            <TopicCloud words={keywords} onSelect={onSearchKeyword} />
+          ) : (
+            <div className="topic-cloud is-loading" aria-hidden="true" />
+          )}
+        </section>
+      )}
 
       <section className="main-flow" aria-labelledby="main-flow-title">
         <h2 id="main-flow-title">이렇게 씁니다</h2>
