@@ -155,7 +155,8 @@ await rejects(
 ok('슬롯은 계정당 최대 2개, 같은 슬롯·같은 집합 중복 거부, 조건이 다르면 다른 집합');
 
 // 7. RLS
-const rs = await run('search', T0, { set: sets[0] });
+// 뒤쪽(12)에서 실제 현재 시각 기준으로 정리를 돌려도 남도록 만료를 길게 둔다(공개 수집 데이터 보존 확인용).
+const rs = await run('search', T0, { set: sets[0], exp: "interval '3650 days'" });
 const vs = await version(V(9), 'h9', '검색결과');
 await obs(rs, V(9), vs, 1);
 const rPartial = await run('popular', '2026-10-01T02:00:00Z', { status: 'partial', pages: 2 });
@@ -243,7 +244,7 @@ await assert.rejects(
 assert.equal((await as(db, 'authenticated', uB, `select 1 from favorites`)).rows.length, 0);
 const convA = (
   await q(
-    `insert into conversations (user_id, expires_at) values ($1, now() + interval '28 days') returning id`,
+    `insert into conversations (user_id, expires_at) values ($1, now() + interval '7 days') returning id`,
     [uA],
   )
 ).rows[0].id;
@@ -351,9 +352,21 @@ assert.equal(await count(`(select 1 from message_citations where run_id=${edge})
 assert.equal(await count(`(select 1 from messages where id=${mAsst}) x`), 1); // 대화 자체는 28일 정책에 따름
 ok('만료 시각 정각에 삭제/1초 전은 유지, 집계·버전·인용 전파, 참조 중 버전 보존');
 
-// 12. 대화 만료, 검색 집합 정리, 계정 삭제
-await q(`insert into conversations (user_id, expires_at) values ($1, '2026-10-10Z')`, [uB]);
-const out2 = (await q(`select * from purge_expired('2026-10-10T00:00:00Z')`)).rows[0];
+// 12. 대화 만료(생성 후 7일, 대화 화면 안내·save_chat_turn과 같은 기준), 검색 집합 정리, 계정 삭제
+// 실제 현재 시각 기준: 7일 전에 만든 대화는 지금 만료된다. 만료 1초 전 정리에서는 남고 만료 시각 정리에서 삭제된다.
+const expB = (
+  await q(
+    `insert into conversations (user_id, created_at, expires_at)
+     values ($1, now() - interval '7 days', now() - interval '7 days' + interval '7 days') returning expires_at`,
+    [uB],
+  )
+).rows[0].expires_at;
+const early = (
+  await q(`select * from purge_expired($1::timestamptz - interval '1 second')`, [expB])
+).rows[0];
+assert.equal(Number(early.conversations), 0);
+assert.equal(await count(`conversations where user_id='${uB}'`), 1);
+const out2 = (await q(`select * from purge_expired($1::timestamptz)`, [expB])).rows[0];
 assert.equal(Number(out2.conversations), 1);
 assert.equal(await count(`conversations where user_id='${uB}'`), 0);
 assert.equal(await count(`conversations where user_id='${uA}'`), 1);
