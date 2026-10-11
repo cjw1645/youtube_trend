@@ -5,43 +5,25 @@ import {
   Cross2Icon,
   HamburgerMenuIcon,
   DashboardIcon,
+  HomeIcon,
   MagnifyingGlassIcon,
 } from '@radix-ui/react-icons';
 
 import AccountPanel from './AccountPanel';
 import UsageBadge from './UsageBadge';
-import { useAuth } from '../hooks/useAuth';
 
-export const PAGE_LABEL: Record<Page, string> = {
-  dashboard: '대시보드',
-  search: '영상 검색',
-  ai: 'AI 대화',
-  favorites: '관심 영상',
-};
-
-/** 본문 위쪽 줄: 현재 위치(왼쪽)와 계정(오른쪽). 로그인·로그아웃은 항상 여기 있다. */
-export function TopBar({ page }: { page: Page }) {
-  return (
-    <div className="topbar">
-      <p className="topbar-page">{PAGE_LABEL[page]}</p>
-      <div className="topbar-right">
-        <UsageBadge />
-        <AccountPanel />
-      </div>
-    </div>
-  );
-}
-
-export type Page = 'dashboard' | 'search' | 'ai' | 'favorites';
+export type Page = 'main' | 'dashboard' | 'search' | 'ai' | 'favorites';
 const NAV: { page: Page; label: string }[] = [
+  { page: 'main', label: '홈' },
   { page: 'dashboard', label: '대시보드' },
   { page: 'search', label: '영상 검색' },
   { page: 'ai', label: 'AI 대화' },
   { page: 'favorites', label: '관심 영상' },
 ];
-export function Logo({ onClick }: { onClick: () => void }) {
+/** 누르면 페이지를 새로 불러와 메인 맨 위로 간다. */
+export function Logo() {
   return (
-    <button className="brand" type="button" onClick={onClick} aria-label="유튜브 트렌드 대시보드">
+    <a className="brand" href="/" aria-label="유튜브 트렌드 메인으로 새로고침">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <rect width="32" height="32" rx="4" fill="currentColor" />
         <path d="M8 22V16M15 22V10M22 22V7" stroke="white" strokeWidth="3" strokeLinecap="round" />
@@ -49,7 +31,7 @@ export function Logo({ onClick }: { onClick: () => void }) {
       <span>
         유튜브 트렌드<span className="brand-caption">공개 영상 · AI 분석</span>
       </span>
-    </button>
+    </a>
   );
 }
 function Navigation({
@@ -71,7 +53,9 @@ function Navigation({
           onClick={() => navigate(item)}
         >
           <span className="nav-symbol" aria-hidden="true">
-            {item === 'dashboard' ? (
+            {item === 'main' ? (
+              <HomeIcon />
+            ) : item === 'dashboard' ? (
               <DashboardIcon />
             ) : item === 'search' ? (
               <MagnifyingGlassIcon />
@@ -111,28 +95,19 @@ export default function Sidebar({
       document.body.style.overflow = '';
     };
   }, []);
-  const auth = useAuth();
-  const info = (
-    <>
-      <p className="sidebar-info">
-        공개 메타데이터로 영상을 탐색하고 기획에 활용하세요.
-        <br />
-        <br />
-        {auth.user
-          ? '관심 영상은 로그인한 계정에 저장됩니다.'
-          : '관심 영상은 로그인하지 않으면 이 브라우저에 저장됩니다.'}
-      </p>
-    </>
-  );
   return (
     <>
       <aside className="sidebar">
-        <Logo onClick={() => navigate('dashboard')} />
+        <Logo />
         <Navigation page={page} count={count} navigate={navigate} />
-        {info}
+        {/* 계정과 오늘 남은 횟수는 메뉴 아래에 모은다. */}
+        <div className="sidebar-account">
+          <UsageBadge />
+          <AccountPanel />
+        </div>
       </aside>
       <header className="mobile-header">
-        <Logo onClick={() => navigate('dashboard')} />
+        <Logo />
         <div className="mobile-header-actions">
           <AccountPanel />
           <button
@@ -170,12 +145,7 @@ export default function Sidebar({
         }}
       >
         <div className="drawer-header">
-          <Logo
-            onClick={() => {
-              close();
-              navigate('dashboard');
-            }}
-          />
+          <Logo />
           <button
             className="icon-button"
             autoFocus
@@ -194,7 +164,6 @@ export default function Sidebar({
             navigate(next);
           }}
         />
-        {info}
       </dialog>
     </>
   );

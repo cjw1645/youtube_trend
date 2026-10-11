@@ -12,6 +12,7 @@ import { MAX_QUESTION_CHARS, selectChatVideos, type ChatTarget } from '../lib/ch
 import { isMeaninglessQuestion, MEANINGLESS_QUESTION_MESSAGE } from '../lib/chat-question';
 import { notifyUsageChanged, useUsage } from '../hooks/useUsage';
 import ChatThread from './ChatThread';
+import HelpTip from './HelpTip';
 import ConversationHistory from './ConversationHistory';
 
 /** 입력창에 예시로만 보여준다(누르는 버튼이 아니다). */
@@ -199,15 +200,15 @@ export default function ChatPanel({
       ref={area}
     >
       <header className="chat-window-head">
-        <div className="chat-head-title">
+        <div className="chat-head-title title-row">
           <h2>
             <ChatBubbleIcon aria-hidden="true" />
             AI 대화
           </h2>
-          <p>
+          <HelpTip label="AI 대화 설명 보기">
             최근 3회 문답만 분석에 사용됩니다 · 대화는 {CONVERSATION_RETENTION_DAYS}일간 저장되어
             채팅으로 남습니다
-          </p>
+          </HelpTip>
         </div>
         <div className="chat-head-actions">
           {chat.signedIn && (

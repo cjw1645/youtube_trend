@@ -12,7 +12,7 @@ import { applyLocalFilter } from '../lib/local-filter';
 import { categoryDistribution } from '../lib/stats';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
-import InfoDisclosure from '../components/InfoDisclosure';
+import HelpTip from '../components/HelpTip';
 import KeywordChips from '../components/KeywordChips';
 
 const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
@@ -169,22 +169,26 @@ export default function Home({
   return (
     <div className="home-page flex flex-col gap-6">
       <header className="page-heading">
-        <h1>영상 검색</h1>
-        <p>키워드로 영상을 찾고, 카테고리·정렬로 바로 좁혀 다음 콘텐츠의 방향을 살펴보세요.</p>
+        <div className="title-row">
+          <h1>영상 검색</h1>
+          <HelpTip label="영상 검색 설명 보기">
+            키워드로 영상을 찾고, 카테고리·정렬로 바로 좁혀 다음 콘텐츠의 방향을 살펴보세요.
+          </HelpTip>
+        </div>
       </header>
       <section className="discovery-controls" aria-label="영상 검색">
         <SearchBar value={draft} onChange={setDraft} onSearch={() => search(draft)} />
         {!locked && (
           <div className="applied-query">
             <div className="applied-query-text">
-              <p className="text-sm text-zinc-600">현재 목록: {label}</p>
-              <InfoDisclosure summary="목록 기준 안내">
-                <p>
+              <p className="title-row text-sm text-zinc-600">
+                현재 목록: {label}
+                <HelpTip label="목록 기준 보기">
                   {q
                     ? '한국에서 시청 가능한 검색 결과 50개(API 관련도순)입니다. 카테고리·정렬은 이 50개 안에서만 적용하며 한국 채널·한국어 영상만을 보장하지 않습니다.'
                     : 'YouTube 인기 차트를 응답 순서대로 200개까지 보여줍니다. 카테고리·정렬은 이 목록 안에서만 적용하며 전체 YouTube 인기 순위를 뜻하지 않습니다.'}
-                </p>
-              </InfoDisclosure>
+                </HelpTip>
+              </p>
             </div>
             <button
               className="primary-button analyze-action"

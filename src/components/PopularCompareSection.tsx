@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import DashSection from './DashSection';
 import Reveal from './Reveal';
+import HelpTip from './HelpTip';
 import WordCloud from './WordCloud';
 import { useReveal } from '../hooks/useReveal';
 import { formatCount } from '../lib/format';
@@ -168,14 +169,14 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
         <p className="compare-eyebrow">
           <span className="live-dot" aria-hidden="true" />
           인기 차트와 비교
+          <HelpTip label="비교 기준 보기">
+            검색 결과 {compare.slot.itemCount}개({when(compare.slot.scheduledFor)} 수집) vs 인기
+            차트 {compare.popular.itemCount}개({when(compare.popular.scheduledFor)} 수집) · 표본
+            크기가 달라 비율로 비교합니다
+          </HelpTip>
         </p>
         <h2 className="compare-verdict">{verdict.headline}</h2>
         <p className="compare-detail">{verdict.detail}</p>
-        <p className="compare-basis">
-          검색 결과 {compare.slot.itemCount}개({when(compare.slot.scheduledFor)} 수집) vs 인기 차트{' '}
-          {compare.popular.itemCount}개({when(compare.popular.scheduledFor)} 수집) · 표본 크기가
-          달라 비율로 비교합니다
-        </p>
       </Reveal>
 
       <dl className="compare-cards">

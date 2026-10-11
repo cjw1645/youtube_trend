@@ -6,6 +6,7 @@ import { ErrorView, LoadingPanel } from '../components/StatusView';
 import DashSection from '../components/DashSection';
 import Spotlight from '../components/Spotlight';
 import WordCloud from '../components/WordCloud';
+import HelpTip from '../components/HelpTip';
 import StoredTrendSection from '../components/StoredTrendSection';
 import SearchTabs from '../components/SearchTabs';
 import AddSearchPopover, { MAX_SLOTS } from '../components/AddSearchPopover';
@@ -218,12 +219,12 @@ export default function Dashboard({
   return (
     <div className="dashboard">
       <header className="page-heading dash-hero">
-        <div>
+        <div className="title-row">
           <h1>내 검색어로 트렌드 추적</h1>
-          <p>
+          <HelpTip label="검색어 추적 설명 보기">
             검색어를 추가하면 매일 YouTube 검색 결과 200개를 저장해 변화를 보여줍니다. 최대{' '}
             {MAX_SLOTS}개.
-          </p>
+          </HelpTip>
         </div>
         <div className="dash-hero-actions">
           <AddSearchPopover
@@ -270,11 +271,11 @@ export default function Dashboard({
       {popularOpen && (
         <div id={popularId} className="popular-dash">
           <header className="popular-dash-head">
-            <div>
+            <div className="title-row">
               <h2>인기 차트 대시보드</h2>
-              <p className="dash-scope">
+              <HelpTip label="인기 차트 기준 보기">
                 {videos ? `${scope} · ${timeLabel} 조회` : 'YouTube 인기 차트 기준'}
-              </p>
+              </HelpTip>
             </div>
             <button
               type="button"

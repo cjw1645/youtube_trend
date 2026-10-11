@@ -1,4 +1,5 @@
 import Reveal from './Reveal';
+import HelpTip from './HelpTip';
 
 export interface HotVideo {
   id: string;
@@ -19,7 +20,7 @@ export interface HotItem {
   onClick?: () => void;
 }
 
-/** 대시보드 맨 위: 지금 가장 눈에 띄는 영상·태그·분야 한 가지씩. 기준은 basis에 적는다. */
+/** 대시보드 맨 위: 지금 가장 눈에 띄는 영상·태그·분야 한 가지씩. 기준은 ? 설명(basis)에 적는다. */
 export default function Spotlight({
   title,
   basis,
@@ -43,7 +44,7 @@ export default function Spotlight({
           <span className="live-dot" aria-hidden="true" />
           {title}
         </h2>
-        <p>{basis}</p>
+        <HelpTip label={`${title} 기준 보기`}>{basis}</HelpTip>
       </header>
       <div className="spotlight-grid">
         {video && (

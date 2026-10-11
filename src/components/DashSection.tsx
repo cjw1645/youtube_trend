@@ -1,7 +1,8 @@
 import { type ReactNode, useId } from 'react';
 import { useReveal } from '../hooks/useReveal';
+import HelpTip from './HelpTip';
 
-/** 구역 공통 틀: 상자 없이 제목과 계산 기준을 한 줄에 둔다. 스크롤해서 보이면 떠오르며 나타난다. */
+/** 구역 공통 틀: 상자 없이 제목을 두고 계산 기준은 ? 설명에 넣는다. 스크롤해서 보이면 떠오르며 나타난다. */
 export default function DashSection({
   title,
   basis,
@@ -23,7 +24,7 @@ export default function DashSection({
     >
       <header>
         <h2 id={id}>{title}</h2>
-        <p>{basis}</p>
+        <HelpTip label={`${title} 기준 보기`}>{basis}</HelpTip>
       </header>
       {children}
     </section>

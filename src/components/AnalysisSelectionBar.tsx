@@ -1,5 +1,6 @@
 import type { AnalysisSelection } from '../hooks/useAnalysisSelection';
 import { CheckIcon } from '@radix-ui/react-icons';
+import HelpTip from './HelpTip';
 export default function AnalysisSelectionBar({
   selection,
   available,
@@ -36,12 +37,12 @@ export default function AnalysisSelectionBar({
             </button>
           </>
         )}
+        <HelpTip label="직접 선택 설명 보기">
+          {selection.enabled
+            ? '화면 순서로 전달합니다. 메뉴 이동은 선택을 유지하며, 새 조회·정렬·관심 목록 변경·새로고침은 초기화합니다.'
+            : '원하는 영상 1~20개를 골라 AI 질문에 사용할 수 있습니다.'}
+        </HelpTip>
       </div>
-      <p className="text-xs text-zinc-500">
-        {selection.enabled
-          ? '화면 순서로 전달합니다. 메뉴 이동은 선택을 유지하며, 새 조회·정렬·관심 목록 변경·새로고침은 초기화합니다.'
-          : '원하는 영상 1~20개를 골라 AI 질문에 사용할 수 있습니다.'}
-      </p>
       {selection.notice && (
         <p role="alert" className="text-sm text-amber-900">
           {selection.notice}

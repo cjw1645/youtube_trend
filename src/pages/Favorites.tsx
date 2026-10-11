@@ -5,6 +5,7 @@ import type { Video } from '../types/video';
 import type { ChatTarget } from '../lib/chat-session';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
+import HelpTip from '../components/HelpTip';
 
 interface Props {
   favorites: FavoritesController;
@@ -37,16 +38,16 @@ export default function Favorites({
         </p>
       )}
       <header className="section-head">
-        <div>
+        <div className="title-row">
           <h2>
             관심 영상 <span className="text-zinc-500">{favorites.videos.length}개</span>
           </h2>
-          <p className="dash-scope">
+          <HelpTip label="관심 영상 목록 설명 보기">
             {favorites.signedIn
               ? '로그인한 계정에 저장된 영상입니다.'
               : '이 브라우저에 저장한 영상입니다.'}{' '}
             목록은 저장 당시 정보이며, 상세 보기에서 다시 조회합니다.
-          </p>
+          </HelpTip>
         </div>
         <button
           className="primary-button"

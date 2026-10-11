@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import Home, { SEARCH_AFTER_LOGIN_KEY, type SearchRequest } from './pages/Home';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
+import Main from './pages/Main';
+import { PENDING_ADD_KEY } from './components/AddSearchPopover';
 import Favorites from './pages/Favorites';
 import VideoDetail from './components/VideoDetail';
 import { useFavorites } from './hooks/useFavorites';
@@ -10,13 +12,14 @@ import { ErrorView } from './components/StatusView';
 import { useChat } from './hooks/useChat';
 import ChatPanel from './components/ChatPanel';
 import { ChatVideoList } from './components/ChatResult';
-import Sidebar, { TopBar, type Page } from './components/Sidebar';
+import Sidebar, { type Page } from './components/Sidebar';
 import { popularChartTarget, selectChatVideos, type ChatTarget } from './lib/chat-session';
 import { loadShared } from './hooks/useApiResource';
 import { CHART_PATH, POPULAR_CACHE_MS } from './hooks/useVideos';
 import { toApiRequestError } from './lib/api';
 import type { VideosResponse } from './types/video';
 import InfoDisclosure from './components/InfoDisclosure';
+import HelpTip from './components/HelpTip';
 import { useTargets } from './hooks/useTargets';
 import { makeTarget } from './lib/analysis-target';
 import type { StoredVideo } from './types/trend';
@@ -27,7 +30,8 @@ function currentPage(): Page {
   if (hash === '#favorites') return 'favorites';
   // 이전 주소(#home)는 영상 검색으로 연결한다.
   if (hash === '#search' || hash === '#home') return 'search';
-  return 'dashboard';
+  if (hash === '#dashboard') return 'dashboard';
+  return 'main';
 }
 export default function App() {
   const [page, setPage] = useState<Page>(currentPage);
@@ -38,6 +42,7 @@ export default function App() {
   const { lastHome, setLastHome, setActive } = targets;
   const target: ChatTarget = targets.active ?? { label: '대상 미선택', videos: [] };
   const scroll = useRef<Record<Page, number>>({
+    main: 0,
     dashboard: 0,
     search: 0,
     ai: 0,
@@ -71,6 +76,8 @@ export default function App() {
     if (!authUser) return;
     try {
       if (sessionStorage.getItem(SEARCH_AFTER_LOGIN_KEY)) navigate('search');
+      // 검색어 추가하려다 로그인한 경우 추가 창이 있는 대시보드로 돌려보낸다.
+      else if (sessionStorage.getItem(PENDING_ADD_KEY)) navigate('dashboard');
     } catch {
       /* 저장소를 못 쓰면 이동하지 않는다 */
     }
@@ -159,7 +166,6 @@ export default function App() {
       </a>
       <Sidebar page={page} count={favorites.videos.length} navigate={navigate} />
       <main id="workspace" tabIndex={-1} className={`workspace page-${page}`}>
-        <TopBar page={page} />
         {favorites.error && (
           <div role="alert" className="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
             <p>{favorites.error}</p>
@@ -168,6 +174,11 @@ export default function App() {
             </button>
           </div>
         )}
+        <div hidden={page !== 'main'}>
+          {visited.has('main') && (
+            <Main navigate={navigate} onSelect={onSelect} onSearchKeyword={searchKeyword} />
+          )}
+        </div>
         <div hidden={page !== 'dashboard'}>
           {visited.has('dashboard') && (
             <Dashboard
@@ -292,8 +303,15 @@ export default function App() {
         </div>
         <div hidden={page !== 'favorites'}>
           <header className="page-heading">
-            <h1>관심 영상</h1>
-            <p>저장한 영상을 다시 살펴보고 다음 기획의 근거로 사용하세요.</p>
+            <div className="title-row">
+              <h1>관심 영상</h1>
+              <HelpTip label="관심 영상 설명 보기">
+                저장한 영상을 다시 살펴보고 다음 기획의 근거로 사용하세요.{' '}
+                {authUser
+                  ? '관심 영상은 로그인한 계정에 저장됩니다.'
+                  : '관심 영상은 로그인하지 않으면 이 브라우저에 저장됩니다.'}
+              </HelpTip>
+            </div>
           </header>
           <Favorites
             favorites={favorites}
