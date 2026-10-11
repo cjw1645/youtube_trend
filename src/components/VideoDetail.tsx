@@ -89,23 +89,6 @@ export default function VideoDetail({
         </div>
       </header>
       <div className="p-5 sm:p-6" aria-live="polite">
-        {state.status === 'success' && (
-          <div className="mb-6">
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() =>
-                onAnalyze({
-                  label: '선택 영상 상세',
-                  videos: [state.data],
-                  rankingSource: 'detail',
-                })
-              }
-            >
-              이 영상으로 AI 질문
-            </button>
-          </div>
-        )}
         {favorites.error && (
           <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
             {favorites.error}
@@ -121,6 +104,13 @@ export default function VideoDetail({
           <DetailContent
             video={state.data}
             categoryName={categoryNames.get(state.data.categoryId)}
+            onAnalyze={() =>
+              onAnalyze({
+                label: '선택 영상 상세',
+                videos: [state.data],
+                rankingSource: 'detail',
+              })
+            }
           />
         )}
       </div>
@@ -128,7 +118,15 @@ export default function VideoDetail({
   );
 }
 
-function DetailContent({ video, categoryName }: { video: VideoDetailData; categoryName?: string }) {
+function DetailContent({
+  video,
+  categoryName,
+  onAnalyze,
+}: {
+  video: VideoDetailData;
+  categoryName?: string;
+  onAnalyze: () => void;
+}) {
   const statistics = [
     ['조회수', video.viewCount],
     ['좋아요', video.likeCount],
@@ -138,19 +136,21 @@ function DetailContent({ video, categoryName }: { video: VideoDetailData; catego
 
   return (
     <article className="flex flex-col gap-5">
-      <img
-        src={video.thumbnailUrl}
-        alt={`${video.title} 썸네일`}
-        className="aspect-video w-full rounded-xl bg-zinc-100 object-cover"
-      />
-      <div>
-        <h3 className="text-xl font-bold leading-snug">{video.title}</h3>
-        <p className="mt-2 text-sm font-medium text-zinc-700">{video.channelTitle}</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          업로드 <time dateTime={video.publishedAt}>{formatDate(video.publishedAt)}</time>
-          {categoryName && ` · ${categoryName}`}
-          {video.durationSeconds > 0 && ` · ${formatDuration(video.durationSeconds)}`}
-        </p>
+      <div className="grid gap-5 sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] sm:items-start">
+        <img
+          src={video.thumbnailUrl}
+          alt={`${video.title} 썸네일`}
+          className="aspect-video w-full rounded-xl bg-zinc-100 object-cover"
+        />
+        <div>
+          <h3 className="text-xl font-bold leading-snug">{video.title}</h3>
+          <p className="mt-2 text-sm font-medium text-zinc-700">{video.channelTitle}</p>
+          <p className="mt-1 text-sm text-zinc-500">
+            업로드 <time dateTime={video.publishedAt}>{formatDate(video.publishedAt)}</time>
+            {categoryName && ` · ${categoryName}`}
+            {video.durationSeconds > 0 && ` · ${formatDuration(video.durationSeconds)}`}
+          </p>
+        </div>
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {statistics.map(([label, value]) => (
@@ -160,6 +160,19 @@ function DetailContent({ video, categoryName }: { video: VideoDetailData; catego
           </div>
         ))}
       </dl>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className="primary-button" onClick={onAnalyze}>
+          이 영상으로 AI 질문
+        </button>
+        <a
+          href={`https://www.youtube.com/watch?v=${video.id}`}
+          target="_blank"
+          rel="noreferrer"
+          className="secondary-button"
+        >
+          YouTube에서 보기 <ExternalLinkIcon aria-hidden="true" />
+        </a>
+      </div>
       <section>
         <h4 className="mb-2 text-sm font-bold">설명</h4>
         <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700">
@@ -183,14 +196,6 @@ function DetailContent({ video, categoryName }: { video: VideoDetailData; catego
           <p className="text-sm text-zinc-500">등록된 태그가 없습니다.</p>
         )}
       </section>
-      <a
-        href={`https://www.youtube.com/watch?v=${video.id}`}
-        target="_blank"
-        rel="noreferrer"
-        className="primary-button w-fit"
-      >
-        YouTube에서 보기 <ExternalLinkIcon aria-hidden="true" />
-      </a>
     </article>
   );
 }

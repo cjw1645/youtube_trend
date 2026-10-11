@@ -67,7 +67,6 @@ interface RankEntry {
 
 /**
  * 썸네일·제목과 오른쪽 수치로 된 순위 목록. 누르면 영상 상세를 연다.
- * lead를 켜면 1위를 큰 썸네일로 보여준다.
  */
 function VideoRankList({
   entries,
@@ -76,7 +75,6 @@ function VideoRankList({
   meta,
   describe,
   onSelect,
-  lead = false,
 }: {
   entries: RankEntry[];
   value: (entry: RankEntry) => string;
@@ -84,10 +82,9 @@ function VideoRankList({
   meta: (entry: RankEntry) => string;
   describe: (entry: RankEntry) => string;
   onSelect: (video: Video) => void;
-  lead?: boolean;
 }) {
   return (
-    <ol className={`rank-list${lead ? ' has-lead' : ''}`}>
+    <ol className="rank-list">
       {entries.map((entry, index) => (
         <li key={entry.item.id}>
           <button
@@ -386,7 +383,6 @@ export default function Dashboard({
                 >
                   {fastest.length ? (
                     <VideoRankList
-                      lead
                       entries={fastest}
                       onSelect={onSelect}
                       value={({ score }) => formatCount(Math.round(score))}

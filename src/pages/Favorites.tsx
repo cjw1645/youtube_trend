@@ -36,7 +36,18 @@ export default function Favorites({
           관심 영상을 불러오는 중…
         </p>
       )}
-      <div>
+      <header className="section-head">
+        <div>
+          <h2>
+            관심 영상 <span className="text-zinc-500">{favorites.videos.length}개</span>
+          </h2>
+          <p className="dash-scope">
+            {favorites.signedIn
+              ? '로그인한 계정에 저장된 영상입니다.'
+              : '이 브라우저에 저장한 영상입니다.'}{' '}
+            목록은 저장 당시 정보이며, 상세 보기에서 다시 조회합니다.
+          </p>
+        </div>
         <button
           className="primary-button"
           type="button"
@@ -52,19 +63,8 @@ export default function Favorites({
         >
           {selection.enabled ? `선택 ${analysisVideos.length}개로 AI 질문` : '상위 20개로 AI 질문'}
         </button>
-      </div>
+      </header>
       <AnalysisSelectionBar selection={selection} available={favorites.videos.length} />
-      <div>
-        <h2 className="text-lg font-bold">
-          관심 영상 <span className="text-zinc-500">{favorites.videos.length}개</span>
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          {favorites.signedIn
-            ? '로그인한 계정에 저장된 영상입니다.'
-            : '이 브라우저에 저장한 영상입니다.'}{' '}
-          목록은 저장 당시 정보이며, 상세 보기에서 다시 조회합니다.
-        </p>
-      </div>
       {favorites.videos.length === 0 ? (
         <EmptyFavoritesView onBrowse={onBrowse} />
       ) : (
