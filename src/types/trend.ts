@@ -151,6 +151,23 @@ export interface CompareEngagementRow {
   videos: number;
   medianViews: number | null;
   medianLikes: number | null;
+  /** 약 24시간 전 수집에도 있던 영상의 하루 조회수 증가(24시간 환산) 중앙값. 이전 수집이 없거나 겹치는 영상이 없으면 null */
+  medianDailyGain: number | null;
+  /** 하루 증가를 계산한 영상 수(두 수집에 모두 있고 조회수가 공개된 영상) */
+  gainVideos: number;
+}
+
+/** 업로드 후 경과 시간이 같은 구간의 영상끼리 비교한 누적 조회수 중앙값. 영상 나이가 다른 탓에 생기는 누적 차이를 피한다. */
+export interface CompareAgeBand {
+  key: 'under3d' | '3to30d' | 'over30d';
+  /** 「3일 미만」 「3~30일」 「30일 이상」 */
+  label: string;
+  slotVideos: number;
+  popularVideos: number;
+  slotMedianViews: number | null;
+  popularMedianViews: number | null;
+  /** 검색 ÷ 인기. 양쪽 모두 최소 표본 이상이고 인기 쪽 중앙값이 0보다 클 때만 */
+  ratio: number | null;
 }
 
 export interface CompareCategoryRow {
@@ -184,6 +201,10 @@ export type PopularCompare =
       categories: CompareCategoryRow[];
       /** 내 검색 결과 · 인기 차트 전체 · 핫 키워드별 조회수·좋아요 중앙값 */
       engagement: CompareEngagementRow[];
+      /** 하루 증가 계산에 쓴 약 24시간 전 수집 시각. 없으면 null */
+      gainBasis: { slotPrev: string | null; popularPrev: string | null };
+      /** 업로드 후 3일 미만 · 3~30일 · 30일 이상 구간별 누적 조회수 비교 */
+      ageBands: CompareAgeBand[];
       /** 이 검색 수집에 저장된 키워드 집계 수. 0이면 집계에 실패한 것으로 보고 다른 검색어를 안내한다. */
       slotKeywordCount: number;
     };

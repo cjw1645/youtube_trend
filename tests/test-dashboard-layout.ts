@@ -125,6 +125,8 @@ try {
         videos: 200,
         medianViews: 12000,
         medianLikes: 300,
+        medianDailyGain: 12000,
+        gainVideos: 150,
       },
       {
         kind: 'popular',
@@ -132,8 +134,39 @@ try {
         videos: 100,
         medianViews: 900000,
         medianLikes: 20000,
+        medianDailyGain: 900000,
+        gainVideos: 80,
       },
-      { kind: 'hot', label: '게임', videos: 21, medianViews: null, medianLikes: 5000 },
+      {
+        kind: 'hot',
+        label: '게임',
+        videos: 21,
+        medianViews: null,
+        medianLikes: 5000,
+        medianDailyGain: null,
+        gainVideos: 0,
+      },
+    ],
+    gainBasis: { slotPrev: '2026-10-07T04:00:00Z', popularPrev: '2026-10-07T05:00:00Z' },
+    ageBands: [
+      {
+        key: 'under3d',
+        label: '3일 미만',
+        slotVideos: 12,
+        popularVideos: 150,
+        slotMedianViews: 30000,
+        popularMedianViews: 120000,
+        ratio: 0.25,
+      },
+      {
+        key: '3to30d',
+        label: '3~30일',
+        slotVideos: 40,
+        popularVideos: 2,
+        slotMedianViews: 90000,
+        popularMedianViews: 800000,
+        ratio: null,
+      },
     ],
     slotKeywordCount: 4,
   };
@@ -146,7 +179,11 @@ try {
   );
   assert.match(full, /인기 차트와 비교/);
   assert.match(full, /compare-verdict/, '맨 위 판정 문장');
-  assert.match(full, /인기 차트의 약 1% 수준입니다/, '조회수가 낮으면 퍼센트 수준으로 말함');
+  assert.match(
+    full,
+    /하루 조회수 증가는 인기 차트의 약 1% 수준입니다/,
+    '하루 증가가 낮으면 퍼센트 수준으로 말함',
+  );
   assert.match(full, /compare-value">1%</, '큰 카드는 0.0배가 아니라 퍼센트');
   assert.doesNotMatch(full, /0\.0배/);
   assert.match(full, /3개 영상/);
@@ -183,10 +220,13 @@ try {
   const bars = renderToStaticMarkup(
     React.createElement(CompareEngagement, { compare: fullCompare }),
   );
-  assert.match(bars, /영상 조회수 비교 · 중앙값/);
+  assert.match(bars, /영상 하루 조회수 증가 비교 · 중앙값/, '기본 지표는 하루 증가');
   assert.match(bars, /engagement-bars/);
   assert.match(bars, /인기 차트 전체/);
   assert.match(bars, /정보 없음/, '비공개 값은 정보 없음');
+  assert.match(bars, /업로드 후 기간별 누적 조회수/, '나이대별 비교 목록');
+  assert.match(bars, /25%/, '같은 나이대 배율');
+  assert.match(bars, /비교 불가/, '표본이 모자란 나이대');
   assert.equal(
     renderToStaticMarkup(
       React.createElement(CompareEngagement, {
@@ -197,26 +237,55 @@ try {
     '인기 차트 비교가 없으면 그리지 않음',
   );
 
-  // 판정 문장: 인기 차트보다 높으면 배율, 비슷하면 비슷함
+  // 판정 문장: 하루 조회수 증가가 인기 차트보다 많으면 배율, 비슷하면 비슷함
   const { compareVerdict } = await vite.ssrLoadModule('/src/components/PopularCompareSection.tsx');
-  const withViews = (mine: number, all: number, hot: number) => ({
+  const gainRow = (kind: string, label: string, gain: number | null, views: number) => ({
+    kind,
+    label,
+    videos: 10,
+    medianViews: views,
+    medianLikes: 1,
+    medianDailyGain: gain,
+    gainVideos: gain === null ? 0 : 10,
+  });
+  const withGains = (mine: number | null, all: number | null, hot: number | null) => ({
     ...fullCompare,
     engagement: [
-      { kind: 'search', label: 'q', videos: 10, medianViews: mine, medianLikes: 1 },
-      { kind: 'popular', label: '인기 차트 전체', videos: 10, medianViews: all, medianLikes: 1 },
-      { kind: 'hot', label: '게임', videos: 5, medianViews: hot, medianLikes: 1 },
+      gainRow('search', 'q', mine, 5_000_000),
+      gainRow('popular', '인기 차트 전체', all, 100_000),
+      gainRow('hot', '게임', hot, 100_000),
     ],
   });
   assert.match(
-    compareVerdict(withViews(980000, 100000, 140000)).headline,
-    /검색 결과는 인기 차트 영상보다 조회수가 약 9\.8배 높습니다/,
+    compareVerdict(withGains(980000, 100000, 140000)).headline,
+    /검색 결과의 하루 조회수 증가가 인기 차트보다 약 9\.8배 많습니다/,
   );
   assert.match(
-    compareVerdict(withViews(980000, 100000, 140000)).detail,
+    compareVerdict(withGains(980000, 100000, 140000)).detail,
     /핫 키워드 1개 중 1개보다/,
   );
-  assert.match(compareVerdict(withViews(100000, 100000, 140000)).headline, /비슷한 수준/);
-  assert.equal(compareVerdict(withViews(100000, 100000, 140000)).detail.includes('0개보다'), true);
+  assert.match(compareVerdict(withGains(100000, 100000, 140000)).headline, /비슷합니다/);
+  assert.equal(compareVerdict(withGains(100000, 100000, 140000)).detail.includes('0개보다'), true);
+  // 누적 조회수만 검색 쪽이 크고(5,000,000 vs 100,000) 하루 증가가 없으면 몇 배라고 단정하지 않는다
+  const cumulativeOnly = compareVerdict({
+    ...withGains(null, null, null),
+    gainBasis: { slotPrev: null, popularPrev: null },
+    ageBands: [],
+  });
+  assert.equal(cumulativeOnly.ratio, null);
+  assert.doesNotMatch(cumulativeOnly.headline, /배|수준/);
+  assert.match(cumulativeOnly.detail, /24시간 전 검색 수집이 없어/);
+  // 하루 증가가 없어도 같은 나이대 비교가 있으면 그것으로 판정한다(배율 있는 구간만)
+  const byAge = compareVerdict({
+    ...withGains(null, null, null),
+    gainBasis: { slotPrev: null, popularPrev: null },
+  });
+  assert.equal(byAge.basis, 'age');
+  assert.equal(byAge.ratio, 0.25);
+  assert.match(
+    byAge.headline,
+    /업로드 3일 미만 영상끼리 보면 누적 조회수는 인기 차트의 약 25% 수준/,
+  );
   const failed = renderToStaticMarkup(
     React.createElement(Section, {
       categoryNames: names,

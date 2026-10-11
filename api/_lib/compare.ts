@@ -2,6 +2,7 @@
 import { median } from '../../src/lib/stats/metrics.js';
 import { videoKeywords } from '../../src/lib/stats/keywords.js';
 import type {
+  CompareAgeBand,
   CompareCategoryRow,
   CompareEngagementRow,
   CompareKeywordRow,
@@ -16,6 +17,14 @@ const POSITION_LIMIT = 8;
 const CATEGORY_LIMIT = 5;
 /** 조회수·좋아요 비교에 올릴 인기 차트 핫 키워드 수 */
 const HOT_KEYWORD_LIMIT = 5;
+/** 나이대 비교에서 배율을 내기 위한 한쪽 최소 영상 수 */
+export const AGE_BAND_MIN_VIDEOS = 3;
+/** 업로드 후 경과 시간 구간(시간 단위, 하한 포함·상한 미포함) */
+const AGE_BANDS: { key: CompareAgeBand['key']; label: string; from: number; to: number }[] = [
+  { key: 'under3d', label: '3일 미만', from: 0, to: 72 },
+  { key: '3to30d', label: '3~30일', from: 72, to: 720 },
+  { key: 'over30d', label: '30일 이상', from: 720, to: Infinity },
+];
 
 export interface RawCompare {
   query: string;
@@ -30,12 +39,23 @@ export interface RawCompare {
   slotCategories?: { categoryId: string; videoCount: number }[];
   popularCategories?: { categoryId: string; videoCount: number }[];
   videoOverlap?: { videoId: string; slotPosition: number; popularPosition: number }[];
-  slotVideos?: { viewCount: number | null; likeCount: number | null }[];
+  /** 약 24시간 전 비교 실행 시각(Stage 12). 없거나 이전 DB 함수면 null/undefined */
+  slotPrevScheduledFor?: string | null;
+  popularPrevScheduledFor?: string | null;
+  slotVideos?: {
+    viewCount: number | null;
+    likeCount: number | null;
+    dailyGain?: number | null;
+    /** 관측 시점의 업로드 후 경과 시간(Stage 12) */
+    ageHours?: number | null;
+  }[];
   popularVideos?: {
     title: string;
     tags: string[] | null;
     viewCount: number | null;
     likeCount: number | null;
+    dailyGain?: number | null;
+    ageHours?: number | null;
   }[];
 }
 
@@ -134,9 +154,14 @@ export function buildCompare(raw: RawCompare, tokens: readonly string[]): Popula
     )
     .slice(0, CATEGORY_LIMIT);
 
-  // 조회수·좋아요 중앙값: 내 검색 결과, 인기 차트 전체, 인기 차트의 핫 키워드(영상 수 상위) 영상 묶음
-  const medianOf = (values: (number | null)[]) =>
-    median(values.flatMap((v) => (v === null ? [] : [v])));
+  // 조회수·좋아요 중앙값: 내 검색 결과, 인기 차트 전체, 인기 차트의 핫 키워드(영상 수 상위) 영상 묶음.
+  // 누적 조회수는 영상 나이에 좌우되므로 비교의 주 지표는 약 24시간 전 수집 대비 하루 증가(dailyGain)다.
+  const medianOf = (values: (number | null | undefined)[]) =>
+    median(values.flatMap((v) => (v == null ? [] : [v])));
+  const gainRow = (group: { dailyGain?: number | null }[]) => {
+    const gains = group.flatMap((v) => (v.dailyGain == null ? [] : [v.dailyGain]));
+    return { medianDailyGain: median(gains), gainVideos: gains.length };
+  };
   const popularVideos = raw.popularVideos ?? [];
   const slotVideos = raw.slotVideos ?? [];
   const engagement: CompareEngagementRow[] = [
@@ -146,6 +171,7 @@ export function buildCompare(raw: RawCompare, tokens: readonly string[]): Popula
       videos: slotVideos.length,
       medianViews: medianOf(slotVideos.map((v) => v.viewCount)),
       medianLikes: medianOf(slotVideos.map((v) => v.likeCount)),
+      ...gainRow(slotVideos),
     },
     {
       kind: 'popular',
@@ -153,6 +179,7 @@ export function buildCompare(raw: RawCompare, tokens: readonly string[]): Popula
       videos: popularVideos.length,
       medianViews: medianOf(popularVideos.map((v) => v.viewCount)),
       medianLikes: medianOf(popularVideos.map((v) => v.likeCount)),
+      ...gainRow(popularVideos),
     },
     ...popularList
       .filter((k) => !tokens.includes(k.keyword))
@@ -167,9 +194,39 @@ export function buildCompare(raw: RawCompare, tokens: readonly string[]): Popula
           videos: group.length,
           medianViews: medianOf(group.map((v) => v.viewCount)),
           medianLikes: medianOf(group.map((v) => v.likeCount)),
+          ...gainRow(group),
         };
       }),
   ];
+
+  // 같은 나이대끼리 누적 조회수 비교. 경과 시간이나 조회수를 모르는 영상은 뺀다.
+  type Aged = { viewCount: number | null; ageHours?: number | null };
+  const inBand = (videos: Aged[], from: number, to: number) =>
+    videos.flatMap((v) =>
+      v.ageHours == null || v.viewCount === null || v.ageHours < from || v.ageHours >= to
+        ? []
+        : [v.viewCount],
+    );
+  const ageBands: CompareAgeBand[] = AGE_BANDS.map(({ key, label, from, to }) => {
+    const mineViews = inBand(slotVideos, from, to);
+    const popularViews = inBand(popularVideos, from, to);
+    const slotMedianViews = median(mineViews);
+    const popularMedianViews = median(popularViews);
+    const enough =
+      mineViews.length >= AGE_BAND_MIN_VIDEOS && popularViews.length >= AGE_BAND_MIN_VIDEOS;
+    return {
+      key,
+      label,
+      slotVideos: mineViews.length,
+      popularVideos: popularViews.length,
+      slotMedianViews,
+      popularMedianViews,
+      ratio:
+        enough && slotMedianViews !== null && popularMedianViews
+          ? slotMedianViews / popularMedianViews
+          : null,
+    };
+  });
 
   return {
     available: true,
@@ -191,6 +248,11 @@ export function buildCompare(raw: RawCompare, tokens: readonly string[]): Popula
     },
     categories,
     engagement,
+    gainBasis: {
+      slotPrev: raw.slotPrevScheduledFor ?? null,
+      popularPrev: raw.popularPrevScheduledFor ?? null,
+    },
+    ageBands,
     slotKeywordCount: slotKeywords.size,
   };
 }
@@ -253,7 +315,21 @@ export function summarizeCompare(
       videos: row.videos,
       medianViews: row.medianViews,
       medianLikes: row.medianLikes,
+      medianDailyViewGain: row.medianDailyGain,
+      dailyGainVideos: row.gainVideos,
     })),
+    viewsNote:
+      '누적 조회수(medianViews)는 오래된 영상일수록 크다. 지금의 인기 비교에는 약 24시간 전 수집 대비 하루 조회수 증가(medianDailyViewGain)를 쓴다. null이면 이전 수집이 없어 판단할 수 없다.',
+    dailyGainBasis: compare.gainBasis,
+    viewsByUploadAge: compare.ageBands.map((band) => ({
+      uploadAge: band.label,
+      searchVideos: band.slotVideos,
+      popularVideos: band.popularVideos,
+      searchMedianViews: band.slotMedianViews,
+      popularMedianViews: band.popularMedianViews,
+      searchToPopularRatio: band.ratio === null ? null : Math.round(band.ratio * 100) / 100,
+    })),
+    viewsByUploadAgeNote: `같은 업로드 후 경과 기간의 영상끼리 누적 조회수 중앙값을 비교한 것이다. 한쪽 영상이 ${AGE_BAND_MIN_VIDEOS}개 미만이면 배율(searchToPopularRatio)은 null이다.`,
     categoryDifferencesTop3: compare.categories.slice(0, 3).map((c) => ({
       category: nameOf(c.categoryId),
       searchSharePercent: percent(c.slotShare),

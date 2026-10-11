@@ -163,6 +163,104 @@ try {
   assert.deepEqual([game.videos, game.medianViews, game.medianLikes], [2, 2000, 100]);
   assert.deepEqual([music.videos, music.medianViews, music.medianLikes], [1, 700, 70]);
   assert.equal(c.slotKeywordCount, 4);
+
+  // 하루 조회수 증가: 이전 DB 함수(dailyGain 없음)면 null, 있으면 공개된 증가값만의 중앙값
+  assert.deepEqual([mine.medianDailyGain, mine.gainVideos], [null, 0]);
+  assert.deepEqual(c.gainBasis, { slotPrev: null, popularPrev: null });
+  const { compareVerdict, gainUnavailableReason } = await vite.ssrLoadModule(
+    '/src/components/PopularCompareSection.tsx',
+  );
+  // 누적 조회수만 있으면 몇 배라고 단정하지 않고 이유를 말한다
+  const noGainVerdict = compareVerdict(c);
+  assert.equal(noGainVerdict.ratio, null);
+  assert.equal(noGainVerdict.headline, '‘고양이 간식’ 검색 결과를 인기 차트와 비교했습니다');
+  assert.match(gainUnavailableReason(c), /24시간 전 검색 수집이 없어/);
+  // 누적은 검색 쪽이 크지만(오래된 영상) 하루 증가는 인기 차트가 크다 → 하루 증가 기준으로 판정
+  const gained = buildCompare(
+    {
+      ...raw,
+      slotPrevScheduledFor: '2026-10-07T04:00:00Z',
+      popularPrevScheduledFor: '2026-10-07T05:00:00Z',
+      slotVideos: [
+        { viewCount: 5_000_000, likeCount: 1, dailyGain: 2_000 },
+        { viewCount: 4_000_000, likeCount: 1, dailyGain: 1_000 },
+        { viewCount: 3_000_000, likeCount: 1, dailyGain: null },
+      ],
+      popularVideos: raw.popularVideos.map((v, i) => ({
+        ...v,
+        dailyGain: [10_000, 30_000, 20_000, null][i],
+      })),
+    },
+    tokenizeQuery(raw.query),
+  );
+  assert.ok(gained.available);
+  if (gained.available) {
+    const [gMine, gAll] = gained.engagement;
+    assert.deepEqual([gMine.medianDailyGain, gMine.gainVideos], [1_500, 2]);
+    assert.deepEqual([gAll.medianDailyGain, gAll.gainVideos], [20_000, 3]);
+    assert.ok(gMine.medianViews! > gAll.medianViews!, '누적은 검색 쪽이 더 크다');
+    const verdict = compareVerdict(gained);
+    assert.equal(verdict.ratio, 1_500 / 20_000);
+    assert.match(verdict.headline, /하루 조회수 증가는 인기 차트의 약 8% 수준/);
+    assert.equal(gainUnavailableReason(gained), null);
+  }
+  // 하루 증가가 없으면 업로드 후 기간이 같은 영상끼리 누적 조회수로 판정(3일 미만·3~30일·30일 이상, 한쪽 3개 미만은 배율 없음)
+  const aged = buildCompare(
+    {
+      ...raw,
+      slotVideos: [
+        // 30일 이상 오래된 영상은 누적이 크다
+        ...[9_000_000, 8_000_000, 7_000_000].map((viewCount) => ({
+          viewCount,
+          likeCount: 1,
+          ageHours: 24 * 400,
+        })),
+        // 3일 미만 영상끼리 비교: 검색 중앙값 20,000
+        ...[10_000, 20_000, 30_000].map((viewCount) => ({ viewCount, likeCount: 1, ageHours: 30 })),
+        { viewCount: 50_000, likeCount: 1, ageHours: 24 * 10 },
+        { viewCount: 60_000, likeCount: 1, ageHours: null },
+      ],
+      popularVideos: [100_000, 200_000, 300_000, 400_000].map((viewCount, i) => ({
+        title: `인기${i}`,
+        tags: [],
+        viewCount,
+        likeCount: 1,
+        ageHours: 20,
+      })),
+    },
+    tokenizeQuery(raw.query),
+  );
+  assert.ok(aged.available);
+  if (aged.available) {
+    const [under3d, mid, over30d] = aged.ageBands;
+    assert.deepEqual(
+      [under3d.label, under3d.slotVideos, under3d.popularVideos],
+      ['3일 미만', 3, 4],
+    );
+    assert.deepEqual([under3d.slotMedianViews, under3d.popularMedianViews], [20_000, 250_000]);
+    assert.equal(under3d.ratio, 20_000 / 250_000);
+    assert.deepEqual([mid.slotVideos, mid.popularVideos, mid.ratio], [1, 0, null], '표본 부족');
+    assert.deepEqual([over30d.slotVideos, over30d.ratio], [3, null], '인기 쪽에 30일 이상 없음');
+    const verdict = compareVerdict(aged);
+    assert.equal(verdict.basis, 'age');
+    assert.equal(verdict.ratio, 20_000 / 250_000);
+    assert.equal(
+      verdict.headline,
+      '‘고양이 간식’ 검색 결과를 업로드 3일 미만 영상끼리 보면 누적 조회수는 인기 차트의 약 8% 수준입니다',
+    );
+    assert.match(verdict.detail, /24시간 전 검색 수집이 없어/);
+    const ai = summarizeCompare(aged, (id: string) => id) as {
+      viewsByUploadAge: { uploadAge: string; searchToPopularRatio: number | null }[];
+    };
+    assert.deepEqual(
+      ai.viewsByUploadAge.map((b) => [b.uploadAge, b.searchToPopularRatio]),
+      [
+        ['3일 미만', 0.08],
+        ['3~30일', null],
+        ['30일 이상', null],
+      ],
+    );
+  }
   const noStats = buildCompare({ ...raw, slotVideos: [{ viewCount: null, likeCount: null }] }, [
     '고양이',
   ]);

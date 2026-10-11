@@ -136,9 +136,17 @@ ok('양쪽 키워드·카테고리 집계 반환');
 
 // 영상별 조회수·좋아요: 검색 쪽은 숫자만, 인기 쪽은 키워드 계산용 제목·태그 포함
 assert.equal(cmp.slotVideos.length, 20);
-assert.deepEqual(cmp.slotVideos[0], { viewCount: 10, likeCount: 1 });
+// 약 24시간 전 실행이 없으므로 하루 증가(dailyGain)는 null. 10-01 업로드 → 10-08 관측이라 경과 168시간
+assert.deepEqual(cmp.slotVideos[0], {
+  viewCount: 10,
+  likeCount: 1,
+  dailyGain: null,
+  ageHours: 168,
+});
 assert.equal(cmp.popularVideos.length, 10);
 assert.deepEqual(Object.keys(cmp.popularVideos[0]).sort(), [
+  'ageHours',
+  'dailyGain',
   'likeCount',
   'tags',
   'title',
@@ -190,6 +198,109 @@ for (const role of ['anon', 'authenticated']) {
   await db.exec('reset role');
 }
 ok('브라우저 역할 실행 차단');
+
+// 하루 조회수 증가(dailyGain): 같은 영상을 약 24시간 전 실행(18~30시간 전)과 이번 실행에서 모두 찾아 24시간 기준으로 환산
+{
+  const g = await createDb();
+  const gq = (sql, p) => g.query(sql, p);
+  const gu = (await gq(`insert into auth.users default values returning id`)).rows[0].id;
+  const set = (await gq(`insert into search_sets (query_norm) values ('고양이 영상') returning id`))
+    .rows[0].id;
+  await gq(`insert into user_search_slots (user_id, slot, search_set_id) values ($1, 1, $2)`, [
+    gu,
+    set,
+  ]);
+  const run = async (kind, at) =>
+    (
+      await gq(
+        `insert into collection_runs (kind, search_set_id, scheduled_for, status, pages_expected, pages_fetched, item_count, finished_at, expires_at)
+         values ($1, $2, $3::timestamptz, 'complete', 4, 4, 3, $3::timestamptz, $3::timestamptz + interval '14 days') returning id`,
+        [kind, kind === 'search' ? set : null, at],
+      )
+    ).rows[0].id;
+  const versions = new Map();
+  const version = async (video) => {
+    if (!versions.has(video))
+      versions.set(
+        video,
+        (
+          await gq(
+            `insert into video_versions (video_id, content_hash, title, channel_id, published_at)
+             values ($1, $1, $1, 'UCchan', '2020-01-01T00:00:00Z') returning id`,
+            [video],
+          )
+        ).rows[0].id,
+      );
+    return versions.get(video);
+  };
+  const obs = async (runId, video, pos, views, at) =>
+    gq(
+      `insert into video_observations (run_id, video_id, version_id, position, view_count, like_count, observed_at)
+       values ($1, $2, $3, $4, $5, 1, $6::timestamptz)`,
+      [runId, video, await version(video), pos, views, at],
+    );
+  const compare = async () =>
+    (await gq(`select get_slot_popular_compare($1, 1::smallint) as c`, [gu])).rows[0].c;
+  const iso = (value) => (value === null ? null : new Date(value).toISOString());
+  const gainOf = (videos, views) => videos.find((v) => v.viewCount === views)?.dailyGain;
+
+  const s1 = await run('search', T(0));
+  const p1 = await run('popular', T(0));
+  await obs(s1, 'oldcatvideo', 1, 5_000_000, T(0));
+  await obs(s1, 'newcatvideo', 2, 1_000, T(0));
+  await obs(p1, 'hitvideo001', 1, 100_000, T(0));
+  let c = await compare();
+  assert.equal(c.slotPrevScheduledFor, null);
+  assert.equal(c.popularPrevScheduledFor, null);
+  assert.ok([...c.slotVideos, ...c.popularVideos].every((v) => v.dailyGain === null));
+  ok('첫 수집만 있으면 이전 실행 없음, 하루 증가 null');
+
+  // 누적은 오래된 영상이 크지만 하루 증가는 인기 영상이 크다
+  const s2 = await run('search', T(24));
+  const p2 = await run('popular', T(24));
+  await obs(s2, 'oldcatvideo', 1, 5_002_000, T(24));
+  await obs(s2, 'newcatvideo', 2, 4_000, T(24));
+  await obs(s2, 'brandnewcat', 3, 500, T(24));
+  await obs(p2, 'hitvideo001', 1, 400_000, T(24));
+  c = await compare();
+  assert.equal(iso(c.slotPrevScheduledFor), T(0));
+  assert.equal(iso(c.popularPrevScheduledFor), T(0));
+  assert.equal(gainOf(c.slotVideos, 5_002_000), 2_000);
+  assert.equal(gainOf(c.slotVideos, 4_000), 3_000);
+  assert.equal(gainOf(c.slotVideos, 500), null, '어제 없던 영상은 null');
+  assert.equal(gainOf(c.popularVideos, 400_000), 300_000);
+  ok('24시간 전 실행 대비 하루 증가, 어제 없던 영상은 null');
+
+  // 관측 간격이 20시간이면 24시간으로 환산(+1,000 → 1,200)
+  const p3 = await run('popular', T(44));
+  await obs(p3, 'hitvideo001', 1, 401_000, T(44));
+  const s3 = await run('search', T(44));
+  await obs(s3, 'newcatvideo', 1, 4_100, T(44));
+  c = await compare();
+  assert.equal(iso(c.popularPrevScheduledFor), T(24));
+  assert.equal(gainOf(c.popularVideos, 401_000), 1_200);
+  assert.equal(gainOf(c.slotVideos, 4_100), 120);
+  ok('관측 간격을 24시간 기준으로 환산');
+
+  // 18~30시간 창 밖(12시간 전 T44, 32시간 전 T24)만 있으면 이전 실행 없음
+  const s4 = await run('search', T(56));
+  await obs(s4, 'newcatvideo', 1, 4_200, T(56));
+  c = await compare();
+  assert.equal(c.slotPrevScheduledFor, null);
+  assert.equal(gainOf(c.slotVideos, 4_200), null);
+  ok('18~30시간 창 밖 실행은 비교에 쓰지 않음');
+
+  // 조회수 비공개면 하루 증가도 null
+  const s5 = await run('search', T(80));
+  await obs(s5, 'newcatvideo', 1, null, T(80));
+  const p5 = await run('popular', T(80));
+  await obs(p5, 'hitvideo001', 1, 402_000, T(80));
+  c = await compare();
+  assert.equal(iso(c.slotPrevScheduledFor), T(56));
+  assert.equal(c.slotVideos[0].dailyGain, null);
+  ok('조회수 비공개면 하루 증가 null');
+  await g.close();
+}
 
 console.log(`PASS: ${checks}개 그룹 (합성 데이터, 로컬 PGlite, 실제 API·DB 0회)`);
 await db.close();

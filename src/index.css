@@ -2474,7 +2474,9 @@ body {
   margin: 0 auto;
 }
 .chat-window.is-empty .chat-dock {
-  flex: 1;
+  /* 첫 화면: 제목·입력 묶음 위아래에 같은 여백을 두어 대화 영역 정중앙에 놓는다. */
+  flex: 0 0 auto;
+  margin-bottom: auto;
   display: flex;
   flex-direction: column;
   width: min(860px, 100%);
@@ -2605,8 +2607,20 @@ body {
   font-size: 12px;
   text-align: center;
 }
-.chat-window.is-empty .chat-disclaimer {
+/* 위쪽 제목줄 높이만큼 아래에도 여백을 두어 화면 기준 정중앙에 맞춘다. */
+.chat-window.is-empty {
+  padding-bottom: 70px;
+}
+.chat-window.is-empty .chat-hero {
+  flex: 0 0 auto;
   margin-top: auto;
+}
+.chat-window.is-empty .chat-thread {
+  flex: 0 0 auto;
+  padding: 0;
+}
+.chat-window.is-empty .chat-disclaimer {
+  margin-top: 20px;
 }
 .chat-login {
   display: flex;
@@ -3280,6 +3294,50 @@ button.spot:hover {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   text-align: right;
+}
+
+/* 업로드 후 기간별 누적 조회수: 같은 나이대끼리 한 줄씩 */
+.age-bands {
+  margin-top: 24px;
+}
+.age-bands .compare-sub {
+  margin: 0;
+}
+.age-bands ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.age-bands li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1fr) 88px;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.age-band-label {
+  font-weight: 700;
+}
+.age-band-side {
+  color: var(--muted);
+}
+.age-band-side small {
+  margin-left: 6px;
+  color: var(--faint);
+  font-size: 11px;
+}
+.age-band-ratio {
+  font-weight: 800;
+  text-align: right;
+}
+.age-band-ratio.is-empty {
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 600;
 }
 @media (max-width: 599px) {
   .engagement-bars li {
