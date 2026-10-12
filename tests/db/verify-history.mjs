@@ -131,6 +131,36 @@ assert.equal(
 );
 ok('검색 기록 28일 보관');
 
+// 오후 등록(첫 수집) 뒤 12시간 만의 정기 수집도 전날 수집으로 비교한다. 증가는 24시간으로 환산
+const setC = (
+  await svc(`select set_search_slot($1,2::smallint,'강아지','KR','ko','relevance','') id`, [A])
+).rows[0].id;
+for (const [h, total] of [
+  [200, 1000],
+  [212, 1100],
+  [236, 1300],
+]) {
+  const at = T(h);
+  const r = (
+    await svc(`select * from start_search_run($1,$2::timestamptz,$2::timestamptz,419430400)`, [
+      setC,
+      at,
+    ])
+  ).rows[0];
+  await svc(`select finish_search_run($1,$2::jsonb,$3::timestamptz) r`, [
+    r.run_id,
+    JSON.stringify(payload(() => total, at)),
+    at,
+  ]);
+}
+const c = (await svc(`select get_slot_history($1,2::smallint) r`, [A])).rows[0].r;
+assert.deepEqual(
+  c.runs.map((r) => r.videos[0].dailyGain),
+  [null, 200, 200],
+  '12시간 간격(+100)은 하루 +200으로 환산',
+);
+ok('12~36시간 전 수집과 비교');
+
 // 사용자 격리·권한
 assert.equal((await svc(`select get_slot_history($1,1::smallint) r`, [B])).rows[0].r, null);
 for (const role of ['anon', 'authenticated']) {

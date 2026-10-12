@@ -3408,6 +3408,22 @@ button.spot:hover {
   color: var(--muted);
   font-size: clamp(22px, 2.4vw, 32px);
 }
+/* 검색어 대시보드 맨 아래: 접어 둔 인기 차트 비교 */
+.compare-reference {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.compare-reference > summary {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.compare-reference[open] > summary {
+  margin-bottom: 16px;
+}
+
 /* 이 주제 안에서 지금: 빠르게 크는 영상 · 늘어난 키워드 */
 .own-now {
   display: grid;

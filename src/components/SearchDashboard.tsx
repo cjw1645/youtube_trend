@@ -88,6 +88,10 @@ export default function SearchDashboard({
     };
   }, [key, slot, call, resolveCategoryNames]);
 
+  const historyValue = history?.key === key ? history.value : null;
+  const hasHistory = !!historyValue;
+  const compareValue = compare?.key === key ? compare.value : null;
+  const trendValue = detail?.key === key ? detail.trend : null;
   const attempt = view.last_attempt;
   const failed = attempt && attempt.status !== 'complete' && attempt.status !== 'running';
   const query = view.conditions.query;
@@ -123,35 +127,31 @@ export default function SearchDashboard({
           {error}
         </p>
       )}
-      {history?.key === key && history.value && (
+      {historyValue && (
         <OwnHistorySection
-          history={history.value}
-          trend={detail?.key === key ? detail.trend : null}
+          history={historyValue}
+          trend={trendValue}
           onOpenVideo={onOpenVideo}
           onSearchKeyword={onSearchKeyword}
         />
       )}
-      {compare?.key === key && compare.value && (
+      {/* 평소 대비가 없을 때만(불러오기 실패 등) 인기 차트 비교를 위에 둔다 */}
+      {!hasHistory && compareValue && (
         <PopularCompareSection
-          secondary={!!(history?.key === key && history.value)}
-          compare={compare.value}
+          compare={compareValue}
           categoryNames={categoryNames}
           onSearchKeyword={onSearchKeyword}
         />
       )}
-      {compare?.key === key && compare.value && !(detail?.key === key && detail.trend) && (
-        <CompareEngagement compare={compare.value} />
-      )}
-      {detail?.key === key && detail.trend && (
+      {!hasHistory && compareValue && !trendValue && <CompareEngagement compare={compareValue} />}
+      {trendValue && detail && (
         <>
           <TrendPanel
             key={detail.key}
             afterSpotlight={
-              compare?.key === key && compare.value ? (
-                <CompareEngagement compare={compare.value} />
-              ) : undefined
+              !hasHistory && compareValue ? <CompareEngagement compare={compareValue} /> : undefined
             }
-            trend={detail.trend}
+            trend={trendValue}
             videos={detail.videos}
             categoryNames={categoryNames}
             scope={`'${query}' 검색 결과`}
@@ -163,6 +163,19 @@ export default function SearchDashboard({
             검색 결과 순서는 YouTube 인기 순위가 아니며, 전체 YouTube를 대표하는 표본이 아닙니다.
           </p>
         </>
+      )}
+      {/* 전체 인기 차트는 대부분 게임이라 이 주제가 뜨는지 판단하는 기준이 아니다. 맨 아래에 접어 둔다. */}
+      {hasHistory && compareValue && (
+        <details className="compare-reference">
+          <summary>참고: 전체 인기 차트와 비교 (분야가 달라 판단 기준은 아닙니다)</summary>
+          <PopularCompareSection
+            secondary
+            compare={compareValue}
+            categoryNames={categoryNames}
+            onSearchKeyword={onSearchKeyword}
+          />
+          <CompareEngagement compare={compareValue} />
+        </details>
       )}
     </div>
   );
