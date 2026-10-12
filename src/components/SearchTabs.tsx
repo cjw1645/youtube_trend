@@ -10,6 +10,8 @@ interface Props {
   message: string | null;
   /** 로그인 여부를 몰라도 되도록 상위가 넘기는 빈 상태 문구 */
   emptyText: string;
+  /** 로그인 확인이나 목록을 처음 불러오는 중이면 true. 빈 상태 문구 대신 불러오는 중이라고 알린다. */
+  loading?: boolean;
   onSelect: (slot: 1 | 2) => void;
   onSelectPopular: () => void;
   /** 인기 차트 대시보드 영역의 id(탭이 제어하는 대상) */
@@ -27,6 +29,7 @@ export default function SearchTabs({
   busy,
   message,
   emptyText,
+  loading = false,
   onSelect,
   onSelectPopular,
   popularPanelId,
@@ -66,7 +69,11 @@ export default function SearchTabs({
           </span>
         ))}
       </nav>
-      {!slots.length && <p className="search-tabs-empty">{emptyText}</p>}
+      {!slots.length && (
+        <p className="search-tabs-empty" aria-busy={loading}>
+          {loading ? '내 검색어를 불러오는 중…' : emptyText}
+        </p>
+      )}
       {message && (
         <p role="status" className="trend-note">
           {message}

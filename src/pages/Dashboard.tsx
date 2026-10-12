@@ -231,6 +231,7 @@ export default function Dashboard({
         busy={search.busy}
         message={search.message ?? search.error}
         emptyText={emptyText}
+        loading={auth.loading || (!!auth.user && !search.loaded)}
         onSelect={chooseTab}
         onRemove={(slot) => {
           if (searchSlot === slot) setSearchSlot(null);

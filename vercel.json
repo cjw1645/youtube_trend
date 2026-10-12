@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm test && npm run build",
   "functions": {
     "api/collect.ts": {
       "maxDuration": 60

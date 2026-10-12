@@ -19,6 +19,8 @@ export function useSearchSlots() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // 로그인한 계정의 목록을 처음 받아오기 전에는 「아직 추가한 검색어가 없습니다」를 보여주지 않는다.
+  const [loaded, setLoaded] = useState(false);
 
   const call = useCallback(
     async <T>(path: string, method: 'GET' | 'POST' | 'DELETE', body?: unknown): Promise<T> => {
@@ -36,6 +38,8 @@ export function useSearchSlots() {
       setError(null);
     } catch (failure) {
       setError(toApiRequestError(failure).message);
+    } finally {
+      setLoaded(true);
     }
   }, [call]);
 
@@ -43,6 +47,7 @@ export function useSearchSlots() {
     setSlots([]);
     setMessage(null);
     setError(null);
+    setLoaded(false);
     if (userId) void reload();
   }, [userId, reload]);
 
@@ -95,5 +100,5 @@ export function useSearchSlots() {
     }
   };
 
-  return { slots, error, busy, message, add, remove, call, reload };
+  return { slots, loaded, error, busy, message, add, remove, call, reload };
 }

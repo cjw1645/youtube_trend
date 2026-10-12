@@ -14,4 +14,3 @@ api/_lib/runtime.ts
 .env
 .env.*
 .agent/
-tests/

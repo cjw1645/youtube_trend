@@ -2735,7 +2735,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 236px;
+  min-height: 200px;
   overflow: hidden;
   padding: 22px;
   border: 1px solid var(--bar);
@@ -3176,10 +3176,10 @@ button.spot:hover {
 /* 로그인 전 영상 검색: 인기 영상 미리보기를 아래로 갈수록 투명하게 하고 로그인 안내를 겹친다. */
 .search-locked {
   position: relative;
-  min-height: 460px;
+  min-height: 400px;
 }
 .search-locked-preview {
-  height: 460px;
+  height: 400px;
   overflow: hidden;
   pointer-events: none;
   user-select: none;
@@ -4221,7 +4221,9 @@ button.chat-quota {
   line-height: 1.6;
 }
 .dash-sub {
-  grid-column: 1 / -1;
+  /* 제목·버튼 줄 아래에 한 줄 전체로 놓는다(제목 옆에 끼어 어색하던 배치) */
+  order: 3;
+  flex: 1 1 100%;
   margin: 0;
   color: var(--muted);
   font-size: 14px;

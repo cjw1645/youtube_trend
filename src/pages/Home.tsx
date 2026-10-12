@@ -4,6 +4,7 @@ import SearchBar from '../components/SearchBar';
 import { EmptyView, ErrorView, FilteredEmptyView, LoadingGrid } from '../components/StatusView';
 import VideoCard from '../components/VideoCard';
 import { useVideos, type VideoQuery } from '../hooks/useVideos';
+import { resolveSearchStart, type SearchRequest } from '../lib/search-start';
 import { useAuth } from '../hooks/useAuth';
 import type { FavoritesController } from '../hooks/useFavorites';
 import type { Video } from '../types/video';
@@ -16,18 +17,13 @@ import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
 import HelpTip from '../components/HelpTip';
 import KeywordChips from '../components/KeywordChips';
 
-const INITIAL_QUERY: VideoQuery = { q: '', categoryId: '', order: '' };
 const EMPTY: Video[] = [];
 /** 로그아웃 상태에서 검색을 시도하면 검색어를 저장해 두었다가, 로그인 복귀 후 바로 검색한다. */
 export const SEARCH_AFTER_LOGIN_KEY = 'youtube-trend:search-after-login';
 /** 로그인 전 검색창 아래에 흐리게 보여 주는 인기 영상 수 */
 const LOCKED_PREVIEW = 8;
 
-/** 대시보드 키워드 클릭처럼 다른 화면에서 요청한 검색. id가 바뀔 때마다 한 번 실행한다. */
-export interface SearchRequest {
-  q: string;
-  id: number;
-}
+export type { SearchRequest };
 
 interface Props {
   searchRequest?: SearchRequest;
@@ -60,15 +56,13 @@ export default function Home({
 }: Props) {
   const auth = useAuth();
   const signedIn = !!auth.user;
-  // 처음 열 때 외부 검색 요청이 있으면 기본 목록을 거치지 않고 바로 그 검색으로 시작한다.
-  const [start] = useState<VideoQuery>(() =>
-    searchRequest ? { ...INITIAL_QUERY, q: searchRequest.q } : (initialQuery ?? INITIAL_QUERY),
-  );
+  // 처음 열 때 외부 검색 요청이 있으면 바로 그 검색으로 시작한다. 이전 검색어는 입력창에만 채우고 실행하지 않는다.
+  const [start] = useState(() => resolveSearchStart(searchRequest, initialQuery));
   // q: 적용된 검색어(서버 조회), categoryId·order: 받은 목록 안에서 즉시 적용하는 화면 필터
-  const [q, setQ] = useState(signedIn ? start.q : '');
-  const [categoryId, setCategoryId] = useState(start.categoryId);
-  const [order, setOrder] = useState(start.order);
-  const [draft, setDraft] = useState(start.q);
+  const [q, setQ] = useState(signedIn ? start.query.q : '');
+  const [categoryId, setCategoryId] = useState(start.query.categoryId);
+  const [order, setOrder] = useState(start.query.order);
+  const [draft, setDraft] = useState(start.draft);
   // 키워드 칩은 이미 받은 목록 안에서만 거른다(새 검색을 하지 않으므로 검색 횟수를 쓰지 않는다).
   const [chip, setChip] = useState('');
   // 로그인 전에 검색하려 한 단어. 로그인 안내에 보여 주고, 로그인하면 바로 이어서 검색한다.
