@@ -116,7 +116,7 @@ function AnswerText({
 }
 
 /** 섹션 사이에 잠깐 멈추는 정도(글자 수로 환산) */
-const SECTION_PAUSE = 10;
+const SECTION_PAUSE = 24;
 
 /**
  * 답변을 앞에서부터 보여 줄 때의 계획: 블록(머리말 앞 글, 각 섹션 본문)별 시작 위치와 전체 글자 수,
