@@ -306,7 +306,9 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
             하루에 얼마나 늘었는지를 뜻합니다.
           </dd>
           <dt>%p(퍼센트포인트)</dt>
-          <dd>두 비율의 차이입니다. 인기 차트에서 82%, 내 검색에서 0.6%라면 81.4%p 차이입니다.</dd>
+          <dd>
+            두 비율의 차이입니다. 예를 들어 인기 차트에서 40%, 내 검색에서 10%라면 30%p 차이입니다.
+          </dd>
           <dt>인기 차트 키워드 노출 “없음”</dt>
           <dd>
             내 검색 결과에 나온 단어가 인기 차트의 핫 키워드 목록에 들지 않았다는 뜻입니다. 내

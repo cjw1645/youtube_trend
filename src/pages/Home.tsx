@@ -72,7 +72,8 @@ export default function Home({
   // 키워드 칩은 이미 받은 목록 안에서만 거른다(새 검색을 하지 않으므로 검색 횟수를 쓰지 않는다).
   const [chip, setChip] = useState('');
   // 로그인 전에 검색하려 한 단어. 로그인 안내에 보여 주고, 로그인하면 바로 이어서 검색한다.
-  const [wanted, setWanted] = useState('');
+  // 홈의 분야 칩처럼 다른 화면의 검색 요청으로 이 화면이 처음 열릴 때도 그 검색어를 안내에 쓴다.
+  const [wanted, setWanted] = useState(() => (!signedIn && searchRequest ? searchRequest.q : ''));
   const appliedRequest = useRef(searchRequest?.id);
   const { state, reload } = useVideos(signedIn ? q : '', auth.getToken);
 
@@ -105,6 +106,15 @@ export default function Home({
     if (q) setQ('');
     else reload();
   };
+  // 안내에서 약속한 대로 로그인 뒤 이어서 검색하도록, 로그인 전에 원한 검색어는 항상 저장해 둔다.
+  useEffect(() => {
+    if (signedIn || !wanted) return;
+    try {
+      sessionStorage.setItem(SEARCH_AFTER_LOGIN_KEY, wanted);
+    } catch {
+      /* 저장소를 못 쓰면 로그인 뒤에 다시 입력한다 */
+    }
+  }, [signedIn, wanted]);
   // 로그인 복귀 후 저장해 둔 검색어를 한 번 실행한다.
   useEffect(() => {
     if (!signedIn) return;

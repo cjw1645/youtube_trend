@@ -64,6 +64,23 @@ try {
   console.log(
     'PASS: 로그아웃 영상 검색 화면(검색창·로그인 안내만, 필터·AI 질문·직접 선택·키워드 칩 숨김)',
   );
+
+  // 홈의 분야 칩처럼 다른 화면의 검색 요청으로 처음 열려도 그 검색어로 로그인을 안내한다.
+  const requested = renderToStaticMarkup(
+    React.createElement(Home, {
+      onResults: () => undefined,
+      onAnalyze: () => undefined,
+      favorites: { has: () => false, toggle: () => undefined, videos: [] },
+      nameById: new Map(),
+      onSelect: () => undefined,
+      resolveCategoryNames: () => undefined,
+      searchRequest: { q: '반려동물', id: 1 },
+    }),
+  );
+  assert.match(requested, /‘반려동물’ 검색은 로그인 후에 할 수 있어요/);
+  assert.match(requested, /바로 이어서 찾아 줍니다/);
+  assert.doesNotMatch(requested, /<h2>검색하려면 로그인하세요<\/h2>/);
+  console.log('PASS: 칩으로 처음 열린 로그아웃 검색 화면에 요청한 검색어를 안내');
 } finally {
   await vite.close();
 }
