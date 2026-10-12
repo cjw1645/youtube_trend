@@ -94,6 +94,7 @@ export function validApiResponse(path: string, body: unknown): boolean {
   if (pathname === '/api/trend' || pathname === '/api/search-trend')
     return body.trend === null || isRecord(body.trend);
   if (pathname === '/api/search-compare') return body.compare === null || isRecord(body.compare);
+  if (pathname === '/api/search-history') return body.history === null || isRecord(body.history);
   if (pathname === '/api/conversations')
     return Array.isArray(body.conversations) || Array.isArray(body.messages) || body.ok === true;
   if (pathname === '/api/snapshot') return body.snapshot === null || isRecord(body.snapshot);

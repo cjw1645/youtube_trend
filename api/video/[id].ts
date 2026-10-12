@@ -10,7 +10,7 @@ export async function GET(request: Request): Promise<Response> {
     for (const [key, value] of new URL(request.url).searchParams)
       if (key !== 'id' || value !== match[1])
         throw new ApiFailure('BAD_REQUEST', `지원하지 않는 요청 파라미터입니다: ${key}`, 400);
-    await chargePublicYoutube(2);
+    await chargePublicYoutube(2, request);
 
     return json(await getVideoDetail(match[1]), {
       cache: 'public, s-maxage=600, stale-while-revalidate=1200',

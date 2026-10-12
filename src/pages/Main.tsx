@@ -11,6 +11,8 @@ import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView } from '../components/StatusView';
 import HelpTip from '../components/HelpTip';
 import TopicCloud from '../components/TopicCloud';
+import MyTopics from '../components/MyTopics';
+import { useAuth } from '../hooks/useAuth';
 import { aggregateKeywords, topBy, viewsPerHour } from '../lib/stats';
 import { formatCount, formatRelativeDate } from '../lib/format';
 import type { Page } from '../components/Sidebar';
@@ -20,8 +22,8 @@ import type { Video, VideosResponse } from '../types/video';
 const FLOW: { page: Page; title: string; text: string; icon: typeof DashboardIcon }[] = [
   {
     page: 'dashboard',
-    title: '인기 흐름 보기',
-    text: '인기 차트에서 빠르게 크는 영상과 소재를 봅니다.',
+    title: '내 주제 추적하기',
+    text: '내 분야 검색어를 추가하면 매일 수집해 평소보다 오르는지 알려 줍니다.',
     icon: DashboardIcon,
   },
   {
@@ -59,6 +61,7 @@ export default function Main({
   onSelect: (video: Video) => void;
   onSearchKeyword: (keyword: string) => void;
 }) {
+  const signedIn = !!useAuth().user;
   const chart = useApiResource<VideosResponse>(CHART_PATH, { cacheMs: POPULAR_CACHE_MS });
   const videos = chart.state.status === 'success' ? chart.state.data.items : undefined;
   const now = chart.state.status === 'success' ? chart.state.receivedAt : 0;
@@ -75,17 +78,17 @@ export default function Main({
     <div className="main-page">
       <section className="main-hero" aria-labelledby="main-title">
         <h1 id="main-title">
-          지금 뜨는 유튜브에서
+          내 주제가 평소보다 뜨는지
           <br />
-          다음 영상 소재를 찾으세요
+          매일 확인하세요
         </h1>
         <p className="main-lead">
-          소규모 채널 편집자·기획자를 위한 트렌드 도구입니다. YouTube 공개 데이터로 인기 흐름을
-          보고, 고른 영상을 근거로 AI에게 기획을 묻습니다.
+          소규모 채널 편집자·기획자를 위한 트렌드 도구입니다. 게임이 대부분인 인기 차트 대신, 내
+          분야 검색어를 매일 저장해 평소와 비교하고 근거 영상으로 AI에게 기획을 묻습니다.
         </p>
         <div className="main-actions">
           <button type="button" className="primary-button" onClick={() => navigate('dashboard')}>
-            인기 흐름 보기 <ArrowRightIcon aria-hidden="true" />
+            내 주제 추적하기 <ArrowRightIcon aria-hidden="true" />
           </button>
           <button type="button" className="secondary-button" onClick={() => navigate('ai')}>
             AI에게 기획 묻기
@@ -93,11 +96,13 @@ export default function Main({
         </div>
       </section>
 
+      {signedIn && <MyTopics onOpen={() => navigate('dashboard')} />}
+
       <section className="main-fields" aria-labelledby="main-fields-title">
         <h2 id="main-fields-title">내 분야로 먼저 찾아보기</h2>
         <p>
-          인기 차트는 지금 게임이 많아요. 내 채널 분야를 눌러 그 주제의 영상부터 찾아보세요(로그인
-          후 검색할 수 있어요).
+          인기 차트는 지금 게임이 많아요. 내 채널 분야를 눌러 그 주제의 영상부터 찾아보세요
+          {signedIn ? '.' : '(로그인 후 검색할 수 있어요).'}
         </p>
         <ul>
           {FIELDS.map((field) => (
@@ -112,7 +117,7 @@ export default function Main({
 
       <section className="main-live" aria-labelledby="main-live-title">
         <div className="title-row">
-          <h2 id="main-live-title">지금 빠르게 조회수를 모으는 영상</h2>
+          <h2 id="main-live-title">전체 인기 차트에서 빠르게 조회수를 모으는 영상</h2>
           <HelpTip label="선정 기준 보기">
             YouTube 인기 차트 {videos?.length ?? 0}개 중 업로드 후 시간당 조회수(누적 ÷ 경과 시간,
             최소 1시간)가 높은 순서입니다.
@@ -170,7 +175,7 @@ export default function Main({
       {chart.state.status !== 'error' && (
         <section className="main-topics" aria-labelledby="main-topics-title">
           <div className="title-row">
-            <h2 id="main-topics-title">지금 뜨고 있는 키워드를 바로 확인하세요</h2>
+            <h2 id="main-topics-title">전체 인기 차트의 키워드</h2>
             <HelpTip label="집계 기준 보기">
               YouTube 인기 차트 영상 {videos?.length ?? 0}개의 제목·태그에서 2개 이상 영상에 나온
               단어입니다. 많은 영상에 나올수록 크게 보입니다. 단어를 누르면 그 키워드로 검색합니다.

@@ -3390,6 +3390,75 @@ button.spot:hover {
   }
 }
 
+/* ───────── 내 주제, 평소와 비교(검색어 대시보드 맨 위) ───────── */
+.own-history {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.own-verdict.is-up {
+  color: #7fd3a1;
+}
+.own-verdict.is-down {
+  color: var(--accent-text);
+}
+.own-verdict.is-collecting {
+  color: var(--muted);
+  font-size: clamp(22px, 2.4vw, 32px);
+}
+.compare-verdict.is-secondary {
+  font-size: clamp(20px, 2vw, 26px);
+  color: var(--muted);
+}
+.own-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 120px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.own-bars li {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  min-width: 0;
+}
+.own-bar-track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 36px;
+}
+.own-bar-fill {
+  width: 100%;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--bar);
+  transition: height 0.4s var(--ease);
+}
+.own-bars li.is-latest .own-bar-fill {
+  background: var(--accent-2);
+}
+.own-bar-fill.is-empty {
+  background: var(--line);
+}
+.own-bars li:hover .own-bar-fill {
+  filter: brightness(1.3);
+}
+.own-bar-day {
+  color: var(--faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* ───────── 인기 차트와 비교(검색어 대시보드 맨 위) ───────── */
 .compare-top {
   display: flex;
@@ -4251,6 +4320,70 @@ button.chat-quota {
   gap: 8px;
   padding: 0;
   list-style: none;
+}
+
+/* 홈 맨 위: 내 주제의 평소 대비 판정 */
+.my-topics {
+  margin: 8px 0 0;
+}
+.my-topics-empty p {
+  max-width: 720px;
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.my-topics ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+.my-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+.my-topic:hover {
+  border-color: var(--accent-text);
+}
+.my-topic-verdict {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+.my-topic-verdict.is-up {
+  color: #7fd3a1;
+}
+.my-topic-verdict.is-down {
+  color: var(--accent-text);
+}
+.my-topic-verdict.is-collecting {
+  color: var(--muted);
+}
+.my-topic-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+.my-topic-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  color: var(--faint);
+  font-size: 12px;
 }
 
 /* 방금 받은 답변이 채팅처럼 나타날 때의 커서 */

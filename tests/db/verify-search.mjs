@@ -101,9 +101,9 @@ assert.equal(
       )
     ).rows[0].d,
   ),
-  14,
+  28,
 );
-ok('구독자 없는 집합 inactive, 시작/busy/done, 14일 보존, 3페이지 120개');
+ok('구독자 없는 집합 inactive, 시작/busy/done, 28일 보존, 3페이지 120개');
 
 // 2. 검색은 0개도 완료, 인기는 0개 거부, 실패는 비공개
 const s2 = await slot(A, 2, '희귀검색어');

@@ -44,7 +44,7 @@ export async function GET(request: Request): Promise<Response> {
           400,
         );
       }
-      await chargePublicYoutube(1);
+      await chargePublicYoutube(1, request);
       const body: VideosResponse = { items: await getVideosByIds(ids) };
       return json(body, { cache: CACHE_SEARCH });
     }
@@ -55,13 +55,13 @@ export async function GET(request: Request): Promise<Response> {
       if (chart !== 'popular' || params.get('all') !== '1' || q) {
         throw new ApiFailure('BAD_REQUEST', 'chart=popular는 all=1만 함께 쓸 수 있습니다.', 400);
       }
-      await chargePublicYoutube(POPULAR_MAX_PAGES);
+      await chargePublicYoutube(POPULAR_MAX_PAGES, request);
       const body: VideosResponse = { items: await listAllPopularVideos() };
       return json(body, { cache: CACHE_POPULAR });
     }
 
     if (!q) {
-      await chargePublicYoutube(1);
+      await chargePublicYoutube(1, request);
       const body: VideosResponse = { items: await listPopularVideos() };
       return json(body, { cache: CACHE_POPULAR });
     }

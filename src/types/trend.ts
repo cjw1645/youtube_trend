@@ -177,6 +177,36 @@ export interface CompareCategoryRow {
   deltaPp: number;
 }
 
+/** 내 검색어 수집 하루치. 통계는 그 수집 시점 값이다. */
+export interface HistoryDay {
+  runId: number;
+  scheduledFor: string;
+  itemCount: number;
+  /** 약 24시간 전 수집에도 있던 영상의 하루 조회수 증가 중앙값. 전날 수집이 없거나 겹친 영상이 적으면 null */
+  medianDailyGain: number | null;
+  /** 하루 증가를 계산한 영상 수 */
+  gainVideos: number;
+  /** 수집 시점에 업로드 후 3일이 안 된 영상 수 */
+  freshCount: number;
+}
+
+/** 내 검색어를 자기 지난 수집(평소)과 비교한 결과 */
+export interface OwnHistory {
+  query: string;
+  /** 오래된 순 */
+  days: HistoryDay[];
+  /** 가장 최근 수집 */
+  latest: HistoryDay;
+  /** 평소: 최근 수집 직전의 비교 가능한 수집들(최대 7개)의 중앙값 */
+  usual: { medianDailyGain: number | null; freshShare: number | null; days: number };
+  /** 평소 판정에 필요한 지난 수집 수 */
+  needed: number;
+  /** 최근 ÷ 평소 하루 조회수 증가. 판정할 수 없으면 null */
+  gainRatio: number | null;
+  /** 최근 수집의 새 영상(3일 미만) 비중 */
+  freshShare: number | null;
+}
+
 /** 슬롯 최신 검색 수집과 가장 가까운 인기 차트 수집의 비교(A 노출·B 키워드·C 영상·D 카테고리) */
 export type PopularCompare =
   | { available: false; query: string; slot: CompareRun }

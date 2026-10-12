@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import TrendPanel from './TrendPanel';
 import PopularCompareSection, { CompareEngagement } from './PopularCompareSection';
+import OwnHistorySection from './OwnHistorySection';
 import { toApiRequestError } from '../lib/api';
 import type { useSearchSlots } from '../hooks/useSearchSlots';
-import type { PopularCompare, SlotView, StoredVideo, TrendResult } from '../types/trend';
+import type {
+  OwnHistory,
+  PopularCompare,
+  SlotView,
+  StoredVideo,
+  TrendResult,
+} from '../types/trend';
 
 interface Props {
   view: SlotView;
@@ -37,14 +44,20 @@ export default function SearchDashboard({
     null,
   );
 
-  // 인기 차트와의 비교는 부가 정보라 실패해도 나머지 대시보드를 막지 않는다.
+  const [history, setHistory] = useState<{ key: string; value: OwnHistory | null } | null>(null);
+
+  // 평소 대비 판정과 인기 차트와의 비교는 각각 실패해도 나머지 대시보드를 막지 않는다.
   useEffect(() => {
     setCompare(null);
+    setHistory(null);
     if (!key) return;
     let active = true;
     call<{ compare: PopularCompare | null }>(`/api/search-compare?slot=${slot}`, 'GET')
       .then((result) => active && setCompare({ key, value: result.compare }))
       .catch(() => active && setCompare({ key, value: null }));
+    call<{ history: OwnHistory | null }>(`/api/search-history?slot=${slot}`, 'GET')
+      .then((result) => active && setHistory({ key, value: result.history }))
+      .catch(() => active && setHistory({ key, value: null }));
     return () => {
       active = false;
     };
@@ -109,8 +122,10 @@ export default function SearchDashboard({
           {error}
         </p>
       )}
+      {history?.key === key && history.value && <OwnHistorySection history={history.value} />}
       {compare?.key === key && compare.value && (
         <PopularCompareSection
+          secondary={!!(history?.key === key && history.value)}
           compare={compare.value}
           categoryNames={categoryNames}
           onSearchKeyword={onSearchKeyword}

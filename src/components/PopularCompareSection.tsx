@@ -48,6 +48,8 @@ export function gainUnavailableReason(compare: Available): string | null {
 
 interface Props {
   compare: PopularCompare;
+  /** 평소 대비 판정이 위에 있으면 인기 차트 비교는 참고 정보로 작게 보인다 */
+  secondary?: boolean;
   categoryNames: ReadonlyMap<string, string>;
   onSearchKeyword: (keyword: string) => void;
 }
@@ -189,7 +191,12 @@ function CloudCard({
  * 내 검색어를 인기 차트와 비교하는 맨 위 블록: 판정 문장, 큰 수치 카드, 인기 차트 핫 키워드와 내 검색 키워드의
  * 단어 구름 두 개(겹치는 단어는 같은 색)와 겹치는 키워드의 증감.
  */
-export default function PopularCompareSection({ compare, categoryNames, onSearchKeyword }: Props) {
+export default function PopularCompareSection({
+  compare,
+  categoryNames,
+  onSearchKeyword,
+  secondary = false,
+}: Props) {
   if (!compare.available)
     return (
       <DashSection
@@ -223,15 +230,15 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
     <section className="popular-compare compare-top" aria-label="인기 차트와 비교">
       <Reveal className="compare-hero">
         <p className="compare-eyebrow">
-          <span className="live-dot" aria-hidden="true" />
-          인기 차트와 비교
+          {!secondary && <span className="live-dot" aria-hidden="true" />}
+          {secondary ? '참고: 전체 인기 차트와 비교' : '인기 차트와 비교'}
           <HelpTip label="비교 기준 보기">
             검색 결과 {compare.slot.itemCount}개({when(compare.slot.scheduledFor)} 수집) vs 인기
             차트 {compare.popular.itemCount}개({when(compare.popular.scheduledFor)} 수집) · 표본
             크기가 달라 비율로 비교합니다
           </HelpTip>
         </p>
-        <h2 className="compare-verdict">{verdict.headline}</h2>
+        <h2 className={`compare-verdict ${secondary ? 'is-secondary' : ''}`}>{verdict.headline}</h2>
         <p className="compare-detail">{verdict.detail}</p>
       </Reveal>
 

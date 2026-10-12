@@ -18,6 +18,7 @@ import { reserveAi, settleUsage } from './usage.js';
 import { getAnalysisContext, listCategories } from './youtube.js';
 import { kstDay } from './collect.js';
 import { loadSlotCompare, summarizeCompare } from './compare.js';
+import { buildHistory, summarizeHistory, type RawHistory } from '../../src/lib/own-history.js';
 
 /** 이전 문답을 문맥으로 쓰는 최대 횟수(사용자 선택 정책, 최적값 근거 없음). */
 export const HISTORY_TURNS = 3;
@@ -105,6 +106,13 @@ async function loadTrend(
     sample && request.searchSlot
       ? await loadSlotCompare(userId, request.searchSlot).catch(() => null)
       : null;
+  // 같은 검색어의 지난 수집(평소)과 비교한 판정. 실패해도 답변은 막지 않는다.
+  const vsUsual =
+    sample && request.searchSlot
+      ? await serviceRpc('get_slot_history', { p_user: userId, p_slot: request.searchSlot })
+          .then((raw) => (raw ? buildHistory(raw as RawHistory) : null))
+          .catch(() => null)
+      : null;
   return {
     ...(common
       ? { common: { ...summarizeTrend(buildTrend(common), nameOf), ...summarizeSeries(common) } }
@@ -117,6 +125,7 @@ async function loadTrend(
             ...summarizeTrend(buildTrend(sample), nameOf),
             ...summarizeSeries(sample),
             ...(vsPopular ? { vsPopular: summarizeCompare(vsPopular, nameOf) } : {}),
+            ...(vsUsual ? { vsUsual: summarizeHistory(vsUsual) } : {}),
           },
         }
       : {}),

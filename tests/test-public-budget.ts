@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 import { createDb } from './db/harness.mjs';
-// 로그인 없는 공개 조회: 허용 밖 파라미터 거부(캐시 우회 차단)와 하루 YouTube 유닛 예산(호출 전 소비, 초과 시 429·호출 0회).
+// 로그인 없는 공개 조회: 허용 밖 파라미터 거부(캐시 우회 차단)와 하루 YouTube 유닛 예산(호출 전 소비, 초과 시 429·호출 0회), IP별 하루 상한.
 // 서버 코드와 실제 SQL 함수(PGlite)를 연결하고 외부 호출은 모의 fetch다. 실제 호출 0회.
 
 process.env.VERCEL = '1';
@@ -133,14 +133,39 @@ try {
   assert.equal(youtube.length, calls);
   assert.equal(await used(), 10);
 
-  // 4. 로그인 사용자 검색은 이 예산을 쓰지 않는다(별도 개인·전체 검색 한도)
-  // 5. 예산 저장소 장애면 운영에서는 YouTube를 부르지 않는다
+  // 4. IP별 상한: 한 곳이 전체 예산을 혼자 쓰지 못한다. 상한을 넘으면 429·YouTube 호출 0, 다른 IP는 계속 쓴다.
+  //    IP는 해시로만 저장한다.
+  await db.exec(`delete from quota_counters; delete from public_ip_quota;`);
+  process.env.PUBLIC_YOUTUBE_IP_DAILY_UNIT_CAP = '3';
+  const from = (ip: string, path: string) =>
+    detail.GET(
+      new Request(`${base}${path}`, { headers: { 'x-forwarded-for': `${ip}, 10.0.0.1` } }),
+    );
+  assert.equal((await from('203.0.113.7', `/api/video/${VIDEO}`)).status, 200);
+  const before = youtube.length;
+  const blocked = await from('203.0.113.7', `/api/video/${VIDEO}`);
+  assert.equal(blocked.status, 429);
+  assert.equal(((await blocked.json()) as { code: string }).code, 'QUOTA_EXCEEDED');
+  assert.equal(youtube.length, before, 'IP 상한 초과는 YouTube를 부르지 않는다');
+  assert.equal(await used(), 2, 'IP에서 막힌 호출은 전체 예산도 쓰지 않는다');
+  assert.equal((await from('198.51.100.2', `/api/video/${VIDEO}`)).status, 200);
+  const stored = (await db.query<{ ip_hash: string }>(`select ip_hash from public_ip_quota`)).rows;
+  assert.equal(stored.length, 2);
+  assert.ok(
+    stored.every((row) => /^[0-9a-f]{32}$/.test(row.ip_hash)),
+    'IP 원문 대신 해시만',
+  );
+  delete process.env.PUBLIC_YOUTUBE_IP_DAILY_UNIT_CAP;
+
+  // 5. 로그인 사용자 검색은 이 예산을 쓰지 않는다(별도 개인·전체 검색 한도)
+  // 6. 예산 저장소 장애면 운영에서는 YouTube를 부르지 않는다
+  const beforeDown = youtube.length;
   storageDown = true;
   const down = await get(categories, '/api/categories');
   assert.ok(down.status >= 500);
-  assert.equal(youtube.length, calls);
+  assert.equal(youtube.length, beforeDown);
   console.log(
-    'PASS: 공개 조회(허용 밖 파라미터 400·유닛 사전 소비·상한 초과 429 호출 0·저장소 장애 차단); 실제 호출 0회',
+    'PASS: 공개 조회(허용 밖 파라미터 400·유닛 사전 소비·상한 초과 429 호출 0·IP별 상한·저장소 장애 차단); 실제 호출 0회',
   );
 } finally {
   globalThis.fetch = realFetch;

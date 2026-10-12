@@ -1,0 +1,124 @@
+import assert from 'node:assert/strict';
+import { createServer } from 'vite';
+// 내 검색어의 평소 대비 판정: 날짜별 중앙값, 평소(직전 최대 7일 중앙값), 기준 부족·겹친 영상 부족, 오름·내림·비슷 문장,
+// 인증 없는 호출 거부. 합성 입력만 쓰며 외부 호출 0회.
+
+process.env.VERCEL = '1';
+process.env.VERCEL_ENV = 'production';
+process.env.SUPABASE_URL = 'https://proj.supabase.co';
+process.env.SUPABASE_ANON_KEY = 'anon-placeholder';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-placeholder';
+
+const vite = await createServer({
+  configFile: false,
+  envDir: 'tmp/no-env',
+  server: { middlewareMode: true },
+  appType: 'custom',
+  logLevel: 'error',
+});
+try {
+  const { buildHistory, historyVerdict, HISTORY_MIN_DAYS } =
+    await vite.ssrLoadModule('/src/lib/own-history.ts');
+
+  // gains: 날짜별 영상 하루 증가 목록(null은 전날 수집에 없던 영상), fresh: 새 영상 수
+  const run = (d: number, gains: (number | null)[], fresh = 0) => ({
+    runId: d + 1,
+    scheduledFor: new Date(Date.parse('2026-10-08T19:00:00Z') + d * 86400_000).toISOString(),
+    itemCount: gains.length,
+    videos: gains.map((dailyGain, i) => ({ dailyGain, ageHours: i < fresh ? 10 : 500 })),
+  });
+  const ten = (value: number) => Array.from({ length: 10 }, () => value);
+
+  // 1. 날짜별 중앙값과 평소: 첫날은 전날이 없어 null, 평소는 직전 날들의 중앙값
+  const up = buildHistory({
+    query: '고양이 간식',
+    runs: [
+      run(
+        0,
+        ten(0).map(() => null),
+      ),
+      run(1, ten(100), 1),
+      run(2, ten(120), 1),
+      run(3, ten(80), 1),
+      run(4, ten(300), 5),
+    ],
+  });
+  assert.deepEqual(
+    up.days.map((d: { medianDailyGain: number | null }) => d.medianDailyGain),
+    [null, 100, 120, 80, 300],
+  );
+  assert.equal(up.usual.medianDailyGain, 100);
+  assert.equal(up.usual.days, 3);
+  assert.equal(up.gainRatio, 3);
+  assert.equal(up.freshShare, 0.5);
+  assert.equal(up.usual.freshShare, 0.1);
+  const upVerdict = historyVerdict(up);
+  assert.equal(upVerdict.tone, 'up');
+  assert.equal(
+    upVerdict.headline,
+    '‘고양이 간식’ 영상들이 평소보다 약 3.0배 빠르게 조회수를 모으고 있습니다',
+  );
+  assert.match(upVerdict.detail, /평소 \+100, 지난 3일 기준/);
+  assert.match(upVerdict.detail, /50%로 평소 10%보다 많습니다/);
+
+  // 2. 내림·비슷
+  const down = buildHistory({
+    query: '강아지',
+    runs: [run(0, ten(100)), run(1, ten(100)), run(2, ten(100)), run(3, ten(50))],
+  });
+  assert.equal(historyVerdict(down).tone, 'down');
+  assert.match(historyVerdict(down).headline, /평소의 약 50% 수준으로 줄었습니다/);
+  const flat = buildHistory({
+    query: '강아지',
+    runs: [run(0, ten(100)), run(1, ten(100)), run(2, ten(100)), run(3, ten(110))],
+  });
+  assert.equal(historyVerdict(flat).tone, 'flat');
+
+  // 3. 평소 기준이 모자라면 판정하지 않고 진행 상황을 말한다
+  const early = buildHistory({ query: '고양이', runs: [run(0, ten(100)), run(1, ten(150))] });
+  assert.equal(early.gainRatio, null);
+  const earlyVerdict = historyVerdict(early);
+  assert.equal(earlyVerdict.tone, 'collecting');
+  assert.equal(
+    earlyVerdict.headline,
+    `‘고양이’의 평소 기준을 쌓는 중입니다 (1/${HISTORY_MIN_DAYS}일)`,
+  );
+
+  // 4. 전날과 겹친 영상이 5개 미만인 날은 중앙값을 내지 않는다(검색 결과가 크게 바뀐 날)
+  const sparse = buildHistory({
+    query: '고양이',
+    runs: [
+      run(0, ten(100)),
+      run(1, ten(100)),
+      run(2, ten(100)),
+      run(3, [500, 500, null, null, null, null, null, null, null, null]),
+    ],
+  });
+  assert.equal(sparse.latest.medianDailyGain, null);
+  assert.equal(sparse.gainRatio, null);
+  assert.match(historyVerdict(sparse).headline, /전날과 겹친 영상이 적어/);
+
+  // 5. 평소는 최근 7일만 쓴다(오래된 큰 값은 빠진다), 순서가 섞여 들어와도 날짜순으로 계산
+  const long = buildHistory({
+    query: '고양이',
+    runs: [
+      run(9, ten(100)),
+      run(0, ten(9000)),
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((d) => run(d, ten(100))),
+    ],
+  });
+  assert.equal(long.usual.days, 7);
+  assert.equal(long.usual.medianDailyGain, 100);
+  assert.equal(long.latest.runId, 10);
+
+  assert.equal(buildHistory({ query: 'x', runs: [] }), null);
+
+  // 6. 인증 없는 호출은 401
+  const handler = await vite.ssrLoadModule('/api/_lib/handlers/search-history.ts');
+  const res = await handler.GET(new Request('http://localhost/api/search-history?slot=1'));
+  assert.equal(res.status, 401);
+
+  console.log('PASS: 평소 대비 판정(중앙값·평소·기준 부족·겹침 부족·문장·인증); 외부 호출 0회');
+} finally {
+  await vite.close();
+}

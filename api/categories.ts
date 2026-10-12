@@ -10,7 +10,7 @@ export async function GET(request: Request): Promise<Response> {
     const id = params.get('id');
     if (id !== null && !/^\d{1,4}(,\d{1,4}){0,49}$/.test(id))
       throw new ApiFailure('BAD_REQUEST', '카테고리 ID 목록이 올바르지 않습니다.', 400);
-    await chargePublicYoutube(1);
+    await chargePublicYoutube(1, request);
     const body: CategoriesResponse = {
       items: id ? await listCategoriesById([...new Set(id.split(','))]) : await listCategories(),
     };

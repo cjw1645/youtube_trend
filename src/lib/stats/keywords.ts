@@ -44,6 +44,15 @@ export const KEYWORD_STOPWORDS: ReadonlySet<string> = new Set([
   '결과',
   '이렇게',
   '제대로',
+  // 제목을 꾸미는 말: 소재가 아니라 어조라 키워드 구름에서 뺀다.
+  '등장',
+  '절대',
+  '미친',
+  '근황',
+  '레전드',
+  '실화',
+  '충격',
+  '역시',
   'official',
   'mv',
   'm/v',
@@ -95,6 +104,16 @@ export const KEYWORD_STOPWORDS: ReadonlySet<string> = new Set([
   'all',
   'at',
   'from',
+  'know',
+  'name',
+  'just',
+  'like',
+  'not',
+  'can',
+  'get',
+  'new',
+  'one',
+  'day',
 ]);
 
 /** 숫자만, 또는 회차·순번 표기(1화, 2회, ep3, 제4화, part2 등) */

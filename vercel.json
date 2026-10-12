@@ -33,6 +33,10 @@
       "destination": "/api/search-data?kind=compare"
     },
     {
+      "source": "/api/search-history",
+      "destination": "/api/search-data?kind=history"
+    },
+    {
       "source": "/api/collect-search",
       "destination": "/api/collect?job=search"
     }
