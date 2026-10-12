@@ -1,14 +1,37 @@
 # 유튜브 트렌드 AI 대시보드
 
-YouTube Data API로 조회한 실제 영상 데이터를 바탕으로 인기 콘텐츠와 키워드 흐름을 살펴보고, Gemini에게 데이터 기반 분석과 기획 제안을 받는 웹 서비스입니다. 유튜브 채널 편집자가 다음 콘텐츠의 방향을 정하는 데 쓰도록 만들었습니다.
+YouTube Data API로 조회한 실제 영상 데이터를 보고, 그 데이터에 근거해 Gemini에게 트렌드 분석과 콘텐츠 기획을 물어보는 웹 서비스입니다. 유튜브 채널 편집자가 다음 콘텐츠 방향을 정하는 용도입니다.
 
-- 서비스: https://youtube-trend-orpin.vercel.app
-- 무료 플랜(Vercel Hobby + Supabase Free)만 사용합니다. 한도를 넘으면 기능을 제한하며 유료로 자동 전환하지 않습니다.
-- Vercel Hobby는 **비상업적 개인 사용 전용**입니다. 광고·결제·판매 등 수익 활동에 쓰려면 Pro 이상이 필요합니다.
+| 항목 | 값 |
+|---|---|
+| Git 저장소 | https://github.com/cjw1645/youtube_trend |
+| 배포 URL (Vercel Hobby) | https://youtube-trend-orpin.vercel.app |
+| 환경변수 예시 | [`.env.example`](.env.example) (값은 비워 둠) |
+
+- 데이터는 YouTube Data API v3 조회 결과만 씁니다(자체 크롤링 없음). 튜밋·블링은 화면 흐름만 참고했고 디자인과 문구는 복제하지 않았습니다.
+- 무료 플랜(Vercel Hobby, Supabase Free, Gemini 무료 API)만 사용하며, 한도를 넘으면 기능을 제한할 뿐 유료로 전환하지 않습니다.
+- Vercel Hobby는 비상업적 개인 사용 전용입니다.
+
+## 요구사항 대응
+
+| 요구사항 | 구현 |
+|---|---|
+| 영상 목록 | 썸네일·제목·채널명·조회수·업로드일·카테고리 표시. 키워드 검색, 카테고리 필터, 조회수순·최신순 정렬 |
+| 영상 상세 | 설명·태그·조회수·좋아요·댓글 수·채널 구독자 수. 비공개 통계는 0이 아니라 「정보 없음」 |
+| 관심 영상 | 저장·해제와 목록 보기. 새로고침 후에도 유지(로그아웃 상태는 이 브라우저 저장, 로그인하면 계정 저장) |
+| 상태 처리 | 로딩, 검색 결과 없음, API 오류를 각각 다른 화면으로 표시 |
+| AI 챗봇 | 조회한 영상의 메타데이터만 근거로 답변(아래 「AI 챗봇」) |
+| Key 보안 | Key는 서버(`/api`)에서만 사용. 저장소·브라우저 번들에 없음(아래 「Key 노출 확인」) |
+
+기능 외에 로그인(Google), 검색어 추적, 인기 차트 변화 비교를 추가했습니다. 이 때문에 Supabase를 함께 씁니다.
+
+## 기술 스택
+
+React 19 + TypeScript, Vite, Tailwind CSS, Vercel Functions(`/api`), Supabase(로그인·저장), Gemini `gemini-3.5-flash-lite`(무료 할당량 안의 Flash 계열).
 
 ## 로컬 실행
 
-필요 도구: Node.js 24(테스트가 TypeScript 파일을 직접 실행), npm
+필요 도구: Node.js 24, npm
 
 ```sh
 git clone https://github.com/cjw1645/youtube_trend.git
@@ -16,109 +39,82 @@ cd youtube_trend
 npm install
 ```
 
-루트에 `.env.local`을 만들고 `.env.example`의 이름대로 값을 채웁니다. 모든 값은 서버에서만 쓰며(`VITE_` 접두사 두 개만 브라우저 공개용), 실제 값은 Git에 올리지 않습니다.
+1. 루트에 `.env.local`을 만들고 `.env.example`의 이름대로 값을 채웁니다(Key 발급은 다음 절).
+2. 실행합니다.
 
 ```sh
-npm run dev        # 화면 + /api 개발 서버 (Vite 개발 플러그인이 api/*.ts를 실행)
+npm run dev        # 화면 + /api 개발 서버
 npm run build      # 타입 검사 + 배포용 빌드
-npm run typecheck  # 타입 검사만
-npm run format:check
-npm test           # 오프라인 테스트 전체 (아래 참고)
+npm test           # 오프라인 테스트 (실제 외부 서비스·환경 파일에 접근하지 않음)
 ```
 
-Vercel Functions 환경 그대로 확인하려면 Vercel CLI(`npm i -g vercel`)로 `vercel dev`를 실행합니다. `npm run preview`는 정적 화면 확인용이라 `/api`가 동작하지 않습니다.
+`/api`를 Vercel 환경 그대로 확인하려면 `npx vercel dev`를 씁니다. `npm run preview`는 정적 화면 확인용이라 `/api`가 동작하지 않습니다.
 
-## 테스트
+## API Key 발급·설정
 
-`tests/`의 테스트는 합성 데이터와 모의 fetch만 사용합니다. 실제 YouTube·Gemini·Supabase나 환경 파일에 접근하지 않으며, 로컬 Postgres(PGlite)에 `supabase/migrations/`를 실제로 적용해 SQL 함수까지 검증합니다.
+값은 코드·문서·채팅에 적지 말고 `.env.local`(로컬)과 Vercel 설정 화면(배포)에만 입력합니다. `.env`·`.env.*`는 `.gitignore`로 제외되어 있습니다.
 
-```sh
-npm test            # 전체
-npm test -- chat    # 파일 이름에 chat이 들어간 것만
-```
+| 변수 | 발급 방법 |
+|---|---|
+| `YOUTUBE_API_KEY` | [Google Cloud Console](https://console.cloud.google.com) → 프로젝트 생성 → API 및 서비스 → **YouTube Data API v3** 사용 설정 → 사용자 인증 정보 → API 키 만들기. 키 제한의 API 제한을 YouTube Data API v3로 지정 |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com) → Get API key. 무료 키의 요청·토큰 한도는 AI Studio에서 확인 |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | [Supabase](https://supabase.com) 새 프로젝트 → Project Settings → API |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | 위 URL·anon key와 같은 값. 브라우저에 공개되는 값이므로 **service role 키는 절대 넣지 않음** |
+| `COLLECT_SECRET` | 32자 이상 무작위 문자열(예약 수집 인증용) |
 
-GitHub Actions(`.github/workflows/ci.yml`)가 `main` push와 PR마다 타입 검사 → 포맷 검사 → 빌드를 실행합니다. 테스트는 배포 빌드에서 실행합니다: `vercel.json`의 `buildCommand`가 `npm test && npm run build`라서 Vercel 빌드가 테스트를 먼저 실행하고, 실패하면 배포가 중단되어 이전 배포가 유지됩니다(Node는 `engines`로 24.x 고정). 이 테스트는 모델 답변의 품질이나 실제 외부 서비스 동작을 검증하지 않습니다. 실제 호출 평가는 별도로 승인된 소량 예산으로 수행합니다.
+`VITE_` 접두사 변수는 클라이언트 번들에 포함되므로 YouTube·Gemini Key에는 쓰지 않습니다. 나머지 선택 변수(호출 상한, 관리자 ID)는 `.env.example`의 주석을 따릅니다.
 
-## 설정 체크리스트 (배포 전)
+Supabase 프로젝트 준비:
 
-값은 문서·채팅·Git에 적지 말고 각 서비스의 설정 화면에 직접 입력합니다.
+1. `supabase/migrations/`의 SQL을 파일 이름 순서대로 SQL Editor에서 실행합니다.
+2. Google 로그인: Google Cloud에서 웹 OAuth 클라이언트를 만들고 리디렉션 URI에 `https://<프로젝트>.supabase.co/auth/v1/callback`을 추가한 뒤, Supabase Auth → Providers → Google에 클라이언트 ID·Secret을 입력합니다. Auth → URL Configuration에 배포 주소와 로컬 주소를 등록합니다.
 
-1. **Supabase 프로젝트**: 새 프로젝트를 만들고 `supabase/migrations/`의 SQL을 파일 이름 순서대로 SQL Editor에서 실행합니다(Free 플랜: DB 500MB, 무료 자동 백업 없음, 비활성 시 일시 중지).
-2. **Google 로그인**: Google Cloud에서 웹 OAuth 클라이언트를 만들고 승인된 리디렉션 URI에 Supabase 콜백(`https://<프로젝트>.supabase.co/auth/v1/callback`)을 추가한 뒤, Supabase Auth → Providers → Google에 클라이언트 ID·Secret을 입력합니다. Supabase Auth → URL Configuration에 사이트 URL과 허용 redirect URL(배포 주소, 로컬 주소)을 등록합니다. 기본 신원 권한만 사용하며 YouTube 채널 권한은 요청하지 않습니다.
-3. **API Key**: YouTube Data API v3 키(API 제한: YouTube Data API v3), Gemini API 키(Google AI Studio). 무료 모델의 요청·토큰 한도는 AI Studio에서 프로젝트별로 확인합니다.
-4. **Vercel 환경변수**(Production·Preview): `.env.example`의 모든 이름. `COLLECT_SECRET`은 32자 이상 무작위 값입니다. 값을 바꾸면 다시 배포해야 반영됩니다.
-5. **수집 예약**: 배포가 정상인지 확인한 뒤 `supabase/cron/activate_collection.sql`을 읽고, 값을 직접 채워 Supabase SQL Editor에서 실행합니다(자동 실행되지 않습니다). 비활성화 방법도 같은 파일에 있습니다. 상세 절차: 로컬 문서 `docs/stage3-collection-runbook.md`.
-6. **확인**: 로그인, 관심 영상 저장, 검색어 추가, AI 질문 1회, 개발자도구 Network·Sources에서 키 문자열과 `googleapis.com` 직접 호출이 없는지 확인합니다.
+## Vercel 배포
 
-### 장애·롤백
+1. GitHub 저장소를 Vercel 프로젝트(Hobby)에 연결합니다. Framework Preset은 Vite입니다.
+2. Project Settings → Environment Variables에 `.env.example`의 변수(`YOUTUBE_API_KEY`, `GEMINI_API_KEY` 포함)를 Production·Preview에 등록합니다. 값을 바꾸면 재배포해야 반영됩니다.
+3. YouTube·Gemini 호출은 `/api` 서버리스 함수에서만 하고, 클라이언트는 `/api` 경로만 호출합니다.
+4. `main` 브랜치에 push하면 자동 배포됩니다. 빌드 명령(`vercel.json`)이 `npm test && npm run build`라서 테스트가 실패하면 배포가 중단되고 이전 배포가 유지됩니다.
+5. (선택) 배포가 정상인지 확인한 뒤 `supabase/cron/activate_collection.sql`을 읽고 값을 채워 SQL Editor에서 실행하면 인기 목록 정기 수집이 시작됩니다. 자동 실행되지 않습니다.
 
-- 배포 롤백: Vercel → Deployments에서 이전 배포를 Promote(Instant Rollback)합니다.
-- 수집 중단: SQL Editor에서 `select cron.unschedule('collect-popular');` 등으로 예약을 해제하면 새 수집이 멈추고 저장된 데이터는 그대로 보입니다.
-- 한도 소진: YouTube·Gemini 전체 예산이 소진되면 새 호출만 429로 막히고 저장된 대시보드·대화 조회는 계속 됩니다.
-- DB가 400MiB에 가까워지면 새 수집이 자동 보류됩니다. 만료 정리는 매일 `purge_expired()`가 실행합니다.
-- 계정 삭제는 화면의 「계정 삭제」에서 본인이 직접 합니다(관심 영상·검색어·대화가 함께 삭제됩니다).
+### Key 노출 확인
 
-## 데이터와 보관
+배포 URL에서 개발자도구를 열어 확인합니다.
 
-| 데이터 | 설명 | 보관 |
-|---|---|---|
-| 공통 인기 목록 | 한국 인기 차트 최대 200개를 서버가 매시간 저장해 변화를 계산 | 28일 |
-| 내 검색어 | 로그인 사용자가 지정한 검색어 최대 2개의 YouTube 검색 결과(최대 200개), 하루 1회 갱신 | 14일 |
-| AI 대화 | 로그인 사용자 본인만 조회·삭제, 분석에는 최근 3회 문답만 사용 | 7일 |
-| 관심 영상 | 로그인하면 계정에 영상 ID만 저장, 아니면 이 브라우저에 저장 | 삭제 전까지 |
+- Sources/번들 검색: Key 문자열이 없어야 합니다.
+- Network: 요청이 `/api/...`로만 가고 `googleapis.com`을 직접 호출하지 않아야 합니다.
+- 배포 환경에서 데이터 조회, AI 질문, 오류 화면이 모두 동작하는지 확인합니다.
 
-- 표본은 한국 API 인기 목록(또는 검색 결과)이며 전체 YouTube를 대표하지 않습니다. 키워드 비율은 그 목록 안의 영상 비율이며 검색량·시청자 관심도가 아닙니다.
-- 영상·음성·썸네일 바이너리, 댓글·자막 본문은 저장하지 않습니다.
-- 오늘 남은 횟수: 로그인하면 화면 위쪽에 오늘 남은 AI 질문(하루 10회)·검색(하루 40회) 횟수가 표시되고, AI 대화 입력창에도 남은 질문 수가 나옵니다. 한국 시간 자정에 초기화되며 0이 되면 질문 전송이 막힙니다. `GET /api/account`가 오늘 사용량을 돌려주고, 한도 수치는 DB 함수의 기본값과 같아야 합니다(테스트가 확인).
-- 공개 조회 보호: 로그인 없이 쓰는 API(인기 차트·영상 상세·관심 영상 ID 조회·카테고리)는 허용된 파라미터만 받고(임의 파라미터로 캐시를 피할 수 없음), YouTube 호출 전에 서비스 전체 하루 유닛 예산(기본 500)에서 차감해 초과하면 429를 돌려줍니다. 수집·로그인 사용자의 검색·분석 쿼터를 지키기 위한 장치입니다.
-- 한도: 사용자별 AI 하루 10회·10초 간격·동시 1건(관리자 계정은 `ADMIN_USER_IDS`로 지정하면 하루 200회·간격 없음), 개인 검색 하루 40회. 서비스 전체 한도는 환경변수로 조정합니다.
+롤백은 Vercel → Deployments에서 이전 배포를 Promote(Instant Rollback)합니다.
 
-## 화면 구성
+## AI 챗봇
 
-왼쪽 메뉴에서 **대시보드 · 영상 검색 · AI 대화 · 관심 영상**으로 이동합니다.
+- 근거는 이미 게시된 영상의 메타데이터(제목·설명·태그·카테고리·업로드일·조회수·좋아요·댓글 수·채널명·구독자 수)뿐이며, 영상·음성은 내려받거나 분석하지 않습니다.
+- 대상은 현재 화면에서 조회한 영상이고, 한 번에 최대 20개를 넘깁니다.
+- 질문 전송 버튼을 누를 때만 Gemini를 호출하고, 처리 중에는 중복 전송을 막습니다. 고정 답변은 없습니다.
+- 데이터에 없는 사실이나 실시간 순위 변동은 단정하지 않으며, 정보가 부족하면 판단이 어렵다고 답합니다.
+- 답변 형식: `[핵심 요약]`(2~3줄) → `[근거 데이터]`(영상명 / 조회수 / 업로드일) → `[콘텐츠 제안]`(제목·소재·썸네일·구성). 「현재 트렌드 분석」 질문에는 상위 영상 3개와 기획 제안 3개를 포함합니다.
+- API 오류나 무료 할당량 초과 시 안내 메시지를 표시합니다.
 
-### 대시보드
+## 한도
 
-YouTube 한국 인기 차트(`chart=mostPopular`, `regionCode=KR`)를 끝까지(최대 4페이지, 200개) 수집한 현재 목록의 통계와, 서버가 저장한 수집 기록으로 계산한 변화를 함께 보여줍니다. 모든 위젯에 계산 범위를 표시합니다.
+로그인 사용자 기준 AI 질문 하루 10회(10초 간격, 동시 1건), 개인 검색 하루 40회이며 한국 시간 자정에 초기화됩니다. 서비스 전체 호출 예산은 환경변수로 조정하고, 소진되면 새 호출만 429로 막히고 저장된 데이터 조회는 계속됩니다.
 
-- **현재 목록 통계**: 24시간 내 업로드 비율, 중앙값 조회수, 빠르게 조회수를 모으는 영상, 지금 뜨는 소재(키워드), 참여율. 카테고리·영상 길이 분포는 아래 수집 기록 집계에서 한 번만 보여줍니다.
-- **수집 기록으로 본 변화**: 전일 동시간(기본)·7일 전·직전 수집·28일 전과 비교한 키워드·카테고리·길이 구간의 비율 변화(퍼센트포인트), 그대로 남은/새로 들어온/빠진 영상 수, 최근 7일 키워드 추이. 키워드를 누르면 근거 영상이 펼쳐집니다. 전일 동시간 수집이 없으면 7일 전 → 직전 수집 → 28일 전 순으로 물러나며 이유를 표시하고, 비교할 수집이 하나도 없으면 비교를 막습니다.
-- **내 검색어(메인 화면)**: 첫 화면의 타이틀이 「내 검색어로 트렌드 추적」이고 큰 「＋ 검색어 추가」 버튼이 가장 위에 있습니다. 누르면 버튼 아래에 작은 입력 창이 뜨며(로그인 필요, 최대 2개, 바깥 클릭·Esc로 닫힘), 등록하면 그 검색 결과의 대시보드가 탭으로 생깁니다. 공통 인기 차트 대시보드는 「인기 차트 대시보드」 버튼으로 여닫는 옵션 패널이며 열림 상태를 기억합니다(로그아웃 상태에서는 기본으로 열려 있음). 검색 결과 순서는 인기 순위가 아닙니다.
-- **인기 차트와 비교**: 검색어 대시보드 맨 위에서 그 검색 결과를 같은 시각의 인기 차트와 비교합니다. 판정 문장(조회수 중앙값이 인기 차트의 몇 배인지), 큰 수치 카드 4개(조회수 배율·인기 차트에 든 영상·인기 차트 키워드 노출·분야 차이), 「지금 인기 차트의 핫 키워드」와 「내 검색 결과의 키워드」 단어 구름 두 개(겹치는 단어는 초록 윤곽)와 겹치는 키워드의 ▲▼ 증감을 보여줍니다. 바로 아래 「지금 가장 눈에 띄는 것」 다음에 내 검색 결과·인기 차트 전체·인기 차트 핫 키워드 영상의 조회수·좋아요 중앙값 막대가 나옵니다. 두 표본의 크기가 달라 비율로 비교하며, 키워드 집계는 영상 2개 이상에 나온 상위 100개만 저장되므로 한쪽에 없다는 것은 0개가 아니라 기준 미만일 수 있습니다. 검색어의 키워드 집계가 비어 있으면 집계에 실패했으니 다른 키워드로 변경하라고 안내합니다. 같은 값이 AI 질문(검색 결과 대상)에도 전달됩니다. 섹션은 스크롤해서 보일 때 떠오르며 나타납니다(움직임 줄이기 설정 시 바로 표시).
-- **AI 대상 가져오기**: 상위 20개를 AI 대화의 분석 대상으로 가져옵니다. 이미 선택한 대상이 있으면 덮어쓰지 않습니다.
+## 화면 캡처
 
-### 영상 검색
+제출용 캡처는 저장소에 포함하지 않고 별도로 첨부합니다.
 
-기본은 YouTube 인기 차트 200개(대시보드와 같은 목록)입니다. 키워드 검색은 로그인한 사용자만 쓸 수 있고(로그아웃 상태에서는 검색창 아래가 흐려지며 로그인 안내가 뜹니다) 검색 1회가 개인 검색 한도 1회를 쓰며 결과는 50개입니다. 카테고리 필터와 인기순·조회수순·최신순 정렬은 선택 즉시 받은 목록 안에서 적용하며 서버를 다시 호출하지 않습니다. 카드를 누르면 카드를 누르면 설명·태그·조회수·좋아요·댓글 수·채널 구독자 수를 상세로 보여줍니다. 비공개 통계는 「정보 없음」으로 0과 구분합니다.
+| 화면 | 내용 |
+|---|---|
+| 데이터 조회 | 실제 YouTube 데이터로 채운 영상 목록·상세 |
+| 챗봇 답변 | 세 섹션 형식의 AI 답변 |
+| 오류 | 할당량 초과·API 오류 안내 |
 
-### 관심 영상
-
-카드나 상세의 관심 영상 버튼으로 저장·해제합니다. 로그인하면 계정에 저장되어 다른 기기에서도 보입니다. 이 브라우저에 저장했던 로컬 목록은 계정으로 이전하지 않으며, 로그아웃하면 다시 표시됩니다.
-
-### AI 대화 (로그인 필요)
-
-채팅 형식입니다. 질문(1~100자)을 보내면 서버가 대상 영상(최대 20개)의 최신 메타데이터와 저장된 트렌드 집계, 최근 3회 문답을 합쳐 Gemini에 한 번 호출합니다. 근거는 공개 메타데이터뿐이며 영상·음성은 분석하지 않습니다. 인기 순위와 목록 소속은 서버가 저장된 목록으로 검증합니다. 대화는 7일간 저장되어 목록에서 다시 열고 삭제할 수 있습니다.
-
-- **분석·기획 질문**: `[핵심 요약]` · `[근거 데이터]`(상위 3개 영상) · `[콘텐츠 제안]` 세 섹션.
-- **통계 질문**(평균·합계·최대 등): 섹션 없이 첫 문장에 값을 답하고 계산 범위를 밝힙니다.
-
-## 구조
-
-Vercel Hobby는 배포당 함수 12개까지라 관련 엔드포인트를 한 함수로 묶고 `vercel.json`의 `rewrites`로 기존 주소를 유지합니다. `tests/test-deploy-limits.ts`가 함수 개수가 12개를 넘으면 실패해 배포 전에 막습니다.
+## 폴더 구조
 
 ```
-api/                 Vercel Functions (API Key·service role 키를 읽는 유일한 위치)
-  videos.ts categories.ts video/[id].ts   영상 목록·검색·카테고리·상세
-  chat.ts conversations.ts                AI 질문(로그인) · 저장된 대화 조회·삭제
-  favorites.ts account.ts                 관심 영상 · 오늘 사용량 조회·계정 삭제
-  search-slots.ts                         내 검색어 등록·변경·해제 (로그인)
-  stored.ts                               저장된 공통 인기 목록·집계(공개): /api/snapshot, /api/trend
-  search-data.ts                          내 검색어의 저장 결과·집계·인기 차트 비교(로그인): /api/search-snapshot, /api/search-trend, /api/search-compare
-  collect.ts                              수집(예약 인증 전용): /api/collect, /api/collect-search
-  _lib/handlers/     위 묶음 함수가 호출하는 개별 핸들러
-  _lib/              youtube, gemini, auth, usage(한도 예약), chat-service, trend 등
-src/                 화면(pages, components, hooks)과 공용 통계(lib/stats)
-supabase/migrations/ 데이터 모델·RLS·한도·수집·대화 SQL (순서대로 적용)
-supabase/cron/       예약 수집 활성화 템플릿(자동 실행되지 않음)
-tests/               오프라인 테스트와 실행기
+api/                 Vercel Functions (Key를 읽는 유일한 위치). 함수 12개 제한 때문에 vercel.json rewrites로 묶음
+src/                 화면(pages, components, hooks)과 공용 통계
+supabase/migrations/ 데이터 모델·RLS·한도 SQL (순서대로 적용)
+tests/               오프라인 테스트 (모의 fetch + 로컬 Postgres)
 ```
