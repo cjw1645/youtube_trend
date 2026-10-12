@@ -10,6 +10,7 @@ import {
   type ChatRanking,
 } from './chat-prompt.js';
 import { generateContent, MAX_OUTPUT_TOKENS, type GeminiResult } from './gemini.js';
+import { generateVerified, unverifiedNotice } from './chat-verify.js';
 import { ApiFailure } from './http.js';
 import { serviceRpc } from './supabase.js';
 import { buildTrend, summarizeSeries, summarizeTrend, type TrendInputs } from './trend.js';
@@ -232,9 +233,9 @@ export async function runChat(
       );
     }
 
-    // 5. 단일 호출(자동 재시도 없음). 이 시점부터는 호출 여부가 불명확할 수 있다.
+    // 5. 호출. 이 시점부터는 호출 여부가 불명확할 수 있다. 입력에 없는 숫자가 있으면 시간이 남을 때 한 번만 다시 쓰게 한다.
     phase = 'called';
-    const result = await generate(input);
+    const { result, unverified } = await generateVerified(generate, input);
     const answer = renderChatReferences(result.text, context, now);
     phase = 'done';
     await settleUsage(userId, reservation.id, 'settled').catch(() => undefined);
@@ -252,7 +253,8 @@ export async function runChat(
     // 6. 저장(실패해도 답변은 돌려주되 저장되지 않았음을 알린다).
     const { topRanking } = buildChatStats(context, ranking, now);
     let conversationId: string | null = null;
-    let notice: string | undefined;
+    // 끝까지 확인되지 않은 숫자는 답변을 바꾸지 않고 화면 안내로 알린다(저장되는 답변 형식을 깨지 않는다).
+    const notices: string[] = unverified.length ? [unverifiedNotice(unverified)] : [];
     try {
       const turn = rows<{ state: string; conversation_id: string | null }>(
         await serviceRpc('save_chat_turn', {
@@ -269,13 +271,15 @@ export async function runChat(
       if (turn?.state === 'saved' || turn?.state === 'duplicate')
         conversationId = turn.conversation_id;
       else
-        notice =
+        notices.push(
           turn?.state === 'conversation_limit' || turn?.state === 'turn_limit'
             ? '대화 저장 한도에 도달해 이 답변은 저장되지 않았습니다. 오래된 대화를 삭제해 주세요.'
-            : '대화를 저장하지 못했습니다. 이 화면에서만 볼 수 있습니다.';
+            : '대화를 저장하지 못했습니다. 이 화면에서만 볼 수 있습니다.',
+        );
     } catch {
-      notice = '대화를 저장하지 못했습니다. 이 화면에서만 볼 수 있습니다.';
+      notices.push('대화를 저장하지 못했습니다. 이 화면에서만 볼 수 있습니다.');
     }
+    const notice = notices.length ? notices.join(' ') : undefined;
     return {
       answer,
       model: result.model,
