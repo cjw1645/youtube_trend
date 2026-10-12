@@ -465,11 +465,11 @@ export default function TrendPanel({
         )}
       </DashSection>
 
-      <div className="dash-detail">
+      <div className="chart-grid">
         <DashSection
           title="카테고리 비중"
           basis="영상 수 기준 · API 제공 카테고리"
-          className="trend-categories"
+          className="chart-card trend-categories"
         >
           {categories.length ? (
             <ol className="trend-list">
@@ -490,7 +490,7 @@ export default function TrendPanel({
         <DashSection
           title="영상 길이 구간"
           basis="길이를 아는 영상 중 비율 · 쇼츠 여부는 API에 없음"
-          className="trend-lengths"
+          className="chart-card trend-lengths"
         >
           <ol className="trend-list">
             {(comparison.available && comparison.lengths
@@ -523,27 +523,26 @@ export default function TrendPanel({
             </p>
           )}
         </DashSection>
+        {trend.series.length > 0 && trend.series[0].points.length > 1 && (
+          <DashSection
+            title="최근 7일 키워드 추이"
+            basis="수집 시점별 영상 수 · 끊긴 선은 기준 미만(2개 미만)이거나 수집 없음"
+            className="chart-card trend-series"
+          >
+            <ul className="trend-list">
+              {trend.series.map((item) => (
+                <li key={item.keyword} className="trend-row is-compact">
+                  <span className="trend-name-static">{item.keyword}</span>
+                  <Sparkline points={item.points} />
+                  <span className="trend-count">
+                    {item.points.length}회 수집 · 최근 {item.points.at(-1)?.videoCount ?? '—'}개
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </DashSection>
+        )}
       </div>
-
-      {trend.series.length > 0 && trend.series[0].points.length > 1 && (
-        <DashSection
-          title="최근 7일 키워드 추이"
-          basis="수집 시점별 영상 수 · 끊긴 선은 기준 미만(2개 미만)이거나 수집 없음"
-          className="trend-series"
-        >
-          <ul className="trend-list">
-            {trend.series.map((item) => (
-              <li key={item.keyword} className="trend-row is-compact">
-                <span className="trend-name-static">{item.keyword}</span>
-                <Sparkline points={item.points} />
-                <span className="trend-count">
-                  {item.points.length}회 수집 · 최근 {item.points.at(-1)?.videoCount ?? '—'}개
-                </span>
-              </li>
-            ))}
-          </ul>
-        </DashSection>
-      )}
 
       {onImport && videos && videos.length > 0 && (
         <div className="trend-import">

@@ -904,7 +904,9 @@ button:active:not(:disabled) {
   color: var(--muted);
 }
 /* 대시보드(데이터 데스크): 상자 대신 구분선, 강조색은 1위·주요 행동에만 쓴다. */
+/* 3칸으로 나뉘는 블록(하이라이트·통계·목록·차트 카드)은 같은 3열과 같은 간격을 써서 열 경계가 세로로 한 줄에 놓인다. */
 .dashboard {
+  --dash-gap: 16px;
   display: flex;
   flex-direction: column;
 }
@@ -969,6 +971,7 @@ button:active:not(:disabled) {
 .dash-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dash-gap);
   border-bottom: 1px solid var(--line);
 }
 .stat-tile {
@@ -1008,8 +1011,12 @@ button:active:not(:disabled) {
 }
 .dash-lead {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dash-gap);
   border-bottom: 1px solid var(--line);
+}
+.dash-lead > .dash-section:first-child {
+  grid-column: span 2;
 }
 .dash-detail {
   display: grid;
@@ -1020,8 +1027,7 @@ button:active:not(:disabled) {
   padding: 22px 0;
 }
 .dash-lead > .dash-section + .dash-section {
-  margin-left: 28px;
-  padding-left: 28px;
+  padding-left: 20px;
   border-left: 1px solid var(--line);
 }
 /* 옆 순위 목록 높이만큼 칸을 채우고 단어는 그 가운데에 둔다. */
@@ -1436,7 +1442,7 @@ button.legend-row:hover,
 .trend-tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--dash-gap, 16px);
 }
 .trend-tiles dt {
   color: var(--muted);
@@ -2638,8 +2644,11 @@ body {
 .chat-login .login-button {
   margin-left: auto;
 }
+/* 팝오버 안에서는 위쪽 구분선과 여백이 필요 없다. */
 .conversation-history {
   margin: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 @media (max-width: 1023px) {
@@ -2718,8 +2727,8 @@ body {
 }
 .spotlight-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dash-gap);
 }
 .spot {
   position: relative;
@@ -2822,8 +2831,12 @@ button.spot:hover {
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--dash-gap);
+  margin-bottom: var(--dash-gap);
+}
+/* 좁은 카드 안의 목록 행: 이름은 남는 폭을, 수치·증감은 필요한 만큼만 쓴다. */
+.chart-card .trend-row.is-compact {
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 .dash-section.chart-card,
 .dash-section.chart-wide {

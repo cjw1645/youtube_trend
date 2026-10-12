@@ -74,6 +74,58 @@ try {
   // 같은 지표를 두 번 보여주지 않는다: 실시간 쪽 카테고리 분포·길이 구간은 없다
   assert.doesNotMatch(open, /카테고리 분포/);
   assert.doesNotMatch(open, /영상 길이 구간<\/h\d>/);
+  // 저장 집계의 카테고리 비중·영상 길이 구간·최근 7일 키워드 추이는 한 가로줄(같은 3열 그리드)에 나온다
+  const { default: TrendPanel } = await vite.ssrLoadModule('/src/components/TrendPanel.tsx');
+  const at = '2026-10-08T04:00:00Z';
+  const trend = {
+    current: {
+      runId: 1,
+      scheduledFor: at,
+      expiresAt: '2026-11-08T04:00:00Z',
+      itemCount: 10,
+      categories: [
+        { categoryId: '15', count: 6, share: 0.6, baseCount: null, baseShare: null, deltaPp: null },
+      ],
+      keywords: [],
+      lengths: { counts: { u60: 1, u180: 2, u600: 3, o600: 4 }, unknown: 0, known: 10 },
+      smallSample: false,
+    },
+    comparisons: ['previous', 'day', 'week', 'month'].map((kind) => ({ kind, available: false })),
+    series: [
+      {
+        keyword: '고양이',
+        points: [
+          { scheduledFor: at, videoCount: 2 },
+          { scheduledFor: '2026-10-08T05:00:00Z', videoCount: 3 },
+        ],
+      },
+    ],
+  };
+  const panel = (series: unknown) =>
+    renderToStaticMarkup(
+      React.createElement(TrendPanel, {
+        trend: { ...trend, series },
+        videos: null,
+        categoryNames: new Map([['15', '반려동물']]),
+        scope: '테스트',
+        onSelectVideo: noop,
+      }),
+    );
+  const withSeries = panel(trend.series);
+  const lastGrid = withSeries.lastIndexOf('class="chart-grid"');
+  assert.ok(lastGrid >= 0, '카드 그리드');
+  const gridRow = withSeries.slice(lastGrid);
+  for (const title of ['카테고리 비중', '영상 길이 구간', '최근 7일 키워드 추이'])
+    assert.ok(gridRow.includes(title), `${title}는 같은 가로줄 그리드 안`);
+  assert.equal((gridRow.match(/chart-card/g) ?? []).length, 3, '세 카드가 한 줄');
+  assert.doesNotMatch(withSeries, /dash-detail/, '세로로 쌓던 컨테이너는 쓰지 않음');
+  // 추이가 없으면 두 카드만(같은 열 경계를 유지한 채 세 번째 칸은 비움)
+  const noSeries = panel([]);
+  assert.equal(
+    (noSeries.slice(noSeries.lastIndexOf('class="chart-grid"')).match(/chart-card/g) ?? []).length,
+    2,
+  );
+
   // 인기 차트 비교 섹션: 값이 있으면 타일·표·칩, 인기 수집이 없으면 안내 한 줄
   const { default: Section } = await vite.ssrLoadModule(
     '/src/components/PopularCompareSection.tsx',
