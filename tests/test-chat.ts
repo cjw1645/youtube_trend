@@ -160,7 +160,7 @@ try {
     );
   const ask = (user: string, extra: Record<string, unknown> = {}) =>
     post(user, { question: '트렌드를 분석해줘', videoIds: [id(1)], requestId: uuid(), ...extra });
-  // 개인 간격(30초)과 하루 횟수 계산을 건너뛰기 위해 이전 예약 시각을 과거로 민다(실제 코드 경로는 그대로).
+  // 개인 간격(10초)과 하루 횟수 계산을 건너뛰기 위해 이전 예약 시각을 과거로 민다(실제 코드 경로는 그대로).
   const age = (user: string) =>
     q(
       `update usage_reservations set created_at = created_at - interval '1 hour', settled_at = settled_at where user_id = $1 and kind = 'ai'`,
@@ -304,7 +304,7 @@ try {
   assert.equal(soon.status, 429);
   assert.match((await soon.json()).message, /초 기다려/);
   assert.equal(geminiCalls, calls0);
-  console.log('  ok 30초 간격 차단');
+  console.log('  ok 10초 간격 차단');
 
   // 5. 후속 질문: 같은 대화, 최근 3회만 문맥, 직접 보내지 않은 이전 답변
   const conversationId = firstBody.conversationId as string;

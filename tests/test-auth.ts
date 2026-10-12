@@ -237,8 +237,31 @@ try {
   respond = rpcResult({ status: 'ok', reservation_id: 'r1', retry_after_seconds: 0 });
   assert.deepEqual(await usage.reserveAi(USER_A, 'req-1'), { id: 'r1', duplicate: false });
   assert.equal(calls[0].url, 'https://proj.supabase.co/rest/v1/rpc/reserve_ai_request');
-  assert.deepEqual(JSON.parse(calls[0].body!), { p_user: USER_A, p_request: 'req-1' });
+  assert.deepEqual(JSON.parse(calls[0].body!), {
+    p_user: USER_A,
+    p_request: 'req-1',
+    p_daily_limit: 10,
+    p_min_gap_seconds: 10,
+  });
   assert.equal(calls[0].headers.authorization, 'Bearer service-placeholder');
+  // 관리자 계정은 환경변수의 사용자 id에만 적용되고 하루 한도·간격이 달라진다(대소문자 무관)
+  process.env.ADMIN_USER_IDS = ' ' + USER_A.toUpperCase() + ', other-id ';
+  reset();
+  respond = rpcResult({ status: 'ok', reservation_id: 'r9', retry_after_seconds: 0 });
+  await usage.reserveAi(USER_A, 'req-admin');
+  assert.deepEqual(JSON.parse(calls[0].body!), {
+    p_user: USER_A,
+    p_request: 'req-admin',
+    p_daily_limit: 200,
+    p_min_gap_seconds: 0,
+  });
+  reset();
+  respond = rpcResult({ status: 'ok', reservation_id: 'r8', retry_after_seconds: 0 });
+  await usage.reserveAi(USER_B, 'req-other');
+  assert.equal(JSON.parse(calls[0].body!).p_daily_limit, 10);
+  delete process.env.ADMIN_USER_IDS;
+  reset();
+  respond = rpcResult({ status: 'ok', reservation_id: 'r1', retry_after_seconds: 0 });
   respond = rpcResult({ status: 'duplicate', reservation_id: 'r1' });
   assert.deepEqual(await usage.reserveAi(USER_A, 'req-1'), { id: 'r1', duplicate: true });
   const expectBlocked = async (

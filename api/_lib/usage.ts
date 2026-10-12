@@ -22,7 +22,28 @@ const BLOCKED: Record<string, string> = {
  * (tests/test-usage-summary.ts가 SQL 기본값과 같은지 확인한다). 화면의 남은 횟수 표시에만 쓰고 차단은 DB가 한다.
  */
 export const AI_DAILY_LIMIT = 10;
+/** 질문 사이 최소 간격(초). DB 함수의 기본값(30)보다 우선하도록 서버가 호출할 때 직접 넘긴다. */
+export const AI_MIN_GAP_SECONDS = 10;
+/** 관리자 계정의 하루 질문 상한과 간격. 무제한이 아니라 큰 상한을 둔다(코드 실수로 질문이 폭주해도 무료 한도를 지킨다). */
+export const ADMIN_AI_DAILY_LIMIT = 200;
+export const ADMIN_AI_MIN_GAP_SECONDS = 0;
 export const SEARCH_DAILY_LIMIT = 40;
+
+/** 환경변수 ADMIN_USER_IDS(쉼표로 구분한 Supabase 사용자 UUID)에 든 계정. 이미 검증된 토큰의 사용자 id로만 비교한다. */
+export function isAdmin(userId: string): boolean {
+  return (process.env.ADMIN_USER_IDS ?? '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(userId.toLowerCase());
+}
+
+/** 사용자별 AI 질문 한도. 서버가 DB 함수에 넘기고 화면의 남은 횟수 계산에도 쓴다. */
+export function aiLimitsFor(userId: string): { dailyLimit: number; minGapSeconds: number } {
+  return isAdmin(userId)
+    ? { dailyLimit: ADMIN_AI_DAILY_LIMIT, minGapSeconds: ADMIN_AI_MIN_GAP_SECONDS }
+    : { dailyLimit: AI_DAILY_LIMIT, minGapSeconds: AI_MIN_GAP_SECONDS };
+}
 
 export interface UsageSummary {
   ai: { used: number; limit: number };
@@ -41,7 +62,7 @@ export async function getUsageSummary(
   if (!raw || typeof raw.aiUsed !== 'number' || typeof raw.searchUsed !== 'number')
     throw new ApiFailure('UPSTREAM_ERROR', '사용량을 읽지 못했습니다.', 502);
   return {
-    ai: { used: raw.aiUsed, limit: AI_DAILY_LIMIT },
+    ai: { used: raw.aiUsed, limit: aiLimitsFor(userId).dailyLimit },
     search: { used: raw.searchUsed, limit: SEARCH_DAILY_LIMIT },
   };
 }
@@ -56,15 +77,21 @@ function allowed(row: ReserveRow): Reservation | null {
 
 /** 허용되면 예약 id를 반환한다. 한도·간격·진행 중 차단은 429로 구분 안내한다. 저장소 장애면 예외를 던져 외부 호출을 막는다. */
 export async function reserveAi(userId: string, requestId: string): Promise<Reservation> {
+  const limits = aiLimitsFor(userId);
   const row = first(
-    await serviceRpc('reserve_ai_request', { p_user: userId, p_request: requestId }),
+    await serviceRpc('reserve_ai_request', {
+      p_user: userId,
+      p_request: requestId,
+      p_daily_limit: limits.dailyLimit,
+      p_min_gap_seconds: limits.minGapSeconds,
+    }),
   );
   const ok = allowed(row);
   if (ok) return ok;
   if (row.status === 'too_soon')
     throw new ApiFailure(
       'QUOTA_EXCEEDED',
-      `다음 질문까지 ${row.retry_after_seconds ?? 30}초 기다려 주세요.`,
+      `다음 질문까지 ${row.retry_after_seconds ?? AI_MIN_GAP_SECONDS}초 기다려 주세요.`,
       429,
     );
   throw new ApiFailure('QUOTA_EXCEEDED', BLOCKED[row.status] ?? '요청을 처리할 수 없습니다.', 429);

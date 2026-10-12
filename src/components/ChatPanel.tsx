@@ -288,7 +288,7 @@ export default function ChatPanel({
       <div className="chat-dock">
         {!chat.signedIn && (
           <div role="status" className="chat-login">
-            <p>AI 질문은 로그인한 사용자만 사용할 수 있습니다(하루 10회, 30초 간격).</p>
+            <p>AI 질문은 로그인한 사용자만 사용할 수 있습니다(하루 10회, 10초 간격).</p>
             {chat.authEnabled && (
               <button type="button" className="login-button" onClick={() => void chat.signIn()}>
                 Google로 로그인
