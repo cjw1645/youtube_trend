@@ -1,7 +1,7 @@
 import Reveal from './Reveal';
 import HelpTip from './HelpTip';
 import { formatCount } from '../lib/format';
-import { historyVerdict, risingKeywords } from '../lib/own-history';
+import { historyVerdict, risingKeywords, RECENT_UPLOAD_HOURS } from '../lib/own-history';
 import type { OwnHistory, TrendResult } from '../types/trend';
 
 const day = (iso: string) =>
@@ -53,7 +53,12 @@ export default function OwnHistorySection({
         <Reveal className="own-risers">
           <h3 className="compare-sub">
             이 주제에서 지금 빠르게 크는 영상
-            {history.risersAt && <small> · {day(history.risersAt)} 수집, 하루 조회수 증가순</small>}
+            {history.risersAt && (
+              <small>
+                {' '}
+                · {day(history.risersAt)} 수집, 최근 30일 업로드 먼저 · 하루 조회수 증가순
+              </small>
+            )}
           </h3>
           {history.risers.length ? (
             <ol>
@@ -65,6 +70,9 @@ export default function OwnHistorySection({
                     <span className="own-riser-meta">
                       하루 +{formatCount(Math.round(v.dailyGain))}회
                       {v.ageHours !== null && ` · ${ageText(v.ageHours)}`}
+                      {(v.ageHours === null || v.ageHours >= RECENT_UPLOAD_HOURS) && (
+                        <span className="own-riser-old"> · 오래된 영상</span>
+                      )}
                     </span>
                   </button>
                 </li>

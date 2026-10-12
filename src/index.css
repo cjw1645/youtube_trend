@@ -3481,6 +3481,9 @@ button.spot:hover {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+.own-riser-old {
+  color: var(--faint);
+}
 .own-bars {
   display: flex;
   align-items: flex-end;

@@ -154,6 +154,28 @@ try {
 
   assert.equal(buildHistory({ query: 'x', runs: [] }), null);
 
+  // 7-1. 최근 30일 업로드를 먼저: 오래된 영상의 증가가 더 커도 최근 영상이 앞, 모자라면 오래된 영상으로 채운다
+  const mixed = buildHistory({
+    query: '고양이',
+    runs: [
+      {
+        runId: 1,
+        scheduledFor: '2026-10-11T19:00:00Z',
+        itemCount: 4,
+        videos: [
+          { dailyGain: 400000, ageHours: 474 * 24, videoId: 'old1', title: '오래된 쇼츠' },
+          { dailyGain: 60000, ageHours: 24, videoId: 'new1', title: '어제 올라온 영상' },
+          { dailyGain: 57000, ageHours: 69 * 24, videoId: 'old2', title: '69일 전 영상' },
+          { dailyGain: 9000, ageHours: 10 * 24, videoId: 'new2', title: '열흘 전 영상' },
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(
+    mixed.risers.map((r: { videoId: string }) => r.videoId),
+    ['new1', 'new2', 'old1'],
+  );
+
   // 9. 늘어난 키워드: 검색어가 붙은 해시태그는 소재만 남기고, 남는 게 불용어·한 글자면 뺀다
   const kw = (keyword: string, deltaPp: number | null, count = 5) => ({
     keyword,

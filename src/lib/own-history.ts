@@ -71,9 +71,15 @@ function pickDaily(runs: readonly RawRun[]): { run: RawRun; day: HistoryDay }[] 
   return [...byDate.values()];
 }
 
-/** 하루 조회수 증가가 가장 큰 영상. 제목이 있는 최근 수집에서만 고른다. */
+/** 「최근 업로드」 기준: 업로드 후 30일 미만 */
+export const RECENT_UPLOAD_HOURS = 30 * 24;
+
+/**
+ * 하루 조회수 증가가 큰 영상. 제목이 있는 최근 수집에서만 고른다.
+ * 편집자에게는 요즘 올라와 뜨는 영상이 더 쓸모 있으므로 최근 30일 업로드를 먼저 고르고, 모자라면 오래된 영상으로 채운다.
+ */
 function pickRisers(run: RawRun): HistoryRiser[] {
-  return run.videos
+  const all = run.videos
     .flatMap((v) =>
       v.videoId && v.title && v.dailyGain != null && v.dailyGain > 0
         ? [
@@ -86,8 +92,9 @@ function pickRisers(run: RawRun): HistoryRiser[] {
           ]
         : [],
     )
-    .sort((a, b) => b.dailyGain - a.dailyGain)
-    .slice(0, HISTORY_RISERS);
+    .sort((a, b) => b.dailyGain - a.dailyGain);
+  const recent = (v: HistoryRiser) => v.ageHours !== null && v.ageHours < RECENT_UPLOAD_HOURS;
+  return [...all.filter(recent), ...all.filter((v) => !recent(v))].slice(0, HISTORY_RISERS);
 }
 
 export function buildHistory(raw: RawHistory): OwnHistory | null {
