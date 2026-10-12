@@ -17,7 +17,7 @@ const vite = await createServer({
   logLevel: 'error',
 });
 try {
-  const { buildHistory, historyVerdict, HISTORY_MIN_DAYS } =
+  const { buildHistory, historyVerdict, risingKeywords, HISTORY_MIN_DAYS } =
     await vite.ssrLoadModule('/src/lib/own-history.ts');
 
   // gains: 날짜별 영상 하루 증가 목록(null은 전날 수집에 없던 영상), fresh: 새 영상 수
@@ -154,13 +154,56 @@ try {
 
   assert.equal(buildHistory({ query: 'x', runs: [] }), null);
 
+  // 9. 늘어난 키워드: 검색어가 붙은 해시태그는 소재만 남기고, 남는 게 불용어·한 글자면 뺀다
+  const kw = (keyword: string, deltaPp: number | null, count = 5) => ({
+    keyword,
+    deltaPp,
+    count,
+    share: 0,
+    baseCount: null,
+    baseShare: null,
+    channels: 1,
+    belowBaseline: false,
+  });
+  const trendWith = (keywords: ReturnType<typeof kw>[]) => ({
+    current: {},
+    comparisons: [{ kind: 'day', available: true, keywords }],
+    series: [],
+  });
+  const chips = risingKeywords(
+    trendWith([
+      kw('고양이일상', 4.7),
+      kw('냥이', 3.2),
+      kw('고양이게임', 3.0),
+      kw('고양이장난감', 2.6),
+      kw('고양이영상', 2.5),
+      kw('고양이들', 2.4),
+      kw('고양이', 9.0),
+      kw('영상', 8.0),
+      kw('장난감', 1.0),
+      kw('간식', -1.0),
+      kw('츄르', 5.0, 1),
+    ]),
+    '고양이 영상',
+  );
+  assert.deepEqual(
+    chips.map((c: { label: string; keyword: string }) => [c.label, c.keyword]),
+    [
+      ['일상', '고양이일상'],
+      ['냥이', '냥이'],
+      ['게임', '고양이게임'],
+      ['장난감', '고양이장난감'],
+    ],
+  );
+  assert.deepEqual(risingKeywords(null, '고양이'), []);
+
   // 8. 인증 없는 호출은 401
   const handler = await vite.ssrLoadModule('/api/_lib/handlers/search-history.ts');
   const res = await handler.GET(new Request('http://localhost/api/search-history?slot=1'));
   assert.equal(res.status, 401);
 
   console.log(
-    'PASS: 평소 대비 판정(중앙값·평소·기준 부족·겹침 부족·같은 날 두 수집·크는 영상·문장·인증); 외부 호출 0회',
+    'PASS: 평소 대비 판정(중앙값·평소·기준 부족·겹침 부족·같은 날 두 수집·크는 영상·늘어난 키워드 정리·문장·인증); 외부 호출 0회',
   );
 } finally {
   await vite.close();

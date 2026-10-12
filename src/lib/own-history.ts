@@ -1,7 +1,8 @@
 // 내 검색어를 「자기 평소」와 비교한다. 인기 차트는 분야가 달라(대부분 게임) 내 주제가 오르는지 말해 주지 못하므로,
 // 같은 검색어의 지난 수집들을 기준으로 삼는다. DB는 영상별 원자료만 주고 중앙값·평소·판정은 여기서 계산한다.
 import { median } from './stats/metrics.js';
-import type { HistoryDay, HistoryRiser, OwnHistory } from '../types/trend.js';
+import { normalizeKeyword, videoKeywords } from './stats/keywords.js';
+import type { HistoryDay, HistoryRiser, OwnHistory, TrendResult } from '../types/trend.js';
 
 /** 평소 판정에 필요한 지난 수집 수(하루 1회 수집이라 3일) */
 export const HISTORY_MIN_DAYS = 3;
@@ -197,4 +198,45 @@ export function summarizeHistory(history: OwnHistory) {
     usualFreshSharePct:
       history.usual.freshShare === null ? null : Math.round(history.usual.freshShare * 100),
   };
+}
+
+export interface RisingKeyword {
+  /** 원래 키워드(검색에 쓴다) */
+  keyword: string;
+  /** 보여 줄 말: 검색어가 붙은 합성어(고양이장난감)는 검색어를 뗀 소재(장난감) */
+  label: string;
+  count: number;
+  deltaPp: number;
+}
+
+/**
+ * 이 주제 안에서 비중이 늘어난 키워드. 전일 동시간, 없으면 직전 수집과 비교한다.
+ * 검색어 단어 자체는 늘 나오므로 빼고, 검색어가 붙은 해시태그는 검색어를 떼어 소재만 남긴다.
+ * 떼고 남은 말이 불용어·한 글자(영상, 들)면 뺀다. 같은 소재로 모이면 증가가 큰 쪽 하나만 둔다.
+ */
+export function risingKeywords(
+  trend: TrendResult | null,
+  query: string,
+  limit = 6,
+): RisingKeyword[] {
+  if (!trend) return [];
+  const base =
+    trend.comparisons.find((c) => c.kind === 'day' && c.available) ??
+    trend.comparisons.find((c) => c.kind === 'previous' && c.available);
+  const own = [...videoKeywords({ title: query, tags: [] })];
+  // 불용어라 토큰에서 빠진 검색어 단어(영상 등)도 검색어 자체로 본다.
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const ownSet = new Set([...own, ...words, own.join(''), words.join('')]);
+  const byLabel = new Map<string, RisingKeyword>();
+  for (const k of base?.keywords ?? []) {
+    if (k.deltaPp === null || k.deltaPp <= 0 || k.count < 2 || ownSet.has(k.keyword)) continue;
+    let rest: string | null = k.keyword;
+    for (const token of [...own].sort((a, b) => b.length - a.length))
+      if (rest?.includes(token)) rest = normalizeKeyword(rest.replace(token, ''));
+    if (!rest || ownSet.has(rest)) continue;
+    const kept = byLabel.get(rest);
+    if (!kept || k.deltaPp > kept.deltaPp)
+      byLabel.set(rest, { keyword: k.keyword, label: rest, count: k.count, deltaPp: k.deltaPp });
+  }
+  return [...byLabel.values()].sort((a, b) => b.deltaPp - a.deltaPp).slice(0, limit);
 }

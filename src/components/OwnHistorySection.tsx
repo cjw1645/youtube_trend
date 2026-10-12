@@ -1,9 +1,8 @@
 import Reveal from './Reveal';
 import HelpTip from './HelpTip';
 import { formatCount } from '../lib/format';
-import { historyVerdict } from '../lib/own-history';
-import { videoKeywords } from '../lib/stats/keywords';
-import type { KeywordChange, OwnHistory, TrendResult } from '../types/trend';
+import { historyVerdict, risingKeywords } from '../lib/own-history';
+import type { OwnHistory, TrendResult } from '../types/trend';
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
@@ -14,23 +13,6 @@ const ageText = (hours: number | null) =>
     : hours < 24
       ? `${Math.max(1, hours)}시간 전 업로드`
       : `${Math.floor(hours / 24)}일 전 업로드`;
-
-/** 이 주제 안에서 비중이 늘어난 키워드. 검색어 자체 단어는 늘 나오므로 뺀다. 전일 동시간, 없으면 직전 수집 기준. */
-export function risingKeywords(
-  trend: TrendResult | null,
-  query: string,
-  limit = 6,
-): KeywordChange[] {
-  if (!trend) return [];
-  const base =
-    trend.comparisons.find((c) => c.kind === 'day' && c.available) ??
-    trend.comparisons.find((c) => c.kind === 'previous' && c.available);
-  const own = videoKeywords({ title: query, tags: [] });
-  return (base?.keywords ?? [])
-    .filter((k) => !own.has(k.keyword) && k.deltaPp !== null && k.deltaPp > 0 && k.count >= 2)
-    .sort((a, b) => (b.deltaPp ?? 0) - (a.deltaPp ?? 0))
-    .slice(0, limit);
-}
 
 /**
  * 검색어 대시보드 맨 위: 내 검색어가 자기 평소보다 오르는지 한 문장 판정, 판정과 상관없이 이 주제 안에서
@@ -100,15 +82,15 @@ export default function OwnHistorySection({
           {rising.length ? (
             <ul>
               {rising.map((k) => (
-                <li key={k.keyword}>
+                <li key={k.label}>
                   <button
                     type="button"
                     className="keyword-chip"
-                    aria-label={`${k.keyword} 검색 (영상 ${k.count}개, 비중 ${(k.deltaPp ?? 0).toFixed(1)}%p 증가)`}
+                    title={k.label !== k.keyword ? `#${k.keyword}` : undefined}
+                    aria-label={`${k.keyword} 검색 (영상 ${k.count}개, 비중 ${k.deltaPp.toFixed(1)}%p 증가)`}
                     onClick={() => onSearchKeyword(k.keyword)}
                   >
-                    {k.keyword}{' '}
-                    <span className="trend-delta is-up">▲ {(k.deltaPp ?? 0).toFixed(1)}%p</span>
+                    {k.label} <span className="trend-delta is-up">▲ {k.deltaPp.toFixed(1)}%p</span>
                   </button>
                 </li>
               ))}
