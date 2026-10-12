@@ -292,31 +292,6 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
         </p>
       )}
 
-      <details className="compare-glossary">
-        <summary>숫자가 어렵다면 · 용어 풀이</summary>
-        <dl>
-          <dt>중앙값</dt>
-          <dd>
-            영상을 큰 순서대로 줄 세웠을 때 한가운데 영상의 값입니다. 몇 개의 폭발적인 영상에 평균이
-            끌려가지 않아 대표 수준을 보기 좋습니다.
-          </dd>
-          <dt>하루 조회수 증가</dt>
-          <dd>
-            약 24시간 전에도 같은 영상이 있었을 때, 하루 동안 늘어난 조회수입니다. 영상 한 개가
-            하루에 얼마나 늘었는지를 뜻합니다.
-          </dd>
-          <dt>%p(퍼센트포인트)</dt>
-          <dd>
-            두 비율의 차이입니다. 예를 들어 인기 차트에서 40%, 내 검색에서 10%라면 30%p 차이입니다.
-          </dd>
-          <dt>인기 차트 키워드 노출 “없음”</dt>
-          <dd>
-            내 검색 결과에 나온 단어가 인기 차트의 핫 키워드 목록에 들지 않았다는 뜻입니다. 내
-            주제가 인기 차트와 다른 흐름이라는 신호일 수 있습니다.
-          </dd>
-        </dl>
-      </details>
-
       {aggregateFailed && (
         <p role="alert" className="trend-warning">
           이 검색어는 키워드 집계에 실패했습니다(2개 이상 영상에 함께 나온 키워드가 없음). 다른

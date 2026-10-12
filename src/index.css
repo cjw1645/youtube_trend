@@ -4158,7 +4158,7 @@ button.spot:hover {
   }
 }
 
-/* ───────── 사용성 개선: 분석 대상 안내, 키워드 거르기, 비교 용어 풀이 ───────── */
+/* ───────── 사용성 개선: 분석 대상 안내, 키워드 거르기, 비교 안내 ───────── */
 .chat-target-line {
   display: flex;
   align-items: center;
@@ -4233,30 +4233,6 @@ button.chat-quota {
   border-radius: 3px;
   color: #ffc772;
   font-size: 14px;
-  line-height: 1.6;
-}
-.compare-glossary {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-.compare-glossary summary {
-  cursor: pointer;
-  color: var(--ink);
-  font-weight: 600;
-}
-.compare-glossary dl {
-  display: grid;
-  gap: 4px 16px;
-  margin-top: 10px;
-  grid-template-columns: max-content 1fr;
-}
-.compare-glossary dt {
-  color: var(--ink);
-  font-weight: 700;
-}
-.compare-glossary dd {
-  margin: 0;
   line-height: 1.6;
 }
 .main-fields {
