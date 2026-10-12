@@ -10,6 +10,7 @@ import type { Video } from '../types/video';
 import { listRanking, selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { applyLocalFilter } from '../lib/local-filter';
 import { categoryDistribution } from '../lib/stats';
+import { videoKeywords } from '../lib/stats/keywords';
 import { useAnalysisSelection } from '../hooks/useAnalysisSelection';
 import AnalysisSelectionBar from '../components/AnalysisSelectionBar';
 import HelpTip from '../components/HelpTip';
@@ -68,6 +69,10 @@ export default function Home({
   const [categoryId, setCategoryId] = useState(start.categoryId);
   const [order, setOrder] = useState(start.order);
   const [draft, setDraft] = useState(start.q);
+  // 키워드 칩은 이미 받은 목록 안에서만 거른다(새 검색을 하지 않으므로 검색 횟수를 쓰지 않는다).
+  const [chip, setChip] = useState('');
+  // 로그인 전에 검색하려 한 단어. 로그인 안내에 보여 주고, 로그인하면 바로 이어서 검색한다.
+  const [wanted, setWanted] = useState('');
   const appliedRequest = useRef(searchRequest?.id);
   const { state, reload } = useVideos(signedIn ? q : '', auth.getToken);
 
@@ -75,22 +80,25 @@ export default function Home({
     const next = Array.from(value.trim()).slice(0, 100).join('');
     setDraft(next);
     if (!signedIn) {
+      // 안내 없이 로그인 화면으로 보내지 않는다. 검색어만 기억하고 로그인 안내에서 직접 누르게 한다.
       if (next) {
+        setWanted(next);
         try {
           sessionStorage.setItem(SEARCH_AFTER_LOGIN_KEY, next);
         } catch {
           /* 저장소를 못 쓰면 로그인 뒤에 다시 입력한다 */
         }
-        void auth.signIn();
       }
       return;
     }
+    setChip('');
     setCategoryId('');
     setOrder('');
     if (next === q) reload();
     else setQ(next);
   };
   const clearSearch = () => {
+    setChip('');
     setDraft('');
     setCategoryId('');
     setOrder('');
@@ -113,11 +121,13 @@ export default function Home({
   useEffect(() => {
     if (!searchRequest || appliedRequest.current === searchRequest.id) return;
     appliedRequest.current = searchRequest.id;
+    setChip('');
     setCategoryId('');
     setOrder('');
     setDraft(searchRequest.q);
-    // 로그아웃 상태에서는 검색어만 채워 두고, 사용자가 검색을 눌러 로그인하게 한다.
+    // 로그아웃 상태에서는 검색어만 채워 두고, 로그인 안내에서 직접 로그인하게 한다.
     if (signedIn) setQ(searchRequest.q);
+    else setWanted(searchRequest.q);
   }, [searchRequest, signedIn]);
 
   const raw = state.status === 'success' ? state.videos : undefined;
@@ -135,15 +145,21 @@ export default function Home({
   const activeCategory = categoryOptions.some((option) => option.id === categoryId)
     ? categoryId
     : '';
-  const videos = useMemo(
+  const listed = useMemo(
     () => (raw ? applyLocalFilter(raw, activeCategory, order) : undefined),
     [raw, activeCategory, order],
+  );
+  // 칩으로 고른 단어가 현재 목록에 없으면(목록이 바뀐 경우) 거르지 않는다.
+  const activeChip = chip && listed?.some((video) => videoKeywords(video).has(chip)) ? chip : '';
+  const videos = useMemo(
+    () => (activeChip ? listed?.filter((video) => videoKeywords(video).has(activeChip)) : listed),
+    [listed, activeChip],
   );
   const query: VideoQuery = { q, categoryId: activeCategory, order };
   const categoryName = activeCategory
     ? (nameById.get(activeCategory) ?? '선택 카테고리')
     : undefined;
-  const label = `${q ? `검색: ${q}` : '인기 차트 200개'}${categoryName ? ` · ${categoryName}` : ''} · ${order === 'viewCount' ? '조회수순' : order === 'date' ? '최신순' : q ? '관련도순' : '인기순'}`;
+  const label = `${q ? `검색: ${q}` : '인기 차트 200개'}${categoryName ? ` · ${categoryName}` : ''}${activeChip ? ` · 키워드 ${activeChip}` : ''} · ${order === 'viewCount' ? '조회수순' : order === 'date' ? '최신순' : q ? '관련도순' : '인기순'}`;
   const selection = useAnalysisSelection(videos ?? EMPTY, JSON.stringify(query));
   const analysisVideos = selection.enabled ? selection.selected : (videos ?? EMPTY);
   // 인기 차트를 다시 정렬했어도 영상에 남은 popularRank를 쓴다. 검색 결과는 순위 기준이 아니다.
@@ -185,7 +201,7 @@ export default function Home({
                 현재 목록: {label}
                 <HelpTip label="목록 기준 보기">
                   {q
-                    ? '한국에서 시청 가능한 검색 결과 50개(API 관련도순)입니다. 카테고리·정렬은 이 50개 안에서만 적용하며 한국 채널·한국어 영상만을 보장하지 않습니다.'
+                    ? '한국에서 시청 가능한 검색 결과 50개(API 관련도순)입니다. 카테고리·정렬은 이 50개 안에서만 적용하며 한국 채널·한국어 영상만을 보장하지 않습니다. 카테고리는 올린 사람이 고른 YouTube 분류라 실제 내용과 다를 수 있고, 오래된 영상이 위에 보이면 ‘최신순’으로 바꿔 보세요.'
                     : 'YouTube 인기 차트를 응답 순서대로 200개까지 보여줍니다. 카테고리·정렬은 이 목록 안에서만 적용하며 전체 YouTube 인기 순위를 뜻하지 않습니다.'}
                 </HelpTip>
               </p>
@@ -219,6 +235,7 @@ export default function Home({
           enabled={auth.enabled}
           videos={raw?.slice(0, LOCKED_PREVIEW)}
           nameById={nameById}
+          wanted={wanted}
           onSignIn={() => void auth.signIn()}
         />
       ) : (
@@ -240,7 +257,7 @@ export default function Home({
                 )}
                 {videos && videos.length > 0 && (
                   <span className="ml-3 text-sm font-normal text-zinc-500">
-                    {videos.length}개 영상
+                    {videos.length}개 영상{activeChip ? ` · ‘${activeChip}’ 포함` : ''}
                   </span>
                 )}
               </h2>
@@ -257,7 +274,12 @@ export default function Home({
             </div>
 
             {videos && videos.length > 0 && (
-              <KeywordChips videos={videos} query={q} onSearch={search} />
+              <KeywordChips
+                videos={listed ?? videos}
+                query={q}
+                active={activeChip}
+                onPick={(keyword) => setChip((now) => (now === keyword ? '' : keyword))}
+              />
             )}
             {state.status === 'loading' && <LoadingGrid />}
             {state.status === 'error' && (
@@ -310,12 +332,14 @@ function LockedPreview({
   enabled,
   videos,
   nameById,
+  wanted,
   onSignIn,
 }: {
   loading: boolean;
   enabled: boolean;
   videos: readonly Video[] | undefined;
   nameById: ReadonlyMap<string, string>;
+  wanted: string;
   onSignIn: () => void;
 }) {
   if (loading) return <LoadingGrid count={LOCKED_PREVIEW} />;
@@ -336,8 +360,15 @@ function LockedPreview({
         </div>
       </div>
       <div className="search-locked-cta">
-        <h2>검색하려면 로그인하세요</h2>
-        <p>키워드 검색은 YouTube 검색 할당량을 사용해 로그인한 사용자만 쓸 수 있습니다.</p>
+        <h2>
+          {wanted ? `‘${wanted}’ 검색은 로그인 후에 할 수 있어요` : '검색하려면 로그인하세요'}
+        </h2>
+        <p>
+          키워드 검색은 YouTube 검색 할당량을 사용해 로그인한 사용자만 쓸 수 있습니다.
+          {wanted
+            ? ' 로그인하면 방금 입력한 검색어로 바로 이어서 찾아 줍니다.'
+            : ' 로그인 없이는 인기 영상 일부만 미리 볼 수 있습니다.'}
+        </p>
         {enabled ? (
           <button type="button" className="login-button" onClick={onSignIn}>
             Google로 로그인

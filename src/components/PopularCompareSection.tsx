@@ -104,7 +104,9 @@ export function compareVerdict(compare: Available): {
       : 0;
   const parts = [
     ratio !== null && comparable.length
-      ? `하루 조회수 증가 기준 인기 차트 핫 키워드 ${comparable.length}개 중 ${above}개보다 많고`
+      ? above === 0
+        ? `하루 조회수 증가는 인기 차트 핫 키워드 ${comparable.length}개 모두보다 낮고`
+        : `하루 조회수 증가는 인기 차트 핫 키워드 ${comparable.length}개 중 ${above}개보다 높고`
       : null,
     ratio === null ? gainUnavailableReason(compare) : null,
     `인기 차트에 든 영상은 ${compare.videos.count}개입니다`,
@@ -280,6 +282,38 @@ export default function PopularCompareSection({ compare, categoryNames, onSearch
           }
         />
       </dl>
+
+      {topCategory && Math.abs(topCategory.deltaPp ?? 0) >= 20 && (
+        <p className="compare-caveat" role="note">
+          인기 차트는 ‘{categoryName}’ 영상이 {pct(topCategory.popularShare)}를 차지하지만 이 검색
+          결과는 {pct(topCategory.slotShare)}라 분야가 많이 다릅니다. 같은 분야끼리의 비교가
+          아니므로 “지금 인기 차트에 비해 어느 정도인지”로만 읽어 주세요. 이 분야 안에서의 흐름은
+          아래 분야별 비중과 키워드 추이에서 확인할 수 있습니다.
+        </p>
+      )}
+
+      <details className="compare-glossary">
+        <summary>숫자가 어렵다면 · 용어 풀이</summary>
+        <dl>
+          <dt>중앙값</dt>
+          <dd>
+            영상을 큰 순서대로 줄 세웠을 때 한가운데 영상의 값입니다. 몇 개의 폭발적인 영상에 평균이
+            끌려가지 않아 대표 수준을 보기 좋습니다.
+          </dd>
+          <dt>하루 조회수 증가</dt>
+          <dd>
+            약 24시간 전에도 같은 영상이 있었을 때, 하루 동안 늘어난 조회수입니다. 영상 한 개가
+            하루에 얼마나 늘었는지를 뜻합니다.
+          </dd>
+          <dt>%p(퍼센트포인트)</dt>
+          <dd>두 비율의 차이입니다. 인기 차트에서 82%, 내 검색에서 0.6%라면 81.4%p 차이입니다.</dd>
+          <dt>인기 차트 키워드 노출 “없음”</dt>
+          <dd>
+            내 검색 결과에 나온 단어가 인기 차트의 핫 키워드 목록에 들지 않았다는 뜻입니다. 내
+            주제가 인기 차트와 다른 흐름이라는 신호일 수 있습니다.
+          </dd>
+        </dl>
+      </details>
 
       {aggregateFailed && (
         <p role="alert" className="trend-warning">

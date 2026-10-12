@@ -34,8 +34,8 @@ interface Props {
   resolveCategoryNames: (ids: readonly string[]) => void;
   onSelect: (video: Video) => void;
   onOpenVideo: (videoId: string) => void;
-  onImport: (videos: readonly StoredVideo[]) => 'set' | 'kept';
-  onImportSearch: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => 'set' | 'kept';
+  onImport: (videos: readonly StoredVideo[]) => void;
+  onImportSearch: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => void;
   onSearchKeyword: (keyword: string) => void;
   onAnalyze: (target: ChatTarget) => void;
   /** 값이 커질 때마다 「인기 차트 전체」 탭을 선택한다(홈의 진입 버튼). */
@@ -210,6 +210,10 @@ export default function Dashboard({
             {MAX_SLOTS}개.
           </HelpTip>
         </div>
+        <p className="dash-sub">
+          아래 탭에서 ‘인기 차트 전체’(누구에게나 같은 공통 화면)와 내가 추가한 검색어(내 주제)를
+          골라 볼 수 있습니다.
+        </p>
         <div className="dash-hero-actions">
           <AddSearchPopover
             full={search.slots.length >= MAX_SLOTS}

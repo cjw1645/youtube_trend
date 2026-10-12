@@ -12,7 +12,7 @@ interface Props {
   resolveCategoryNames: (ids: readonly string[]) => void;
   onOpenVideo: (videoId: string) => void;
   onSearchKeyword: (keyword: string) => void;
-  onImport: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => 'set' | 'kept';
+  onImport: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => void;
 }
 
 /** 선택한 검색어 한 개의 저장된 검색 결과 대시보드. */

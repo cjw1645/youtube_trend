@@ -10,7 +10,7 @@ import type { ChatController } from '../hooks/useChat';
 import { useConversations } from '../hooks/useConversations';
 import { MAX_QUESTION_CHARS, selectChatVideos, type ChatTarget } from '../lib/chat-session';
 import { isMeaninglessQuestion, MEANINGLESS_QUESTION_MESSAGE } from '../lib/chat-question';
-import { notifyUsageChanged, useUsage } from '../hooks/useUsage';
+import { notifyUsageChanged, useUsageState } from '../hooks/useUsage';
 import ChatThread from './ChatThread';
 import HelpTip from './HelpTip';
 import ConversationHistory from './ConversationHistory';
@@ -63,7 +63,7 @@ export default function ChatPanel({
   const videos = selectChatVideos(target.videos);
   const { state, question } = chat;
   const pending = state.status === 'pending';
-  const usage = useUsage();
+  const { usage, failed: usageFailed, retry: retryUsage } = useUsageState();
   const aiLeft = usage ? Math.max(usage.ai.limit - usage.ai.used, 0) : null;
   // 질문을 보내면 요청 시작 때 예약되므로, 끝나면(성공·실패) 남은 횟수를 다시 센다.
   useEffect(() => {
@@ -163,6 +163,16 @@ export default function ChatPanel({
         <span id={`${inputId}-help`} className="chat-time chat-help">
           {meaningless ? MEANINGLESS_QUESTION_MESSAGE : 'Enter로 전송 · Shift+Enter로 줄바꿈'}
         </span>
+        {chat.signedIn && !usage && usageFailed && (
+          <button
+            type="button"
+            className="chat-quota is-low"
+            title="오늘 남은 질문 횟수를 불러오지 못했습니다. 눌러서 다시 확인합니다."
+            onClick={retryUsage}
+          >
+            남은 질문 횟수를 확인하지 못했어요 · 다시 확인
+          </button>
+        )}
         {usage && aiLeft !== null && (
           <span
             className={`chat-quota ${aiLeft === 0 ? 'is-empty' : aiLeft <= 2 ? 'is-low' : ''}`}
@@ -281,6 +291,14 @@ export default function ChatPanel({
             )}
           </div>
         )}
+        <p className="chat-target-line" aria-live="polite">
+          <span className="chat-target-label">지금 분석할 목록</span>
+          <strong title={target.label}>{videos.length ? target.label : '선택된 영상 없음'}</strong>
+          <span>{videos.length}개</span>
+          <button type="button" className="chat-target-change" onClick={() => toggle('target')}>
+            바꾸기
+          </button>
+        </p>
         <div className="chat-compose-wrap">
           {popover === 'target' && (
             <div className="popover is-target" role="dialog" aria-label="분석 대상">

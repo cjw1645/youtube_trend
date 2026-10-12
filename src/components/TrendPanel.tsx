@@ -103,8 +103,8 @@ interface Props {
   scope: string;
   onSelectVideo: (videoId: string) => void;
   onSearchKeyword?: (keyword: string) => void;
-  /** AI 대상으로 상위 20개를 가져온다. 이미 선택한 대상이 있으면 'kept'를 돌려준다. */
-  onImport?: (videos: readonly StoredVideo[]) => 'set' | 'kept';
+  /** AI 대상으로 상위 20개를 가져온다. 이미 선택한 대상이 있어도 이 목록으로 바꾼다. */
+  onImport?: (videos: readonly StoredVideo[]) => void;
   /** 위쪽에 이미 하이라이트가 있는 화면에서는 false */
   showSpotlight?: boolean;
   /** 「지금 가장 눈에 띄는 것」 바로 아래에 끼워 넣는 블록(예: 인기 차트 비교 차트) */
@@ -125,7 +125,7 @@ export default function TrendPanel({
   const [initial] = useState(() => pickDefaultBaseline(trend.comparisons));
   const [kind, setKind] = useState<BaselineKind>(initial.kind);
   const [open, setOpen] = useState<string | null>(null);
-  const [imported, setImported] = useState<'set' | 'kept' | null>(null);
+  const [imported, setImported] = useState(false);
   const comparison: Comparison =
     trend.comparisons.find((c) => c.kind === kind) ?? trend.comparisons[0];
   const { current } = trend;
@@ -549,15 +549,17 @@ export default function TrendPanel({
           <button
             type="button"
             className="secondary-button"
-            onClick={() => setImported(onImport(videos))}
+            onClick={() => {
+              onImport(videos);
+              setImported(true);
+            }}
           >
             이 목록 상위 20개를 AI 대상으로 가져오기
           </button>
           {imported && (
             <p role="status" className="trend-note">
-              {imported === 'set'
-                ? 'AI 대화의 분석 대상으로 가져왔습니다. 질문은 AI 대화 화면에서 전송합니다.'
-                : '이미 선택한 분석 대상이 있어 유지했습니다. 바꾸려면 AI 대화 화면에서 대상을 바꾸세요.'}
+              AI 대화의 분석 대상을 이 목록 상위 20개로 바꿨습니다. 질문은 왼쪽 메뉴의 AI 대화에서
+              보냅니다.
             </p>
           )}
         </div>

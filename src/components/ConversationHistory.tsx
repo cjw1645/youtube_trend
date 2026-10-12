@@ -60,7 +60,7 @@ export default function ConversationHistory({
                 {item.first_question ?? '(질문 없음)'}
               </button>
               <span className="conversation-meta">
-                {Number(item.turns)}회 · {when(item.updated_at)} · {when(item.expires_at)}까지
+                {Number(item.turns)}회 · {when(item.updated_at)} · {when(item.expires_at)}까지 보관
               </span>
               <span className="conversation-actions">
                 {activeId === item.id && <span className="chat-time">열려 있음</span>}

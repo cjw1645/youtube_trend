@@ -44,6 +44,9 @@ const FLOW: { page: Page; title: string; text: string; icon: typeof DashboardIco
   },
 ];
 
+/** 인기 차트가 한 분야로 쏠려 있어도 내 분야로 바로 들어갈 수 있게 하는 시작 키워드 */
+const FIELDS = ['반려동물', '브이로그', '요리', '여행', '뷰티', '운동', '육아', '교육'];
+
 const order = (index: number) => ({ '--i': index }) as CSSProperties;
 
 /** 첫 화면: 무엇을 하는 곳인지 실제 인기 차트 데이터와 사용 흐름으로 보여준다. */
@@ -88,6 +91,23 @@ export default function Main({
             AI에게 기획 묻기
           </button>
         </div>
+      </section>
+
+      <section className="main-fields" aria-labelledby="main-fields-title">
+        <h2 id="main-fields-title">내 분야로 먼저 찾아보기</h2>
+        <p>
+          인기 차트는 지금 게임이 많아요. 내 채널 분야를 눌러 그 주제의 영상부터 찾아보세요(로그인
+          후 검색할 수 있어요).
+        </p>
+        <ul>
+          {FIELDS.map((field) => (
+            <li key={field}>
+              <button type="button" className="keyword-chip" onClick={() => onSearchKeyword(field)}>
+                {field}
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="main-live" aria-labelledby="main-live-title">

@@ -308,10 +308,13 @@ try {
   );
   assert.match(
     compareVerdict(withGains(980000, 100000, 140000)).detail,
-    /핫 키워드 1개 중 1개보다/,
+    /핫 키워드 1개 중 1개보다 높고/,
   );
   assert.match(compareVerdict(withGains(100000, 100000, 140000)).headline, /비슷합니다/);
-  assert.equal(compareVerdict(withGains(100000, 100000, 140000)).detail.includes('0개보다'), true);
+  assert.match(
+    compareVerdict(withGains(100000, 100000, 140000)).detail,
+    /핫 키워드 1개 모두보다 낮고/,
+  );
   // 누적 조회수만 검색 쪽이 크고(5,000,000 vs 100,000) 하루 증가가 없으면 몇 배라고 단정하지 않는다
   const cumulativeOnly = compareVerdict({
     ...withGains(null, null, null),

@@ -1,11 +1,16 @@
-import { useUsage, type Usage } from '../hooks/useUsage';
+import { useUsageState, type Usage } from '../hooks/useUsage';
 
 const left = (entry: Usage['ai']) => Math.max(entry.limit - entry.used, 0);
 
 /** 화면 위쪽에 두는 오늘의 남은 횟수. 0이 되면 눈에 띄게 하고, 하루 단위(한국 시간 자정 초기화)임을 알린다. */
 export default function UsageBadge() {
-  const usage = useUsage();
-  if (!usage) return null;
+  const { usage, failed, retry } = useUsageState();
+  if (!usage)
+    return failed ? (
+      <button type="button" className="usage-retry" onClick={retry}>
+        오늘 남은 횟수를 확인하지 못했어요 · 다시 확인
+      </button>
+    ) : null;
   const ai = left(usage.ai);
   const search = left(usage.search);
   return (

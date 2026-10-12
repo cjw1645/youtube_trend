@@ -30,29 +30,44 @@ function loadUsage(token: string): Promise<Usage> {
   return promise;
 }
 
-/** 로그인 사용자의 오늘 사용량. 로그아웃이거나 불러오지 못하면 null(표시하지 않는다). */
-export function useUsage(): Usage | null {
+/**
+ * 로그인 사용자의 오늘 사용량. 로그아웃이면 usage는 null이다.
+ * 불러오지 못하면 이전 값을 유지하고(없으면 null) failed를 켜서 화면이 "확인하지 못했다"고 알릴 수 있게 한다.
+ */
+export function useUsageState(): { usage: Usage | null; failed: boolean; retry: () => void } {
   const { user, getToken } = useAuth();
   const userId = user?.id ?? null;
   const [usage, setUsage] = useState<Usage | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const refresh = useCallback(async () => {
     const token = await getToken();
-    if (!token) return setUsage(null);
+    if (!token) {
+      setUsage(null);
+      return setFailed(false);
+    }
     try {
       setUsage(await loadUsage(token));
+      setFailed(false);
     } catch {
-      /* 표시용이라 실패해도 기능은 막지 않는다. 이전 값을 유지한다. */
+      /* 표시용이라 실패해도 기능은 막지 않는다. */
+      setFailed(true);
     }
   }, [getToken]);
 
   useEffect(() => {
     setUsage(null);
+    setFailed(false);
     if (!userId) return;
     void refresh();
     window.addEventListener(CHANGED, refresh);
     return () => window.removeEventListener(CHANGED, refresh);
   }, [userId, refresh]);
 
-  return userId ? usage : null;
+  return { usage: userId ? usage : null, failed: !!userId && failed, retry: () => void refresh() };
+}
+
+/** 로그인 사용자의 오늘 사용량. 로그아웃이거나 불러오지 못하면 null. */
+export function useUsage(): Usage | null {
+  return useUsageState().usage;
 }

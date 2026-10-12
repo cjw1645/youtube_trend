@@ -122,14 +122,13 @@ export default function App() {
     setActive(makeTarget(value, value.source ?? 'detail', value.query));
   };
   const onSelect = (video: { id: string }) => setSelectedVideoId(video.id);
-  // 저장된 목록 상위 20개를 AI 대상으로 가져온다. 이미 선택한 대상이 있으면 덮어쓰지 않고 유지한다.
+  // 저장된 목록 상위 20개를 AI 대상으로 가져온다. 사용자가 직접 누른 동작이므로 기존 대상을 바꾼다.
   const importStored = (
     stored: readonly StoredVideo[],
     label: string,
     popular: boolean,
     slot?: 1 | 2,
-  ): 'set' | 'kept' => {
-    if (targets.active) return 'kept';
+  ): void => {
     const items = stored
       .slice(0, 20)
       .map((video) => ({ id: video.video_id, title: video.title, popularRank: video.position }));
@@ -148,7 +147,6 @@ export default function App() {
         popular ? 'dashboard' : 'home',
       ),
     );
-    return 'set';
   };
   const searchKeyword = (q: string) => {
     setSearchRequest({ q, id: Date.now() });

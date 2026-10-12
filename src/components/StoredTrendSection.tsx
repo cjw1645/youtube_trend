@@ -15,7 +15,7 @@ interface Props {
   resolveCategoryNames: (ids: readonly string[]) => void;
   onOpenVideo: (videoId: string) => void;
   onSearchKeyword: (keyword: string) => void;
-  onImport: (videos: readonly StoredVideo[]) => 'set' | 'kept';
+  onImport: (videos: readonly StoredVideo[]) => void;
 }
 
 /** 서버가 저장한 공통 인기 목록 수집 기록으로 계산한 변화. 위쪽의 실시간 인기 목록과 별개의 원천이다. */

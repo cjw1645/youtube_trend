@@ -4157,3 +4157,120 @@ button.spot:hover {
     transition: none;
   }
 }
+
+/* ───────── 사용성 개선: 분석 대상 안내, 키워드 거르기, 비교 용어 풀이 ───────── */
+.chat-target-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.chat-target-line strong {
+  max-width: min(56ch, 100%);
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-target-label {
+  color: var(--faint);
+}
+.chat-target-change {
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 12px;
+}
+.chat-target-change:hover {
+  border-color: var(--color-zinc-300);
+}
+button.chat-quota {
+  padding: 2px 8px;
+  border: 1px solid #ffb84d88;
+  border-radius: 3px;
+  background: none;
+}
+.usage-retry {
+  padding: 8px 10px;
+  border: 1px solid #ffb84d88;
+  border-radius: 3px;
+  color: #ffc772;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+}
+.keyword-chip.is-active {
+  border-color: var(--ink);
+  background: #1f1d1b;
+}
+.keyword-clear {
+  margin-left: 10px;
+  color: var(--ink);
+  font-size: 12px;
+  text-decoration: underline;
+}
+.favorites-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.dash-sub {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.compare-caveat {
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #ffb84d55;
+  border-radius: 3px;
+  color: #ffc772;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.compare-glossary {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.compare-glossary summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+}
+.compare-glossary dl {
+  display: grid;
+  gap: 4px 16px;
+  margin-top: 10px;
+  grid-template-columns: max-content 1fr;
+}
+.compare-glossary dt {
+  color: var(--ink);
+  font-weight: 700;
+}
+.compare-glossary dd {
+  margin: 0;
+  line-height: 1.6;
+}
+.main-fields {
+  margin: 8px 0 0;
+}
+.main-fields p {
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.main-fields ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
