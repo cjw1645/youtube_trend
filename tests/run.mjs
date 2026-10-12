@@ -17,11 +17,18 @@ const files = [
   .filter((f) => f.includes(filter))
   .sort();
 
+// Vercel 빌드에는 실제 서비스 환경변수가 들어 있다. 테스트는 합성 값만 쓰도록 모두 비운다.
+const REAL_SERVICE_ENV =
+  /^(SUPABASE_|VITE_SUPABASE_|YOUTUBE_|GEMINI_|ADMIN_USER_IDS|AI_DAILY_|SEARCH_DAILY_|PUBLIC_YOUTUBE_|COLLECT_SECRET|DATABASE_URL|POSTGRES_)/;
+const cleanEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([key]) => !REAL_SERVICE_ENV.test(key)),
+);
+
 const run = (file) =>
   new Promise((resolve) => {
     const started = Date.now();
     const child = spawn(process.execPath, [fileURLToPath(new URL(file, root))], {
-      env: { ...process.env, NODE_ENV: 'production', VERCEL: '1' },
+      env: { ...cleanEnv, NODE_ENV: 'production', VERCEL: '1' },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let out = '';
