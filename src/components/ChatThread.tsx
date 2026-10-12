@@ -1,13 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
-import { AnswerBody } from './ChatResult';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AnswerBody, answerRevealPlan } from './ChatResult';
+import { useTypedReveal } from '../hooks/useTypedReveal';
 import { copyChatText } from '../lib/chat-export';
 import { formatNumericRanges } from '../lib/format';
 import type { AnswerVideoInfo } from '../lib/answer-sections';
 import type { ChatState } from '../lib/chat-session';
 import type { ThreadItem } from '../lib/chat-thread';
 
-function Bubble({ item }: { item: ThreadItem }) {
-  const [copied, setCopied] = useState<'done' | 'fail' | null>(null);
+function Bubble({
+  item,
+  animate,
+  onReveal,
+}: {
+  item: ThreadItem;
+  animate: boolean;
+  onReveal: () => void;
+}) {
   if (item.role === 'user')
     return (
       <li className="chat-turn is-user">
@@ -15,10 +23,43 @@ function Bubble({ item }: { item: ThreadItem }) {
         {item.createdAt && <time className="chat-time">{when(item.createdAt)}</time>}
       </li>
     );
+  return <AssistantBubble item={item} animate={animate} onReveal={onReveal} />;
+}
+
+function AssistantBubble({
+  item,
+  animate,
+  onReveal,
+}: {
+  item: ThreadItem;
+  animate: boolean;
+  onReveal: () => void;
+}) {
+  const [copied, setCopied] = useState<'done' | 'fail' | null>(null);
   const { response, snapshot } = item;
+  const text = formatNumericRanges(item.text);
+  const info = new Map<string, AnswerVideoInfo>([
+    ...(snapshot?.videos ?? []).map(({ id, title }) => [id, { title }] as const),
+    ...(response?.context.videos ?? []).map(
+      ({ id, title, tags }) => [id, { title, tags }] as const,
+    ),
+  ]);
+  // 방금 받은 답변만 채팅처럼 앞에서부터 보여 주고, 불러온 이전 대화는 그대로 전부 보여 준다.
+  const plan = animate ? answerRevealPlan(text, info) : null;
+  const { reveal, typing, skip } = useTypedReveal(
+    plan?.total ?? 0,
+    plan?.slowUntil ?? 0,
+    animate,
+    onReveal,
+  );
   return (
     <li className="chat-turn is-assistant">
-      <div className="chat-bubble">
+      <div
+        className={`chat-bubble ${typing ? 'is-typing' : ''}`}
+        aria-busy={typing}
+        onClick={typing ? skip : undefined}
+        title={typing ? '눌러서 전체 보기' : undefined}
+      >
         {response && response.context.excludedIds.length > 0 && (
           <p className="chat-caution">
             조회할 수 없는 영상 {response.context.excludedIds.length}개를 제외하고{' '}
@@ -26,19 +67,13 @@ function Bubble({ item }: { item: ThreadItem }) {
           </p>
         )}
         <AnswerBody
-          answer={formatNumericRanges(item.text)}
+          answer={text}
           videos={response?.context.videos ?? []}
           ranking={response?.ranking?.ids}
-          info={
-            new Map<string, AnswerVideoInfo>([
-              ...(snapshot?.videos ?? []).map(({ id, title }) => [id, { title }] as const),
-              ...(response?.context.videos ?? []).map(
-                ({ id, title, tags }) => [id, { title, tags }] as const,
-              ),
-            ])
-          }
+          info={info}
+          reveal={reveal}
         />
-        {response?.notice && <p className="chat-caution">{response.notice}</p>}
+        {!typing && response?.notice && <p className="chat-caution">{response.notice}</p>}
       </div>
       <div className="chat-meta">
         {item.createdAt && <time className="chat-time">{when(item.createdAt)}</time>}
@@ -116,15 +151,32 @@ export default function ChatThread({
   state: ChatState;
 }) {
   const end = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLOListElement>(null);
   const live = state.status === 'pending' || state.status === 'error';
+  // 답변을 기다리다 방금 도착한 마지막 답변만 채팅처럼 나타나게 한다(이전 대화를 열 때는 해당 없음).
+  const [typingKey, setTypingKey] = useState<string | null>(null);
+  const previous = useRef(state.status);
+  useLayoutEffect(() => {
+    if (previous.current === 'pending' && state.status === 'success') {
+      const last = items.at(-1);
+      if (last?.role === 'assistant') setTypingKey(last.key);
+    }
+    previous.current = state.status;
+  }, [state.status, items]);
+  // 글자가 늘어나는 동안 사용자가 위로 올려 읽고 있지 않을 때만 맨 아래를 따라간다.
+  const follow = () => {
+    const element = list.current;
+    if (element && element.scrollHeight - element.scrollTop - element.clientHeight < 200)
+      end.current?.scrollIntoView?.({ block: 'end' });
+  };
   useEffect(() => {
     end.current?.scrollIntoView?.({ block: 'end' });
   }, [items.length, state.status]);
   if (!items.length && !live) return null;
   return (
-    <ol className="chat-thread" aria-label="대화 내용" aria-live="polite">
+    <ol ref={list} className="chat-thread" aria-label="대화 내용" aria-live="polite">
       {items.map((item) => (
-        <Bubble key={item.key} item={item} />
+        <Bubble key={item.key} item={item} animate={item.key === typingKey} onReveal={follow} />
       ))}
       {live && (
         <>

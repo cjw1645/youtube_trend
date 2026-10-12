@@ -1,5 +1,6 @@
-// 모델 답변의 본문 숫자가 입력(근거) 데이터에 있는지 확인한다. 입력에 없는 큰 숫자는 모델이 지어냈거나
-// 잘못 계산한 값일 수 있다. 판단 기준을 단순하게 두어 정상 답변을 틀렸다고 하지 않는 쪽을 택한다.
+// 모델 답변을 서버에서 확인한다. 본문 숫자가 입력(근거) 데이터에 있는지, [핵심 요약]이 충분한 길이인지 본다.
+// 입력에 없는 큰 숫자는 모델이 지어냈거나 잘못 계산한 값일 수 있다. 판단 기준을 단순하게 두어
+// 정상 답변을 틀렸다고 하지 않는 쪽을 택한다.
 import type { GeminiInput, GeminiResult } from './gemini.js';
 
 /** 이 값 미만의 숫자(순위·개수·퍼센트 등 작은 수)는 검사하지 않는다. */
@@ -34,6 +35,25 @@ export function ungroundedNumbers(answer: string, promptText: string): number[] 
   return [...new Set(found)];
 }
 
+/** 분석 답변의 [핵심 요약]이 이 문장 수보다 적으면 다시 쓰게 한다. */
+export const MIN_SUMMARY_SENTENCES = 4;
+const SENTENCE_BREAK = /(?<=[.!?])\s+|\n+/;
+
+/** [핵심 요약] 섹션의 문장 수. 섹션 머리말이 없는 답변(통계 질문·짧은 응답)은 null이라 검사하지 않는다. */
+export function summarySentenceCount(answer: string): number | null {
+  const start = answer.indexOf('[핵심 요약]');
+  if (start < 0 || !answer.includes('[근거 데이터]')) return null;
+  const from = start + '[핵심 요약]'.length;
+  const end = answer.indexOf('[근거 데이터]', from);
+  const body = answer.slice(from, end < 0 ? undefined : end).trim();
+  return body ? body.split(SENTENCE_BREAK).filter((part) => part.trim()).length : 0;
+}
+
+const isShort = (answer: string) => {
+  const count = summarySentenceCount(answer);
+  return count !== null && count < MIN_SUMMARY_SENTENCES;
+};
+
 const fmt = (values: readonly number[]) => values.map((v) => v.toLocaleString('ko-KR')).join(', ');
 
 export interface VerifiedResult {
@@ -44,7 +64,7 @@ export interface VerifiedResult {
 }
 
 /**
- * 한 번 생성하고, 입력에 없는 숫자가 있으면 그 숫자를 알려 주며 한 번만 다시 쓰게 한다(시간이 남을 때만).
+ * 한 번 생성하고, 입력에 없는 숫자가 있거나 요약이 너무 짧으면 그 이유를 알려 주며 한 번만 다시 쓰게 한다(시간이 남을 때만).
  * 다시 쓴 답이 더 나쁘거나 실패하면 처음 답을 쓴다. 두 번 호출한 경우 토큰 사용량은 합산한다.
  */
 export async function generateVerified(
@@ -56,13 +76,23 @@ export async function generateVerified(
   const started = clock();
   const first = await generate(input);
   const firstBad = ungroundedNumbers(first.text, input.prompt);
-  if (!firstBad.length) return { result: first, unverified: [], retried: false };
+  const firstShort = isShort(first.text);
+  if (!firstBad.length && !firstShort) return { result: first, unverified: [], retried: false };
   if (clock() - started >= (options.retryWithinMs ?? RETRY_WITHIN_MS))
     return { result: first, unverified: firstBad, retried: false };
+  const requests: string[] = [];
+  if (firstBad.length)
+    requests.push(
+      `직전 답변에 입력 데이터에 없는 숫자(${fmt(firstBad)})가 있었습니다. 입력에 있는 숫자만 쓰고, 직접 계산해 만든 숫자는 쓰지 마세요. 확인할 수 없는 내용은 숫자 없이 말하세요.`,
+    );
+  if (firstShort)
+    requests.push(
+      `직전 답변의 [핵심 요약]이 ${MIN_SUMMARY_SENTENCES}문장보다 짧았습니다. 결론 → 근거·비교 → 의미·한계 순서로 ${MIN_SUMMARY_SENTENCES}–6문장이 되게 문장을 나눠 쓰되, 같은 말을 늘리지는 마세요.`,
+    );
   try {
     const second = await generate({
       ...input,
-      systemInstruction: `${input.systemInstruction}\n\n■ 수정 요청\n직전 답변에 입력 데이터에 없는 숫자(${fmt(firstBad)})가 있었습니다. 같은 형식과 구성으로 다시 쓰되 입력에 있는 숫자만 쓰고, 직접 계산해 만든 숫자는 쓰지 마세요. 확인할 수 없는 내용은 숫자 없이 말하세요.`,
+      systemInstruction: `${input.systemInstruction}\n\n■ 수정 요청\n${requests.join(' ')} 나머지 형식과 구성은 같게 다시 쓰세요.`,
     });
     const usage =
       first.usage || second.usage
@@ -72,7 +102,12 @@ export async function generateVerified(
           }
         : undefined;
     const secondBad = ungroundedNumbers(second.text, input.prompt);
-    const better = secondBad.length <= firstBad.length ? second : first;
+    // 숫자 문제가 더 적은 쪽을, 같으면 요약이 충분히 긴 쪽을 쓴다.
+    const better =
+      secondBad.length < firstBad.length ||
+      (secondBad.length === firstBad.length && (!isShort(second.text) || firstShort))
+        ? second
+        : first;
     return {
       result: { ...better, ...(usage ? { usage } : {}) },
       unverified: better === second ? secondBad : firstBad,

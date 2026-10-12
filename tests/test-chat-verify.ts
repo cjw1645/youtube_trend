@@ -10,8 +10,13 @@ const vite = await createServer({
   logLevel: 'error',
 });
 try {
-  const { ungroundedNumbers, generateVerified, unverifiedNotice, RETRY_WITHIN_MS } =
-    await vite.ssrLoadModule('/api/_lib/chat-verify.ts');
+  const {
+    ungroundedNumbers,
+    generateVerified,
+    unverifiedNotice,
+    summarySentenceCount,
+    RETRY_WITHIN_MS,
+  } = await vite.ssrLoadModule('/api/_lib/chat-verify.ts');
   const prompt = JSON.stringify({
     question: '고양이 영상 트렌드 분석해줘',
     videos: [{ title: '2026 월드컵 하이라이트 1000회 달성', viewCount: 733587 }],
@@ -107,6 +112,31 @@ try {
     const out = await generateVerified(generate, input, { clock: () => now });
     assert.equal(calls.length, 1);
     assert.deepEqual(out.unverified, [812000]);
+  }
+  // 요약이 4문장 미만이면 다시 쓰게 하고, 충분히 길어지면 그 답을 쓴다
+  {
+    const rest = '\n[근거 데이터]\n근거\n[콘텐츠 제안]\n1. 제목: 가';
+    const short = `[핵심 요약]\n첫째입니다. 둘째입니다.${rest}`;
+    const long = `[핵심 요약]\n첫째입니다. 둘째입니다. 셋째입니다. 넷째입니다.${rest}`;
+    assert.equal(summarySentenceCount(short), 2);
+    assert.equal(summarySentenceCount(long), 4);
+    assert.equal(summarySentenceCount('평균 조회수는 812회입니다.'), null); // 섹션 없는 답변은 검사 안 함
+    const { calls, generate } = make([short, long]);
+    const out = await generateVerified(generate, input);
+    assert.equal(calls.length, 2);
+    assert.match(calls[1], /4문장보다 짧았습니다/);
+    assert.equal(out.result.text, long);
+    assert.deepEqual(out.unverified, []);
+    // 처음부터 충분히 길면 한 번만 호출
+    const again = make([long]);
+    await generateVerified(again.generate, input);
+    assert.equal(again.calls.length, 1);
+    // 다시 써도 짧으면 숫자 문제가 같을 때 처음 답을 유지(둘 다 짧음)
+    const both = make([short, short]);
+    const kept = await generateVerified(both.generate, input);
+    assert.equal(both.calls.length, 2);
+    assert.equal(kept.result.text, short);
+    console.log('  ok 짧은 요약 재작성');
   }
   console.log('  ok 한 번 재작성·사용량 합산·시간 제한');
   console.log('test-chat-verify: all passed');

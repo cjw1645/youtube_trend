@@ -1,6 +1,6 @@
 import type { ChatState, ChatTarget } from '../lib/chat-session';
 import { formatCount, formatNumericRanges } from '../lib/format';
-import { Fragment, useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { copyChatText, formatChatExport } from '../lib/chat-export';
 import {
   findMentionedVideos,
@@ -8,6 +8,7 @@ import {
   parseAnswerSections,
   splitVideoIds,
   withoutTagCitations,
+  type AnswerPart,
   type AnswerVideoInfo,
 } from '../lib/answer-sections';
 import type { AnalysisVideo } from '../types/chat';
@@ -54,38 +55,91 @@ function CitedTags({ tags, title }: { tags: string[]; title: string }) {
   );
 }
 
-/** 답변 속 대상 영상 ID를 짧은 제목 링크로 보여준다. 복사·내보내기 원문은 그대로다. */
+/** 화면에 보이는 글자 수. 영상 링크·태그는 한 덩어리로 세어 중간에 잘리지 않게 한다. */
+const partLength = (part: AnswerPart) =>
+  typeof part === 'string'
+    ? part.length
+    : part.kind === 'tags'
+      ? part.tags.length
+      : part.label.length;
+const textLength = (text: string, videos: ReadonlyMap<string, AnswerVideoInfo>) =>
+  splitVideoIds(text, videos).reduce((sum, part) => sum + partLength(part), 0);
+
+/** 답변 속 대상 영상 ID를 짧은 제목 링크로 보여준다. 복사·내보내기 원문은 그대로다. limit이 있으면 앞에서 그만큼만 보인다. */
 function AnswerText({
   text,
   videos,
+  limit,
 }: {
   text: string;
   videos: ReadonlyMap<string, AnswerVideoInfo>;
+  limit?: number;
 }) {
+  let left = limit ?? Infinity;
+  const shown: ReactNode[] = [];
+  const parts = splitVideoIds(text, videos);
+  const total = parts.reduce((sum, part) => sum + partLength(part), 0);
+  for (const [index, part] of parts.entries()) {
+    if (left <= 0) break;
+    left -= partLength(part);
+    shown.push(
+      typeof part === 'string' ? (
+        left >= 0 ? (
+          part
+        ) : (
+          part.slice(0, part.length + left)
+        )
+      ) : part.kind === 'tags' ? (
+        <CitedTags key={index} tags={part.tags} title={part.title} />
+      ) : (
+        <Fragment key={index}>
+          {part.labeled && '영상 제목: '}
+          <a
+            className="answer-video-link"
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(part.id)}`}
+            target="_blank"
+            rel="noreferrer"
+            title={part.title}
+          >
+            {part.labeled ? part.label : `「${part.label}」`}
+          </a>
+        </Fragment>
+      ),
+    );
+  }
   return (
     <p className="whitespace-pre-wrap break-words">
-      {splitVideoIds(text, videos).map((part, index) =>
-        typeof part === 'string' ? (
-          part
-        ) : part.kind === 'tags' ? (
-          <CitedTags key={index} tags={part.tags} title={part.title} />
-        ) : (
-          <Fragment key={index}>
-            {part.labeled && '영상 제목: '}
-            <a
-              className="answer-video-link"
-              href={`https://www.youtube.com/watch?v=${encodeURIComponent(part.id)}`}
-              target="_blank"
-              rel="noreferrer"
-              title={part.title}
-            >
-              {part.labeled ? part.label : `「${part.label}」`}
-            </a>
-          </Fragment>
-        ),
-      )}
+      {shown}
+      {limit !== undefined && limit < total && <span className="typing-caret" aria-hidden="true" />}
     </p>
   );
+}
+
+/** 섹션 사이에 잠깐 멈추는 정도(글자 수로 환산) */
+const SECTION_PAUSE = 10;
+
+/**
+ * 답변을 앞에서부터 보여 줄 때의 계획: 블록(머리말 앞 글, 각 섹션 본문)별 시작 위치와 전체 글자 수,
+ * 핵심 요약이 끝나는 위치(그때까지는 천천히 보여 준다).
+ */
+export function answerRevealPlan(answer: string, info: ReadonlyMap<string, AnswerVideoInfo>) {
+  const parsed = parseAnswerSections(answer);
+  const blocks = parsed
+    ? [
+        ...(parsed.intro ? [{ title: '', text: parsed.intro }] : []),
+        ...parsed.sections.map((section) => ({ title: section.title, text: section.body })),
+      ]
+    : [{ title: '', text: answer }];
+  let cursor = 0;
+  const starts: number[] = [];
+  let slowUntil = parsed ? 0 : textLength(answer, info);
+  for (const block of blocks) {
+    starts.push(cursor);
+    const length = textLength(block.text, info);
+    cursor += length + SECTION_PAUSE;
+    if (block.title === '핵심 요약') slowUntil = cursor - SECTION_PAUSE;
+  }
+  return { parsed, blocks, starts, total: Math.max(0, cursor - SECTION_PAUSE), slowUntil };
 }
 
 /** 머리말이 모두 있으면 섹션 카드로, 아니면 원문 그대로 텍스트로 표시한다. */
@@ -94,35 +148,47 @@ export function AnswerBody({
   videos,
   info,
   ranking,
+  reveal,
 }: {
   answer: string;
   videos: AnalysisVideo[];
   info: ReadonlyMap<string, AnswerVideoInfo>;
   /** 서버 topRanking 순서. 없으면(이전 응답) 근거에 언급된 순서로 고른다. */
   ranking?: readonly string[];
+  /** 방금 받은 답변을 채팅처럼 앞에서부터 보여 줄 때 지금까지 보일 글자 수. 없으면 전부 보인다. */
+  reveal?: number;
 }) {
-  const parsed = parseAnswerSections(answer);
+  const plan = answerRevealPlan(answer, info);
+  const { parsed } = plan;
+  // 블록 i에 보일 글자 수: 아직 시작 전이면 0 이하, 끝났으면 전체
+  const limitOf = (index: number) =>
+    reveal === undefined ? undefined : reveal - plan.starts[index];
   if (!parsed)
     return (
       <div aria-label="AI 답변" className="answer-plain">
-        <AnswerText text={answer} videos={info} />
+        <AnswerText text={answer} videos={info} limit={limitOf(0)} />
       </div>
     );
+  const offset = parsed.intro ? 1 : 0;
   return (
     <div aria-label="AI 답변" className="answer-sections">
-      {parsed.intro && <AnswerText text={parsed.intro} videos={info} />}
-      {parsed.sections.map((section) => {
+      {parsed.intro && <AnswerText text={parsed.intro} videos={info} limit={limitOf(0)} />}
+      {parsed.sections.map((section, index) => {
+        const limit = limitOf(index + offset);
+        // 섹션은 앞 섹션을 다 보여 준 뒤 머리말부터 나타난다.
+        if (limit !== undefined && limit < 0) return null;
         const mentioned =
           section.title !== '근거 데이터'
             ? []
             : ranking?.length
               ? rankedVideos(ranking, videos)
               : findMentionedVideos(withoutTagCitations(section.body, info), videos);
+        const finished = limit === undefined || limit >= textLength(section.body, info);
         return (
           <section key={section.title} className="answer-section">
             <h3>{section.title}</h3>
-            <AnswerText text={section.body} videos={info} />
-            {mentioned.length > 0 && <EvidenceVideos videos={mentioned} />}
+            <AnswerText text={section.body} videos={info} limit={limit} />
+            {mentioned.length > 0 && finished && <EvidenceVideos videos={mentioned} />}
           </section>
         );
       })}
