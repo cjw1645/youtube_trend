@@ -25,6 +25,11 @@ const EXAMPLE_PLACEHOLDER = [
 const QUICK_PROMPTS = [
   { icon: '↗', label: '현재 트렌드 분석', text: '현재 유튜브 트렌드를 분석해줘' },
   { icon: '?', label: '인기 이유 분석', text: '이 영상이 인기 있는 이유를 분석해줘' },
+  {
+    icon: '~',
+    label: '최근 며칠 추이',
+    text: '최근 며칠간 이 주제의 트렌드가 어떻게 변했는지 분석해줘',
+  },
   { icon: '+', label: '콘텐츠 아이디어', text: '다음 콘텐츠 아이디어 3개를 제안해줘' },
 ];
 /** 대화 보관 기간(일). DB의 save_chat_turn 만료 기간과 같아야 한다. */

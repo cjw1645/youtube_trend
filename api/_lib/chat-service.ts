@@ -12,7 +12,7 @@ import {
 import { generateContent, MAX_OUTPUT_TOKENS, type GeminiResult } from './gemini.js';
 import { ApiFailure } from './http.js';
 import { serviceRpc } from './supabase.js';
-import { buildTrend, summarizeTrend, type TrendInputs } from './trend.js';
+import { buildTrend, summarizeSeries, summarizeTrend, type TrendInputs } from './trend.js';
 import { reserveAi, settleUsage } from './usage.js';
 import { getAnalysisContext, listCategories } from './youtube.js';
 import { kstDay } from './collect.js';
@@ -105,13 +105,16 @@ async function loadTrend(
       ? await loadSlotCompare(userId, request.searchSlot).catch(() => null)
       : null;
   return {
-    ...(common ? { common: summarizeTrend(buildTrend(common), nameOf) } : {}),
+    ...(common
+      ? { common: { ...summarizeTrend(buildTrend(common), nameOf), ...summarizeSeries(common) } }
+      : {}),
     ...(sample
       ? {
           searchSample: {
             query: slotQuery,
             note: '사용자가 지정한 검색어의 YouTube 검색 결과 표본(인기 순위 아님)',
             ...summarizeTrend(buildTrend(sample), nameOf),
+            ...summarizeSeries(sample),
             ...(vsPopular ? { vsPopular: summarizeCompare(vsPopular, nameOf) } : {}),
           },
         }

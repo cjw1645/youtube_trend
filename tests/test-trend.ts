@@ -19,7 +19,7 @@ const vite = await createServer({
   logLevel: 'error',
 });
 const { buildPayload } = await vite.ssrLoadModule('/api/_lib/collect.ts');
-const { buildTrend } = await vite.ssrLoadModule('/api/_lib/trend.ts');
+const { buildTrend, summarizeSeries } = await vite.ssrLoadModule('/api/_lib/trend.ts');
 const { storedKeywordCounts } = await vite.ssrLoadModule('/src/lib/stats/keywords.ts');
 
 const BASE = Date.parse('2026-10-08T00:00:00Z');
@@ -319,6 +319,49 @@ try {
   assert.deepEqual(pickDefaultBaseline(cmp('month')), { kind: 'month', fallback: true });
   assert.deepEqual(pickDefaultBaseline(cmp()), { kind: 'day', fallback: false });
   console.log('  ok 비교 기준 기본값(day 우선·폴백)');
+  // AI용 일별 키워드 추이: 한국 날짜별 마지막 수집, null 보존, 방향은 서버가 계산한다.
+  {
+    const run = (iso: string, count: number | undefined, total: number) => ({
+      scheduled_for: iso,
+      item_count: total,
+      counts: count === undefined ? {} : { 고양이: count },
+    });
+    const series = summarizeSeries({
+      top_keywords: ['고양이'],
+      series: [
+        run('2026-10-08T01:00:00Z', 10, 100),
+        run('2026-10-08T14:00:00Z', 20, 100), // 한국 시간 10/8 23시 → 10/8의 마지막 수집
+        run('2026-10-09T15:30:00Z', 40, 100), // 한국 시간 10/10 00:30
+        run('2026-10-10T20:00:00Z', undefined, 100), // 한국 시간 10/11: 기준 미만(null)
+      ],
+    });
+    assert.equal(series.daysCovered, 3);
+    const row = series.keywordDailySeries![0];
+    assert.deepEqual(
+      row.points.map((point: { date: string; sharePercent: number | null }) => [
+        point.date,
+        point.sharePercent,
+      ]),
+      [
+        ['2026-10-08', 20],
+        ['2026-10-10', 40],
+        ['2026-10-11', null],
+      ],
+    );
+    assert.equal(row.direction, '늘어남');
+    assert.equal(row.changePp, 20);
+    const short = summarizeSeries({
+      top_keywords: ['고양이'],
+      series: [run('2026-10-08T01:00:00Z', 5, 100)],
+    });
+    assert.equal(short.keywordDailySeries, null);
+    const flat = summarizeSeries({
+      top_keywords: ['고양이'],
+      series: [run('2026-10-08T01:00:00Z', 10, 100), run('2026-10-09T01:00:00Z', 11, 100)],
+    });
+    assert.equal(flat.keywordDailySeries![0].direction, '비슷함');
+    console.log('  ok AI 일별 키워드 추이(KST 일 단위·null 보존·방향)');
+  }
   console.log('test-trend: all passed');
 } finally {
   await vite.close();

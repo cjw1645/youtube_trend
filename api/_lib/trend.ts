@@ -233,3 +233,57 @@ export function summarizeTrend(trend: TrendResult, categoryName: (id: string) =>
       .map((cmp) => KIND_LABEL[cmp.kind]),
   };
 }
+
+/** AI 입력의 일별 키워드 추이에 담는 최대 일수와 키워드 수 */
+const SERIES_DAYS = 7;
+const SERIES_KEYWORDS = 5;
+/** 첫 관측과 마지막 관측의 비율 차이가 이 값(퍼센트포인트) 이상이면 늘어남·줄어듦으로 말한다. */
+const SERIES_MOVE_PP = 3;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const kstDate = (iso: string) =>
+  new Date(Date.parse(iso) + KST_OFFSET_MS).toISOString().slice(0, 10);
+
+/**
+ * AI 입력용 일별 키워드 추이. 같은 날 여러 번 수집했으면 그날의 마지막 수집을 쓰고(한국 시간 기준),
+ * 최근 7일·상위 5개 키워드만 담는다. 비율은 그 수집의 전체 영상 수 대비이며, 값이 없는 날은 0이 아니라
+ * null(저장 기준 미만 또는 상위 밖)이다. 늘어남·줄어듦은 서버가 정해 모델이 다시 계산하지 않게 한다.
+ */
+export function summarizeSeries(inputs: Pick<TrendInputs, 'series' | 'top_keywords'>) {
+  const byDay = new Map<string, TrendInputs['series'][number]>();
+  [...inputs.series]
+    .sort((a, b) => Date.parse(a.scheduled_for) - Date.parse(b.scheduled_for))
+    .forEach((run) => byDay.set(kstDate(run.scheduled_for), run));
+  const days = [...byDay.entries()].slice(-SERIES_DAYS);
+  if (days.length < 2) return { daysCovered: days.length, keywordDailySeries: null };
+  return {
+    daysCovered: days.length,
+    keywordDailySeries: inputs.top_keywords.slice(0, SERIES_KEYWORDS).map((keyword) => {
+      const points = days.map(([date, run]) => {
+        const count = run.counts[keyword] ?? null;
+        return {
+          date,
+          videoCount: count,
+          sharePercent:
+            count !== null && run.item_count > 0 ? r1((count / run.item_count) * 100) : null,
+        };
+      });
+      const seen = points.filter((point) => point.sharePercent !== null);
+      const first = seen[0]?.sharePercent;
+      const last = seen.at(-1)?.sharePercent;
+      const move = first != null && last != null ? last - first : null;
+      return {
+        keyword,
+        points,
+        direction:
+          seen.length < 2 || move === null
+            ? '비교할 기간 부족'
+            : move >= SERIES_MOVE_PP
+              ? '늘어남'
+              : move <= -SERIES_MOVE_PP
+                ? '줄어듦'
+                : '비슷함',
+        ...(move === null ? {} : { changePp: r1(move) }),
+      };
+    }),
+  };
+}
