@@ -9,8 +9,11 @@ import { collectSearchSnapshot, type PopularSnapshot, type SearchConditions } fr
 
 /** 신규 조회 1회가 소비하는 검색 호출 수(최대 4페이지) */
 export const SEARCH_UNITS = 4;
-/** 같은 조건의 집합에 이 시간 안의 완료 수집이 있으면 새로 조회하지 않고 재사용(임시값) */
-export const SHARE_FRESH_HOURS = 6;
+/**
+ * 같은 조건의 집합에 이 시간 안의 완료 수집이 있으면 새로 조회하지 않고 그 기록에 붙는다(재등록 포함).
+ * 검색어는 하루 한 번 수집하므로 하루로 둔다. 지웠다가 다시 추가해도 같은 날 수집이 두 번 생기지 않는다.
+ */
+export const SHARE_FRESH_HOURS = 24;
 /** 서비스 전체 하루 검색 호출 상한(운영자 내부 기준: 알파 2명×40회. 공식 기본 한도는 100회/일) */
 const DEFAULT_SEARCH_CAP = 80;
 const DEFAULT_YOUTUBE_CAP = 1000;

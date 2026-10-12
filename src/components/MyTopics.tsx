@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { useSearchSlots } from '../hooks/useSearchSlots';
 import { historyVerdict } from '../lib/own-history';
+import { formatCount } from '../lib/format';
 import type { OwnHistory } from '../types/trend';
 
 /**
@@ -61,7 +62,15 @@ export default function MyTopics({ onOpen }: { onOpen: () => void }) {
                               : '아직 비교할 기록이 없습니다'
                         }`}
                   </span>
-                  {verdict && <span className="my-topic-detail">{verdict.detail}</span>}
+                  {verdict && verdict.tone !== 'collecting' && (
+                    <span className="my-topic-detail">{verdict.detail}</span>
+                  )}
+                  {history?.risers[0] && (
+                    <span className="my-topic-detail">
+                      지금 가장 빠르게 크는 영상: {history.risers[0].title} (하루 +
+                      {formatCount(Math.round(history.risers[0].dailyGain))}회)
+                    </span>
+                  )}
                   <span className="my-topic-more">
                     대시보드에서 보기 <ArrowRightIcon aria-hidden="true" />
                   </span>

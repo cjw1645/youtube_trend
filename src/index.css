@@ -3408,9 +3408,62 @@ button.spot:hover {
   color: var(--muted);
   font-size: clamp(22px, 2.4vw, 32px);
 }
-.compare-verdict.is-secondary {
-  font-size: clamp(20px, 2vw, 26px);
+/* 이 주제 안에서 지금: 빠르게 크는 영상 · 늘어난 키워드 */
+.own-now {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+}
+.own-risers ol,
+.own-rising-keywords ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.own-rising-keywords ul {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.own-risers small {
+  color: var(--faint);
+  font-weight: 400;
+}
+.own-risers button {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.own-risers button:hover {
+  border-color: var(--accent-text);
+}
+.own-riser-rank {
+  grid-row: span 2;
+  color: var(--accent-2);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.own-riser-title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.own-riser-meta {
   color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 .own-bars {
   display: flex;

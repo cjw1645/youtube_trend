@@ -260,10 +260,24 @@ try {
   assert.equal(r3.state, 'complete');
   assert.equal(searchCalls(), 1);
   assert.equal(await count(`search_sets where query_norm='먹방'`), 2);
-  // 6시간 지나면 재조회
+  // 같은 날 지웠다가 다시 추가(12시간 뒤): 새로 조회하지 않고 기존 기록에 붙는다
+  reset();
+  await db.query(`select clear_search_slot($1, 1::smallint)`, [B]);
+  assert.equal(
+    (
+      await registerSearchSlot(
+        B,
+        parseSlotInput(input(1, '먹방', { order: 'viewCount', window: '7d' })),
+        new Date(NOW.getTime() + 12 * 3600_000),
+      )
+    ).state,
+    'shared_fresh',
+  );
+  assert.equal(youtubeCalls.length, 0);
+  // 하루가 지나면 재조회
   reset();
   youtube([range(1, 5)]);
-  const later = new Date(NOW.getTime() + 7 * 3600_000);
+  const later = new Date(NOW.getTime() + 25 * 3600_000);
   assert.equal(
     (
       await registerSearchSlot(
@@ -542,7 +556,7 @@ try {
   assert.equal(batchApi.GET, undefined);
 
   console.log(
-    'PASS: 입력 정규화·검증, 등록(조건 반영·3페이지·삭제영상 제외·검색순서·예약 정산), 동일 조건 재사용(6시간)·조건 다르면 재조회, 재전송 멱등, 검색어 변경 시 집합 분리, 부분 실패 비공개·사용량 유지, 0개 결과, 진행 중 집합 반환·예약 반환, 개인 40회 상한(슬롯 불변), 전체 예산 소진 차단, 일괄 갱신(공유 집합 1회 호출·전역 1회·사용자별 차감·부담자 없음 건너뜀·BATCH_LIMIT·예산 소진 중단), 인증 없는 호출 거부; 실제 호출 0회',
+    'PASS: 입력 정규화·검증, 등록(조건 반영·3페이지·삭제영상 제외·검색순서·예약 정산), 동일 조건 재사용(24시간, 같은 날 재등록 포함)·조건 다르면 재조회, 재전송 멱등, 검색어 변경 시 집합 분리, 부분 실패 비공개·사용량 유지, 0개 결과, 진행 중 집합 반환·예약 반환, 개인 40회 상한(슬롯 불변), 전체 예산 소진 차단, 일괄 갱신(공유 집합 1회 호출·전역 1회·사용자별 차감·부담자 없음 건너뜀·BATCH_LIMIT·예산 소진 중단), 인증 없는 호출 거부; 실제 호출 0회',
   );
 } finally {
   globalThis.fetch = realFetch;

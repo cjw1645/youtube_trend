@@ -111,14 +111,57 @@ try {
   assert.equal(long.usual.medianDailyGain, 100);
   assert.equal(long.latest.runId, 10);
 
+  // 6. 같은 날 두 번 수집(검색어 추가 직후 즉시 수집): 전날과 비교할 수 있는 수집을 그날 값으로 쓴다
+  const at = (iso: string, gains: (number | null)[], id: number) => ({
+    runId: id,
+    scheduledFor: iso,
+    itemCount: gains.length,
+    videos: gains.map((dailyGain, i) => ({
+      dailyGain,
+      ageHours: 500,
+      videoId: `v${id}-${i}`,
+      title: `영상 ${id}-${i}`,
+    })),
+  });
+  const sameDay = buildHistory({
+    query: '고양이 영상',
+    runs: [
+      at('2026-10-08T19:00:00Z', ten(100), 1),
+      at('2026-10-09T19:00:00Z', ten(100), 2),
+      at('2026-10-10T19:00:00Z', ten(100), 3),
+      at('2026-10-11T19:00:00Z', [900, 800, 700, 200, 200, 200, 200, 200, 200, 200], 4), // 10/12 04:00 KST
+      at(
+        '2026-10-12T07:00:00Z',
+        ten(0).map(() => null),
+        5,
+      ), // 10/12 16:00 KST, 18~30시간 전 수집 없음
+    ],
+  });
+  assert.equal(sameDay.days.length, 4, '10/12의 두 수집은 하루로 묶인다');
+  assert.equal(sameDay.latest.runId, 4, '비교할 수 있는 04:00 수집이 그날 값');
+  assert.equal(historyVerdict(sameDay).tone, 'up');
+  // 7. 판정과 상관없이 하루 조회수 증가가 큰 영상 3개(제목이 있는 최근 수집에서)
+  assert.deepEqual(
+    sameDay.risers.map((r: { videoId: string; dailyGain: number }) => [r.videoId, r.dailyGain]),
+    [
+      ['v4-0', 900],
+      ['v4-1', 800],
+      ['v4-2', 700],
+    ],
+  );
+  assert.equal(sameDay.risersAt, '2026-10-11T19:00:00Z');
+  assert.deepEqual(early.risers, [], '제목이 없는 오래된 수집에서는 고르지 않는다');
+
   assert.equal(buildHistory({ query: 'x', runs: [] }), null);
 
-  // 6. 인증 없는 호출은 401
+  // 8. 인증 없는 호출은 401
   const handler = await vite.ssrLoadModule('/api/_lib/handlers/search-history.ts');
   const res = await handler.GET(new Request('http://localhost/api/search-history?slot=1'));
   assert.equal(res.status, 401);
 
-  console.log('PASS: 평소 대비 판정(중앙값·평소·기준 부족·겹침 부족·문장·인증); 외부 호출 0회');
+  console.log(
+    'PASS: 평소 대비 판정(중앙값·평소·기준 부족·겹침 부족·같은 날 두 수집·크는 영상·문장·인증); 외부 호출 0회',
+  );
 } finally {
   await vite.close();
 }

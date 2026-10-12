@@ -238,13 +238,23 @@ export default function PopularCompareSection({
             크기가 달라 비율로 비교합니다
           </HelpTip>
         </p>
-        <h2 className={`compare-verdict ${secondary ? 'is-secondary' : ''}`}>{verdict.headline}</h2>
-        <p className="compare-detail">{verdict.detail}</p>
+        {secondary ? (
+          // 분야가 다른(대부분 게임) 차트와의 배율을 판정처럼 크게 말하지 않는다. 수치만 참고로 둔다.
+          <p className="trend-note">
+            전체 인기 차트는 분야가 달라 이 주제가 뜨는지 판단하는 기준이 아닙니다. 차이만
+            참고하세요.
+          </p>
+        ) : (
+          <>
+            <h2 className="compare-verdict">{verdict.headline}</h2>
+            <p className="compare-detail">{verdict.detail}</p>
+          </>
+        )}
       </Reveal>
 
       <dl className="compare-cards">
         <StatCard
-          primary
+          primary={!secondary}
           delay={0}
           label={
             verdict.basis === 'age' && verdict.band

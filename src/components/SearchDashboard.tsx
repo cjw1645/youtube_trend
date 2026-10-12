@@ -95,8 +95,9 @@ export default function SearchDashboard({
     <div className="search-dashboard">
       {view.observation_started_at && (
         <p className="trend-note">
-          관측 시작 {new Date(view.observation_started_at).toLocaleString('ko-KR')} · 검색어를
-          해제하고 다시 추가하면 새 관측이 시작되며 이전 기록과 이어지지 않습니다.
+          관측 시작 {new Date(view.observation_started_at).toLocaleString('ko-KR')} · 같은
+          검색어·조건으로 다시 추가하면 이전 기록에 이어지고, 검색어나 조건을 바꾸면 새로
+          관측합니다.
         </p>
       )}
       {failed && (
@@ -122,7 +123,14 @@ export default function SearchDashboard({
           {error}
         </p>
       )}
-      {history?.key === key && history.value && <OwnHistorySection history={history.value} />}
+      {history?.key === key && history.value && (
+        <OwnHistorySection
+          history={history.value}
+          trend={detail?.key === key ? detail.trend : null}
+          onOpenVideo={onOpenVideo}
+          onSearchKeyword={onSearchKeyword}
+        />
+      )}
       {compare?.key === key && compare.value && (
         <PopularCompareSection
           secondary={!!(history?.key === key && history.value)}

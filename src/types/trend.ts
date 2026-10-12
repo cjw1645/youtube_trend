@@ -190,6 +190,15 @@ export interface HistoryDay {
   freshCount: number;
 }
 
+/** 내 검색어 결과 중 하루 조회수 증가가 큰 영상 */
+export interface HistoryRiser {
+  videoId: string;
+  title: string;
+  dailyGain: number;
+  /** 업로드 후 경과 시간(관측 시점) */
+  ageHours: number | null;
+}
+
 /** 내 검색어를 자기 지난 수집(평소)과 비교한 결과 */
 export interface OwnHistory {
   query: string;
@@ -205,6 +214,10 @@ export interface OwnHistory {
   gainRatio: number | null;
   /** 최근 수집의 새 영상(3일 미만) 비중 */
   freshShare: number | null;
+  /** 이 주제에서 지금 빠르게 크는 영상(판정과 상관없이 보여 준다) */
+  risers: HistoryRiser[];
+  /** risers를 고른 수집 시각 */
+  risersAt: string | null;
 }
 
 /** 슬롯 최신 검색 수집과 가장 가까운 인기 차트 수집의 비교(A 노출·B 키워드·C 영상·D 카테고리) */

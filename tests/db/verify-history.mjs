@@ -105,7 +105,13 @@ assert.deepEqual(
 );
 assert.equal(h.runs[1].videos[0].ageHours, 192);
 assert.equal(h.runs[4].videos.filter((v) => v.ageHours < 72).length, 2, '새 영상 경과 시간');
-ok('날짜별 실행·하루 증가·경과 시간');
+// 최근 이틀 수집에만 영상 ID·제목이 있다(크는 영상 표시용). 오래된 수집은 숫자만.
+assert.deepEqual(Object.keys(h.runs[0].videos[0]).sort(), ['ageHours', 'dailyGain']);
+assert.equal(h.runs[4].videos[0].videoId, vid(1));
+assert.equal(h.runs[4].videos[0].title, '고양이 1');
+assert.ok(h.runs[3].videos.every((v) => typeof v.title === 'string'));
+assert.ok(h.runs[2].videos.every((v) => v.title === undefined));
+ok('날짜별 실행·하루 증가·경과 시간·최근 이틀 제목');
 
 // 조회 기간: 최근 2일이면 마지막 두 실행만
 const recent = (await svc(`select get_slot_history($1,1::smallint,2) r`, [A])).rows[0].r;
