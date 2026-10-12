@@ -1,5 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { DashboardIcon } from '@radix-ui/react-icons';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { CHART_PATH, POPULAR_CACHE_MS } from '../hooks/useVideos';
 import { useApiResource } from '../hooks/useApiResource';
 import { ErrorView, LoadingPanel } from '../components/StatusView';
@@ -29,7 +28,6 @@ import type { StoredVideo } from '../types/trend';
 
 /** 이 개수 미만이면 비율·순위 해석에 주의 문구를 붙인다. */
 const SMALL_SAMPLE = 10;
-const POPULAR_OPEN_KEY = 'youtube-trend:popular-dash-open';
 
 interface Props {
   categoryNames: ReadonlyMap<string, string>;
@@ -40,6 +38,8 @@ interface Props {
   onImportSearch: (videos: readonly StoredVideo[], label: string, slot: 1 | 2) => 'set' | 'kept';
   onSearchKeyword: (keyword: string) => void;
   onAnalyze: (target: ChatTarget) => void;
+  /** 값이 커질 때마다 「인기 차트 전체」 탭을 선택한다(홈의 진입 버튼). */
+  openPopularSignal?: number;
 }
 
 /** 0–1 비율을 정수 %로. 0보다 크지만 반올림하면 0이 되는 값은 「1% 미만」으로 구분한다. */
@@ -123,37 +123,21 @@ export default function Dashboard({
   onImport,
   onImportSearch,
   onAnalyze,
+  openPopularSignal,
 }: Props) {
   const auth = useAuth();
   const search = useSearchSlots();
   const [searchSlot, setSearchSlot] = useState<1 | 2 | null>(null);
-  const selectedSearch = search.slots.find((item) => item.slot === searchSlot);
-  // 등록한 검색어가 있으면 첫 번째를 한 번 자동으로 열어 둔다(사용자가 고른 뒤에는 건드리지 않는다).
-  const autoSelected = useRef(false);
-  useEffect(() => {
-    if (autoSelected.current || !search.slots.length) return;
-    autoSelected.current = true;
-    setSearchSlot(search.slots[0].slot);
-  }, [search.slots]);
-  // 공통 인기 대시보드는 옵션 패널이다. 사용자가 고른 상태를 기억하고, 고른 적이 없으면 로그아웃 상태에서만 열어 둔다.
-  const [popularChoice, setPopularChoice] = useState<boolean | null>(() => {
-    try {
-      const saved = localStorage.getItem(POPULAR_OPEN_KEY);
-      return saved === null ? null : saved === '1';
-    } catch {
-      return null;
-    }
-  });
-  const popularOpen = popularChoice ?? (!auth.loading && !auth.user);
-  const togglePopular = () => {
-    const next = !popularOpen;
-    setPopularChoice(next);
-    try {
-      localStorage.setItem(POPULAR_OPEN_KEY, next ? '1' : '0');
-    } catch {
-      /* 저장하지 못해도 이번 화면에서는 동작한다 */
-    }
+  // 탭을 바꾸면 이전 탭의 스크롤 위치를 이어가지 않고 맨 위에서 시작한다.
+  const chooseTab = (slot: 1 | 2 | null) => {
+    setSearchSlot(slot);
+    window.scrollTo(0, 0);
   };
+  const selectedSearch = search.slots.find((item) => item.slot === searchSlot);
+  // 홈의 「인기 흐름 보기」로 들어오면 인기 차트 전체 탭으로 돌아온다.
+  useEffect(() => {
+    if (openPopularSignal) setSearchSlot(null);
+  }, [openPopularSignal]);
   const popularId = useId();
   const chart = useApiResource<VideosResponse>(CHART_PATH, { cacheMs: POPULAR_CACHE_MS });
   const [tab, setTab] = useState('');
@@ -231,26 +215,19 @@ export default function Dashboard({
             full={search.slots.length >= MAX_SLOTS}
             busy={search.busy}
             onAdd={search.add}
-            onAdded={setSearchSlot}
+            onAdded={chooseTab}
           />
-          <button
-            type="button"
-            className={`ghost-button${popularOpen ? ' is-open' : ''}`}
-            aria-expanded={popularOpen}
-            aria-controls={popularId}
-            onClick={togglePopular}
-          >
-            <DashboardIcon aria-hidden="true" /> 인기 차트 대시보드
-          </button>
         </div>
       </header>
       <SearchTabs
         slots={search.slots}
         selected={selectedSearch ? searchSlot : null}
+        popularPanelId={popularId}
+        onSelectPopular={() => chooseTab(null)}
         busy={search.busy}
         message={search.message ?? search.error}
         emptyText={emptyText}
-        onSelect={setSearchSlot}
+        onSelect={chooseTab}
         onRemove={(slot) => {
           if (searchSlot === slot) setSearchSlot(null);
           void search.remove(slot);
@@ -268,7 +245,7 @@ export default function Dashboard({
           onImport={onImportSearch}
         />
       )}
-      {popularOpen && (
+      {!selectedSearch && (
         <div id={popularId} className="popular-dash">
           <header className="popular-dash-head">
             <div className="title-row">

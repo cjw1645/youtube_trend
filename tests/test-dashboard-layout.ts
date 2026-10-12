@@ -4,7 +4,7 @@ import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { jsxDEV } from 'react/jsx-dev-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
-// 대시보드 첫 화면: 「검색어 추가」가 타이틀이고, 공통 인기 대시보드는 옵션 패널이다(열림 상태 기억, 로그아웃 기본 열림).
+// 대시보드 첫 화면: 「검색어 추가」가 타이틀이고, 「인기 차트 전체」 탭이 맨 왼쪽에 고정되어 있고 기본으로 선택돼 공통 인기 대시보드가 보인다.
 
 // Windows Vite SSR의 CJS 재평가를 피하고 native React와 같은 dispatcher를 사용한다.
 const g = globalThis as typeof globalThis & { __r?: unknown; __j?: unknown };
@@ -49,33 +49,27 @@ const props = {
   onSearchKeyword: noop,
   onAnalyze: noop,
 };
-const store = globalThis as typeof globalThis & { localStorage?: unknown };
-const setSaved = (value: string | null) => {
-  store.localStorage = { getItem: () => value, setItem: noop };
-};
 try {
   const { default: Dashboard } = await vite.ssrLoadModule('/src/pages/Dashboard.tsx');
   const render = () => renderToStaticMarkup(React.createElement(Dashboard, props));
 
-  // 저장된 선택이 없고 로그아웃이면 빈 메인을 피하려고 공통 대시보드가 열려 있다
-  setSaved(null);
+  // 인기 차트 전체 탭은 맨 왼쪽에 고정이고 기본 선택이라 공통 대시보드가 바로 보인다(로그인 여부와 무관)
   const open = render();
   assert.match(open, /내 검색어로 트렌드 추적/, '메인 타이틀은 내 검색어');
-  assert.match(open, /인기 차트 대시보드/, '옵션 패널 토글');
-  assert.match(open, /class="popular-dash"/, '로그아웃·미선택은 기본 열림');
+  assert.match(
+    open,
+    /class="popular-tab"[^>]*aria-pressed="true"[^>]*>인기 차트 전체</,
+    '고정 탭 기본 선택',
+  );
+  assert.ok(
+    open.indexOf('인기 차트 전체') < open.indexOf('class="search-tabs-empty"') ||
+      !open.includes('search-tabs-empty'),
+    '고정 탭은 검색어 탭·안내보다 앞',
+  );
+  assert.match(open, /class="popular-dash"/, '인기 차트 대시보드가 기본으로 보임');
   assert.match(open, /stored-trend/, '저장 집계 섹션');
-
-  // 사용자가 닫아 둔 상태는 기억한다: 공통 통계는 보이지 않는다
-  setSaved('0');
-  const closed = render();
-  assert.match(closed, /내 검색어로 트렌드 추적/);
-  assert.doesNotMatch(closed, /popular-dash/);
-  assert.doesNotMatch(closed, /stored-trend/);
-  assert.match(closed, /aria-expanded="false"/, '토글 상태 표시');
-
-  // 열어 둔 상태도 기억한다
-  setSaved('1');
-  assert.match(render(), /class="popular-dash"/);
+  assert.doesNotMatch(open, /ghost-button/, '검색어 추가 오른쪽의 토글 버튼 없음');
+  assert.equal((open.match(/인기 차트 대시보드<\/h2>/g) ?? []).length, 1);
 
   // 같은 지표를 두 번 보여주지 않는다: 실시간 쪽 카테고리 분포·길이 구간은 없다
   assert.doesNotMatch(open, /카테고리 분포/);
@@ -315,7 +309,9 @@ try {
   );
   assert.match(unavailable, /비교할 인기 차트 수집이 없습니다/);
   assert.doesNotMatch(unavailable, /class="cloud"/);
-  console.log('PASS: 대시보드 메인(검색어 타이틀·옵션 패널 기본값·열림 상태 기억·중복 섹션 제거)');
+  console.log(
+    'PASS: 대시보드 메인(검색어 타이틀·인기 차트 전체 고정 탭 기본 선택·토글 버튼 없음·중복 섹션 제거)',
+  );
 } finally {
   await vite.close();
 }

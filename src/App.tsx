@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import Home, { SEARCH_AFTER_LOGIN_KEY, type SearchRequest } from './pages/Home';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
@@ -38,16 +38,11 @@ export default function App() {
   const [visited, setVisited] = useState<ReadonlySet<Page>>(() => new Set([currentPage()]));
   const [searchRequest, setSearchRequest] = useState<SearchRequest>();
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  // 홈의 진입 버튼으로 대시보드에 들어올 때마다 늘려 「인기 차트 전체」 탭을 선택한다.
+  const [openPopularSignal, setOpenPopularSignal] = useState(0);
   const targets = useTargets();
   const { lastHome, setLastHome, setActive } = targets;
   const target: ChatTarget = targets.active ?? { label: '대상 미선택', videos: [] };
-  const scroll = useRef<Record<Page, number>>({
-    main: 0,
-    dashboard: 0,
-    search: 0,
-    ai: 0,
-    favorites: 0,
-  });
   const favorites = useFavorites();
   const [chartLoad, setChartLoad] = useState<{ loading: boolean; error?: string }>({
     loading: false,
@@ -93,7 +88,6 @@ export default function App() {
     resolveNames(favorites.videos.map((video) => video.categoryId));
   }, [favorites.videos, resolveNames]);
   const navigate = (next: Page) => {
-    scroll.current[page] = window.scrollY;
     setVisited((prev) => (prev.has(next) ? prev : new Set([...prev, next])));
     if (next === 'ai' && !targets.active && lastHome) setActive(lastHome);
     setPage(next);
@@ -108,8 +102,16 @@ export default function App() {
     window.addEventListener('hashchange', change);
     return () => window.removeEventListener('hashchange', change);
   }, []);
+  // 화면을 바꾸면 이전 스크롤 위치를 가져오지 않고 그 화면의 맨 위에서 시작한다.
+  // AI 대화는 가장 최근 대화가 보이도록 채팅 목록을 맨 아래로 내린다.
   useLayoutEffect(() => {
-    window.scrollTo(0, scroll.current[page]);
+    window.scrollTo(0, 0);
+    if (page === 'ai') {
+      const thread = document.querySelector<HTMLElement>('.ai-workspace .chat-thread');
+      if (thread) thread.scrollTop = thread.scrollHeight;
+      // 채팅 목록이 따로 스크롤되지 않는 좁은 화면에서는 페이지 자체를 맨 아래로 내린다.
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    }
   }, [page]);
   const receiveHome = useCallback(
     (value: ChatTarget) => setLastHome(makeTarget(value, 'home', value.query)),
@@ -176,7 +178,14 @@ export default function App() {
         )}
         <div hidden={page !== 'main'}>
           {visited.has('main') && (
-            <Main navigate={navigate} onSelect={onSelect} onSearchKeyword={searchKeyword} />
+            <Main
+              navigate={(next) => {
+                if (next === 'dashboard') setOpenPopularSignal((value) => value + 1);
+                navigate(next);
+              }}
+              onSelect={onSelect}
+              onSearchKeyword={searchKeyword}
+            />
           )}
         </div>
         <div hidden={page !== 'dashboard'}>
@@ -190,6 +199,7 @@ export default function App() {
               onImportSearch={(stored, label, slot) => importStored(stored, label, false, slot)}
               onSearchKeyword={searchKeyword}
               onAnalyze={analyze}
+              openPopularSignal={openPopularSignal}
             />
           )}
         </div>

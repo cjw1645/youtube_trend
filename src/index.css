@@ -3743,12 +3743,16 @@ button.spot:hover {
   outline-offset: 1px;
 }
 .help-tip-bubble {
+  /* 닫힌 동안은 레이아웃에서 빠져 화면 밖에 걸쳐도 가로 스크롤을 만들지 않는다. */
+  display: none;
   position: absolute;
   top: calc(100% + 8px);
   left: -6px;
   z-index: 60;
   width: max-content;
-  max-width: 300px;
+  /* 화면 폭보다 넓어지지 않게 하고, 가장자리에 걸리면 HelpTip이 --shift로 안쪽으로 민다. */
+  max-width: min(300px, calc(100vw - 24px));
+  translate: var(--shift, 0px) 0;
   padding: 10px 12px;
   border: 1px solid var(--bar);
   border-radius: 8px;
@@ -3762,29 +3766,26 @@ button.spot:hover {
   text-align: left;
   white-space: normal;
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px) scale(0.98);
   transform-origin: top left;
-  transition:
-    opacity 120ms ease-out,
-    transform 120ms ease-out,
-    visibility 0s linear 120ms;
 }
 .help-tip.is-end .help-tip-bubble {
   left: auto;
   right: -6px;
   transform-origin: top right;
 }
-.help-tip:hover .help-tip-bubble,
-.help-tip-trigger:focus-visible + .help-tip-bubble {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition:
-    opacity 180ms var(--ease) 60ms,
-    transform 180ms var(--ease) 60ms,
-    visibility 0s linear 60ms;
+.help-tip.is-open .help-tip-bubble {
+  display: block;
+  animation: help-tip-in 180ms var(--ease) both;
+}
+@keyframes help-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ───────── 메인 ───────── */
@@ -4136,7 +4137,9 @@ button.spot:hover {
   .main-video-skeleton {
     animation: none;
   }
-  .help-tip-bubble,
+  .help-tip.is-open .help-tip-bubble {
+    animation: none;
+  }
   .main-video-thumb img {
     transition: none;
   }
