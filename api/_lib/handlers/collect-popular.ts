@@ -1,4 +1,4 @@
-// 공통 인기 목록 수집 진입점. Supabase Cron(pg_net)만 호출한다: 브라우저는 비밀 값을 알지 못한다.
+// 공통 인기 목록 수집 진입점. Supabase Cron(pg_net)만 호출한다.
 import { runPopularCollection } from '../collect.js';
 import { requireCronSecret } from '../cron-auth.js';
 import { errorResponse, json } from '../http.js';
