@@ -37,7 +37,7 @@ npm test            # 전체
 npm test -- chat    # 파일 이름에 chat이 들어간 것만
 ```
 
-GitHub Actions(`.github/workflows/ci.yml`)가 `main` push와 PR마다 타입 검사 → 포맷 검사 → 테스트 → 빌드를 실행합니다. 배포도 테스트를 통과해야 진행됩니다: `vercel.json`의 `buildCommand`가 `npm test && npm run build`라서 Vercel 빌드가 테스트를 먼저 실행하고, 실패하면 배포가 중단되어 이전 배포가 유지됩니다(Node는 `engines`로 24.x 고정). 이 테스트는 모델 답변의 품질이나 실제 외부 서비스 동작을 검증하지 않습니다. 실제 호출 평가는 별도로 승인된 소량 예산으로 수행합니다.
+GitHub Actions(`.github/workflows/ci.yml`)가 `main` push와 PR마다 타입 검사 → 포맷 검사 → 빌드를 실행합니다. 테스트는 배포 빌드에서 실행합니다: `vercel.json`의 `buildCommand`가 `npm test && npm run build`라서 Vercel 빌드가 테스트를 먼저 실행하고, 실패하면 배포가 중단되어 이전 배포가 유지됩니다(Node는 `engines`로 24.x 고정). 이 테스트는 모델 답변의 품질이나 실제 외부 서비스 동작을 검증하지 않습니다. 실제 호출 평가는 별도로 승인된 소량 예산으로 수행합니다.
 
 ## 설정 체크리스트 (배포 전)
 
