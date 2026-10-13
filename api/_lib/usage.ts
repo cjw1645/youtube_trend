@@ -25,7 +25,7 @@ export const AI_DAILY_LIMIT = 10;
 /** 질문 사이 최소 간격(초). DB 함수의 기본값(30)보다 우선하도록 서버가 호출할 때 직접 넘긴다. */
 export const AI_MIN_GAP_SECONDS = 10;
 /** 관리자 계정의 하루 질문 상한과 간격. 무제한이 아니라 큰 상한을 둔다(코드 실수로 질문이 폭주해도 무료 한도를 지킨다). */
-export const ADMIN_AI_DAILY_LIMIT = 200;
+export const ADMIN_AI_DAILY_LIMIT = 20;
 export const ADMIN_AI_MIN_GAP_SECONDS = 0;
 export const SEARCH_DAILY_LIMIT = 40;
 

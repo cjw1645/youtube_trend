@@ -252,7 +252,7 @@ try {
   assert.deepEqual(JSON.parse(calls[0].body!), {
     p_user: USER_A,
     p_request: 'req-admin',
-    p_daily_limit: 200,
+    p_daily_limit: 20,
     p_min_gap_seconds: 0,
   });
   reset();
